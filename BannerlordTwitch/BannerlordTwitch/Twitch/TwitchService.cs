@@ -188,7 +188,7 @@ namespace BannerlordTwitch
                             authSettings.AccessToken,
                             authSettings.ClientID);
                         Log.Info("[Extension] PubSub service ready");
-                        localRelay = new LocalRelayService();
+                        //localRelay = new LocalRelayService();
                         Log.Info("[LocalRelay] Service started — OBS source: http://localhost:3000");
                     }
                     else

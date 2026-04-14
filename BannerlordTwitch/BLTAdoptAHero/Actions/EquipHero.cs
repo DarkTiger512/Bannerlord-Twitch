@@ -91,6 +91,7 @@ namespace BLTAdoptAHero
                 {
                     generator.P("{=02iAT4Y8}Disallowed for player companions".Translate());
                 }
+                generator.Value("Can specify culture");
             }
         }
 

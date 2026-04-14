@@ -310,6 +310,7 @@ namespace BLTAdoptAHero.Actions
             if (unit == null) { onFailure("Not a formation unit"); return; }
 
             var arrangement = formation.Arrangement;
+            if (Mission.Current.IsSiegeBattle) { onFailure("Cannot move in siege battles"); return; }
 
             try
             {
@@ -322,7 +323,7 @@ namespace BLTAdoptAHero.Actions
                                 .Where(a => a != null && a != heroAgent && a.GetHero() == null)
                                 .OrderBy(a => ((IFormationUnit)a).FormationRankIndex)
                                 .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
-                                .Take((int)arrangement.Width).SelectRandom();
+                                .Take(arrangement.UnitCount/arrangement.RankCount).SelectRandom();
 
                             if (candidate == null) { onFailure("No troop found"); break; }
 
@@ -338,7 +339,7 @@ namespace BLTAdoptAHero.Actions
                                 .Where(a => a != null && a != heroAgent && a.GetHero() == null)
                                 .OrderByDescending(a => ((IFormationUnit)a).FormationRankIndex)
                                 .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
-                                .Take((int)arrangement.Width).SelectRandom();
+                                .Take(arrangement.UnitCount/arrangement.RankCount/2).SelectRandom();
 
                             if (candidate == null) { onFailure("No troop found"); break; }
 

@@ -20,7 +20,29 @@ namespace BLTBuffet
      UsedImplicitly]
     public partial class CharacterEffect : ActionHandlerBase
     {
+        
         protected override Type ConfigType => typeof(Config);
+
+        public class Documentation : IDocumentable
+        {
+            private readonly Config _config;
+
+            private Documentation(Config config)
+            {
+                _config = config;
+            }
+
+            public void GenerateDocumentation(IDocumentationGenerator generator)
+            {
+                generator.Value($"<strong>Target:</strong> {_config.Target}");
+                if (_config.HealPerSecond > 0)
+                    generator.Value($"<strong>Heal/s:</strong> {_config.HealPerSecond}");
+                if (_config.HealPercent > 0)
+                    generator.Value($"<strong>Heal %:</strong> {_config.HealPercent}");
+                if (_config.Duration > 0)
+                    generator.Value($"<strong>Duration:</strong> {_config.Duration}");
+            }
+        }
 
         protected override void ExecuteInternal(ReplyContext context, object baseConfig,
             Action<string> onSuccess, Action<string> onFailure)

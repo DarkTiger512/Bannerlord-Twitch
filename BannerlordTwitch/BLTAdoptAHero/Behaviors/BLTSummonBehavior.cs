@@ -128,6 +128,12 @@ namespace BLTAdoptAHero
                 // If hero isn't registered yet then this must be a hero that is part of one of the involved parties
                 // already
                 HeroDeathSpecifics.Remove(adoptedHero);
+                //if (adoptedHero.Clan != null)
+                //{
+                //    agent.SetClothingColor1(adoptedHero.Clan.Color);
+                //    agent.SetClothingColor2(adoptedHero.Clan.Color2);                    
+                //    agent.UpdateSpawnEquipmentAndRefreshVisuals(agent.SpawnEquipment);
+                //}
 
             });
         }

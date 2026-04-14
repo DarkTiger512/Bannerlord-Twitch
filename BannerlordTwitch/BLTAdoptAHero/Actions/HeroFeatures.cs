@@ -403,7 +403,7 @@ namespace BLTAdoptAHero.Actions
                                 return;
 
                             BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.MarriageCost);
-                            onSuccess("{=JW5L4lvt}Marriage successful with spawned spouse".Translate());
+                            onSuccess("{=JW5L4lvt}Marriage successful with spawned spouse({culture})".Translate(("culture", cultureSpouse.Name.ToString())));
                             Log.ShowInformation("{=h6AHfoVx}{heroName} has married {spouseName}!".Translate(("heroName", adoptedHero.Name.ToString()), ("spouseName", CleanName(newHero.Name.ToString()))),
                                 adoptedHero.Spouse.CharacterObject, Log.Sound.Horns2);
                             return;
@@ -422,9 +422,9 @@ namespace BLTAdoptAHero.Actions
                             }
 
                             IEnumerable<Hero> candidates = CampaignHelpers.AliveHeroes.Where(n =>
-                                (n.Name != null && (!StripTranslationKey(n.Name.ToString()).Contains(BLTAdoptAHeroModule.Tag) || !StripTranslationKey(n.Name.ToString()).Contains(BLTAdoptAHeroModule.DevTag))) &&
-                                (n.Spouse == null) &&
-                                (adoptedHero.IsFemale != n.IsFemale));
+                                n.Name != null && !n.IsAdopted() && !n.IsRetired() &&
+                                n.Spouse == null &&
+                                adoptedHero.IsFemale != n.IsFemale);
 
                             Func<Hero, bool> universalFilters = n =>
                                 n.Occupation == Occupation.Lord &&
