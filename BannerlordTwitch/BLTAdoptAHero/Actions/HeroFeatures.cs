@@ -552,7 +552,7 @@ namespace BLTAdoptAHero.Actions
                         if (splitArgs.Length < 2 || !int.TryParse(splitArgs[1], out int race) || !validRaces.Any(x => x.RaceId == race))
                         {
                             string list = string.Join(", ", validRaces.Select(x => $"{x.RaceId} ({x.Monster.StringId})"));
-                            onFailure($"Valid races: {list}");
+                            onFailure($"{TaleWorlds.Core.FaceGen.GetBaseMonsterFromRace(adoptedHero.CharacterObject.Race)?.StringId} .Valid races: {list}");
                             return;
                         }
 
