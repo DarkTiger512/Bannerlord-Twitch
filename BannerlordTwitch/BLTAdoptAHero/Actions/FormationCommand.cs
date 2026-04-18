@@ -9,19 +9,14 @@ using BannerlordTwitch.Util;
 using JetBrains.Annotations;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
-using TaleWorlds.Engine;
 using TaleWorlds.MountAndBlade;
 using BLTAdoptAHero;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
-// ============================================================
-//  FormationCommand
-// ============================================================
-
 namespace BLTAdoptAHero.Actions
 {
     [LocDisplayName("{=TESTING}FormationCommand"),
-     LocDescription("{=TESTING}Show and change hero formation"),
+     LocDescription("{=TESTING}Show and change hero formation / issue detachment orders"),
      UsedImplicitly]
     public class FormationCommand : HeroCommandHandlerBase
     {
@@ -29,28 +24,59 @@ namespace BLTAdoptAHero.Actions
         {
             [LocDisplayName("{=TESTING}Respect class"),
              LocCategory("General", "{=TESTING}General"),
-             LocDescription("{=TESTING}Turn off to allow any formation otherwise infantry can only change to other infantry formations"),
+             LocDescription("{=TESTING}When on, heroes can only switch to formations that match their physical class"),
              PropertyOrder(1), UsedImplicitly]
             public bool Filter { get; set; } = true;
 
             [LocDisplayName("{=TESTING}Detachments"),
              LocCategory("General", "{=TESTING}General"),
-             LocDescription("{=TESTING}Enable detach commands"),
+             LocDescription("{=TESTING}Allow detachment sub-commands"),
              PropertyOrder(2), UsedImplicitly]
             public bool Detach { get; set; } = true;
 
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
-                generator.Value("<strong>Usage:</strong> [number | keyword]");
-                generator.Value("No arg: show current formation info");
-                generator.Value("number: switch to formation N");
-                generator.Value("front / back: move to front or back rank");
-                generator.Value("detach / attach: detach from or reattach to formation");
-                generator.Value("(while detached): charge / hold / follow / gate / walls");
+                generator.Value("<strong>Usage:</strong> [number | front | back | keyword]");
+                generator.Value("");
+                generator.Value("<strong>Formation movement (attached):</strong>");
+                generator.Value("  (no args)  – show formation list");
+                generator.Value("  [number]   – switch to that numbered formation");
+                generator.Value("  front      – move to the front rank");
+                generator.Value("  back       – move to the back rank");
+                generator.Value("");
+                generator.Value("<strong>Detachment commands:</strong>");
+                generator.Value("  detach     – leave formation, go independent");
+                generator.Value("  attach     – return to formation");
+                generator.Value("  status     – show current detachment order");
+                generator.Value("  charge     – hunt and engage nearest enemy");
+                generator.Value("  hold       – stand ground and fight nearby");
+                generator.Value("  follow     – shadow the parent formation");
+                generator.Value("  flank      – reach the enemy's closest flank, then charge");
+                generator.Value("  gate       – attack / defend nearest gate");
+                generator.Value("  walls      – scale / hold walls (re-issue to cycle targets)");
             }
         }
 
         public override Type HandlerConfigType => typeof(Settings);
+
+        private static readonly HashSet<string> DetachKeywords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "detach",
+            "attach",
+            "status",
+            "charge",
+            "hold",
+            "follow",
+            "flank",
+            "gate",
+            "walls",
+        };
+
+        private static readonly HashSet<string> PositionKeywords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "front",
+            "back"
+        };
 
         protected override void ExecuteInternal(Hero adoptedHero, ReplyContext context, object config,
             Action<string> onSuccess, Action<string> onFailure)
@@ -58,269 +84,268 @@ namespace BLTAdoptAHero.Actions
             if (config is not Settings settings) return;
 
             if (adoptedHero == null) { onFailure(AdoptAHero.NoHeroMessage); return; }
-            if (Mission.Current == null) { onFailure("No mission"); return; }
-            if (Mission.Current.IsNavalBattle) { onFailure("Cannot change formation in naval battle"); return; }
-            if (MissionHelpers.InTournament()) { onFailure("Cannot change formation in tournament"); return; }
+            if (Mission.Current == null) { onFailure("No active mission"); return; }
+            if (Mission.Current.IsNavalBattle) { onFailure("Not available in naval battles"); return; }
+            if (MissionHelpers.InTournament()) { onFailure("Not available in tournaments"); return; }
 
             var agent = adoptedHero.GetAgent();
-            if (agent == null) { onFailure("Hero not in mission"); return; }
+            if (agent == null) { onFailure("Hero is not on the battlefield"); return; }
 
             var formation = agent.Formation;
             if (formation == null) { onFailure("Hero has no formation"); return; }
 
-            var args = context.Args?.Trim() ?? "";
-            var parts = args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            var cmd = parts.Length > 0 ? parts[0].ToLowerInvariant() : "";
+            string keyword = (context.Args?.Split(' ')[0].Trim() ?? "").ToLowerInvariant();
 
-            var behavior = BLTHeroDetachmentBehavior.Current;
-
-            // ---- Detachment commands ----
-            var detachKeywords = new[] { "detach", "attach", "charge", "hold", "follow", "gate", "walls" };
-            if (detachKeywords.Contains(cmd))
+            // ── Detachment commands ──────────────────────────────────────────
+            if (DetachKeywords.Contains(keyword))
             {
-                if (!settings.Detach) { onFailure("Detach commands are disabled"); return; }
-                if (behavior == null) { onFailure("Detachment system not active"); return; }
-                if (!Mission.Current.IsDeploymentFinished) { onFailure("Cannot detach while deploying"); return; }
+                if (!settings.Detach)
+                { onFailure("Detachment commands are disabled"); return; }
 
-                string error = cmd switch
-                {
-                    "detach" => behavior.Detach(agent),
-                    "attach" => behavior.Attach(agent),
-                    "charge" => behavior.Charge(agent),
-                    "hold" => behavior.Hold(agent),
-                    "follow" => behavior.Follow(agent),
-                    "gate" => behavior.TargetDoor(agent),
-                    "walls" => behavior.Walls(agent),
-                    _ => "Unknown detach command"
-                };
+                var behavior = BLTHeroDetachmentBehavior.Current;
+                if (behavior == null)
+                { onFailure("Detachment system is not active"); return; }
 
-                if (error != null) onFailure(error);
-                else onSuccess($"{cmd} OK");
+                if (!Mission.Current.IsDeploymentFinished && keyword is not "status" and not "attach")
+                { onFailure("Cannot issue detachment commands during deployment"); return; }
+
+                ExecuteDetachmentCommand(keyword, agent, behavior, onSuccess, onFailure);
                 return;
             }
 
-            // ---- Position adjustment commands ----
-            if (cmd == "front" || cmd == "back")
+            // ── Position commands ────────────────────────────────────────────
+            if (PositionKeywords.Contains(keyword))
             {
-                if (agent.IsDetachedFromFormation) { onFailure("Reattach first (use: attach)"); return; }
-                SetHeroFormationPosition(agent, cmd, onSuccess, onFailure);
+                if (agent.IsDetachedFromFormation)
+                { onFailure("Reattach before repositioning within the formation"); return; }
+                SetHeroFormationPosition(agent, keyword, onSuccess, onFailure);
                 return;
             }
 
-            // ---- Formation list / switch ----
-            var detachedMarker = (behavior?.IsDetached(agent) ?? false) ? " [DETACHED]" : "";
-
-            if (settings.Filter)
-            {
-                // Only formations matching hero's class
-                var formType = GetFormationClass(formation);
-
-                var matchingFormations = agent.Team.FormationsIncludingSpecialAndEmpty
-                    .Where(f => f.CountOfUnits > 0 && f.PhysicalClass == formType)
-                    .OrderBy(f => f.Index)
-                    .ToList();
-
-                int total = matchingFormations.Count;
-                int position = matchingFormations.IndexOf(formation) + 1;
-
-                // No argument → show info
-                if (string.IsNullOrEmpty(cmd))
-                {
-                    var sb = BuildFormationList(matchingFormations, formation);
-                    onSuccess($"{formType} {position}/{total}{detachedMarker} | {GetOrderSummary(formation)} | {sb}");
-                    return;
-                }
-
-                if (!int.TryParse(cmd, out int target)) { onFailure($"Unknown command: {cmd}"); return; }
-                if (agent.IsDetachedFromFormation) { onFailure("Reattach first (use: attach)"); return; }
-                if (target < 1 || target > total) { onFailure($"Invalid number. Range: 1-{total}"); return; }
-
-                var dest = matchingFormations[target - 1];
-                if (dest == formation) { onSuccess($"Already in formation {target}"); return; }
-
-                TransferHeroToFormation(agent, dest);
-                onSuccess($"Moved to {formType} formation {target} ({dest.CountOfUnits} troops)");
-            }
-            else
-            {
-                // All non-empty formations
-                var allFormations = agent.Team.FormationsIncludingSpecialAndEmpty
-                    .Where(f => f.CountOfUnits > 0)
-                    .OrderBy(f => f.Index)
-                    .ToList();
-
-                int total = allFormations.Count;
-                int position = allFormations.IndexOf(formation) + 1;
-
-                if (string.IsNullOrEmpty(cmd))
-                {
-                    var sb = BuildFormationListFull(allFormations, formation);
-                    onSuccess($"Fmn {position}/{total}{detachedMarker} | {GetOrderSummary(formation)} | {sb}");
-                    return;
-                }
-
-                if (!int.TryParse(cmd, out int target)) { onFailure($"Unknown command: {cmd}"); return; }
-                if (agent.IsDetachedFromFormation) { onFailure("Reattach first (use: attach)"); return; }
-                if (target < 1 || target > total) { onFailure($"Invalid number. Range: 1-{total}"); return; }
-
-                var dest = allFormations[target - 1];
-                if (dest == formation) { onSuccess($"Already in formation {target}"); return; }
-
-                TransferHeroToFormation(agent, dest);
-                onSuccess($"Moved to formation {target} ({GetFormationClass(dest)} {dest.CountOfUnits} troops)");
-            }
+            // ── Formation number switch ──────────────────────────────────────
+            ExecuteFormationSwitch(agent, formation, keyword, settings, onSuccess, onFailure);
         }
 
-        // ---- Helpers ----
+        // ── Detachment dispatch ───────────────────────────────────────────────
 
-        private static FormationClass GetFormationClass(Formation f)
+        private static void ExecuteDetachmentCommand(string keyword, Agent agent,
+            BLTHeroDetachmentBehavior behavior,
+            Action<string> onSuccess, Action<string> onFailure)
         {
-            var q = f.QuerySystem;
-            return q switch
+            bool requiresDetached = keyword is not "detach" and not "status";
+
+            if (requiresDetached && !behavior.IsDetached(agent))
+            { onFailure("Hero is not detached — use 'detach' first"); return; }
+
+            string error = keyword switch
             {
-                _ when q.IsInfantryFormationReadOnly => FormationClass.Infantry,
-                _ when q.IsRangedFormationReadOnly => FormationClass.Ranged,
-                _ when q.IsCavalryFormationReadOnly => FormationClass.Cavalry,
-                _ when q.IsRangedCavalryFormationReadOnly => FormationClass.HorseArcher,
-                _ => FormationClass.Infantry
+                "detach" => behavior.Detach(agent),
+                "attach" => behavior.Attach(agent),
+                "status" => HandleStatus(agent, behavior, onSuccess),
+                "charge" => behavior.Charge(agent),
+                "hold" => behavior.Hold(agent),
+                "follow" => behavior.Follow(agent),
+                "flank" => behavior.Flank(agent),
+                "gate" => behavior.Gate(agent),
+                "walls" => behavior.Walls(agent),
+                _ => "Unknown detachment command"
             };
+
+            if (error != null)
+                onFailure(error);
+            else if (keyword != "status")
+                onSuccess(FriendlyOrderName(keyword));
         }
 
-        private static string FormationClassName(Formation f) => GetFormationClass(f) switch
+        private static string HandleStatus(Agent agent, BLTHeroDetachmentBehavior behavior,
+            Action<string> onSuccess)
         {
-            FormationClass.Infantry => "Inf",
-            FormationClass.Ranged => "Rng",
-            FormationClass.Cavalry => "Cav",
-            FormationClass.HorseArcher => "HA",
-            _ => "?"
+            onSuccess(behavior.GetStatus(agent));
+            return null;
+        }
+
+        private static string FriendlyOrderName(string keyword) => keyword switch
+        {
+            "detach" => "Detached from formation",
+            "attach" => "Reattached to formation",
+            "charge" => "Charging nearest enemy",
+            "hold" => "Holding position",
+            "follow" => "Following formation",
+            "flank" => "Flanking enemy formation",
+            "gate" => "Targeting gate",
+            "walls" => "Moving to walls",
+            _ => keyword
         };
 
-        private static string GetOrderSummary(Formation f)
+        // ── Formation number switch ───────────────────────────────────────────
+
+        private static void ExecuteFormationSwitch(Agent agent, Formation currentFormation,
+            string keyword, Settings settings,
+            Action<string> onSuccess, Action<string> onFailure)
         {
-            var m = f.GetReadonlyMovementOrderReference().OrderEnum;
-            var a = f.ArrangementOrder.OrderEnum;
-            return $"{MovementAbbrev(m)}-{ArrangementAbbrev(a)}";
+            var query = currentFormation.QuerySystem;
+            var heroClass = query switch
+            {
+                _ when query.IsInfantryFormationReadOnly => FormationClass.Infantry,
+                _ when query.IsRangedFormationReadOnly => FormationClass.Ranged,
+                _ when query.IsCavalryFormationReadOnly => FormationClass.Cavalry,
+                _ when query.IsRangedCavalryFormationReadOnly => FormationClass.HorseArcher,
+                _ => FormationClass.Infantry
+            };
+
+            var formationList = agent.Team.FormationsIncludingSpecialAndEmpty
+                .Where(f => f.CountOfUnits > 0 &&
+                            (!settings.Filter || f.PhysicalClass == heroClass))
+                .OrderBy(f => f.Index)
+                .ToList();
+
+            int currentPos = formationList.FindIndex(f => f.Index == currentFormation.Index) + 1;
+
+            if (string.IsNullOrEmpty(keyword) || !int.TryParse(keyword, out int number))
+            {
+                onSuccess($"{heroClass} {currentPos}/{formationList.Count} ({currentFormation.CountOfUnits} troops) | {BuildFormationList(formationList, currentFormation)}");
+                return;
+            }
+
+            if (agent.IsDetachedFromFormation)
+            { onFailure("Reattach before switching formations"); return; }
+
+            if (number < 1 || number > formationList.Count)
+            { onFailure($"Enter 1–{formationList.Count}"); return; }
+
+            var target = formationList[number - 1];
+            if (target == currentFormation)
+            { onSuccess($"Already in formation {number}"); return; }
+
+            TransferHeroToFormation(agent, target);
+            onSuccess($"Moved to formation {number} ({target.CountOfUnits} troops)");
+        }
+
+        // ── Formation position (front / back) ─────────────────────────────────
+
+        private static void SetHeroFormationPosition(Agent heroAgent, string position,
+            Action<string> onSuccess, Action<string> onFailure)
+        {
+            if (Mission.Current.IsSiegeBattle)
+            { onFailure("Position shifting is unavailable during siege battles"); return; }
+
+            var arrangement = heroAgent.Formation?.Arrangement;
+            if (arrangement == null) { onFailure("No arrangement"); return; }
+
+            var unit = (IFormationUnit)heroAgent;
+            int fileWidth = Math.Max(1, arrangement.UnitCount / Math.Max(1, arrangement.RankCount));
+
+            try
+            {
+                Agent candidate;
+                if (position == "front")
+                {
+                    candidate = arrangement.GetAllUnits()
+                        .Select(u => u as Agent)
+                        .Where(a => a != null && a != heroAgent && a.GetHero() == null)
+                        .OrderBy(a => ((IFormationUnit)a).FormationRankIndex)
+                        .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
+                        .Take(fileWidth)
+                        .SelectRandom();
+
+                    if (candidate == null) { onFailure("No eligible troop in the front rank"); return; }
+                    arrangement.SwitchUnitLocations(candidate, unit);
+                    onSuccess("Moved to front rank");
+                }
+                else
+                {
+                    candidate = arrangement.GetAllUnits()
+                        .Select(u => u as Agent)
+                        .Where(a => a != null && a != heroAgent && a.GetHero() == null)
+                        .OrderByDescending(a => ((IFormationUnit)a).FormationRankIndex)
+                        .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
+                        .Take(Math.Max(1, fileWidth / 2))
+                        .SelectRandom();
+
+                    if (candidate == null) { onFailure("No eligible troop in the back rank"); return; }
+                    arrangement.SwitchUnitLocations(candidate, unit);
+                    onSuccess("Moved to back rank");
+                }
+            }
+            catch (Exception e)
+            {
+                onFailure($"Arrangement does not support position shifting ({e.Message})");
+            }
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private static void TransferHeroToFormation(Agent heroAgent, Formation target)
+        {
+            var old = heroAgent.Formation;
+            heroAgent.Formation = target;
+            old?.Team.TriggerOnFormationsChanged(old);
+            target.Team.TriggerOnFormationsChanged(target);
+            Log.Trace($"{heroAgent.Name} → {target.FormationIndex.GetName()}");
         }
 
         private static string BuildFormationList(List<Formation> formations, Formation current)
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < formations.Count; i++)
+            int n = 1;
+            foreach (var f in formations)
             {
-                var f = formations[i];
-                var tag = f == current ? "*" : "";
-                sb.Append($"{tag}{i + 1}:{f.CountOfUnits}[{GetOrderSummary(f)}] ");
+                string marker = f == current ? "*" : "";
+                sb.Append($"{n}{marker}:{f.CountOfUnits}[{BuildCompact(f)}] ");
+                n++;
             }
             return sb.ToString().TrimEnd();
         }
 
-        private static string BuildFormationListFull(List<Formation> formations, Formation current)
+        private static string BuildCompact(Formation f)
         {
-            var sb = new StringBuilder();
-            for (int i = 0; i < formations.Count; i++)
+            string order = MovementLabel(f.GetReadonlyMovementOrderReference().OrderEnum);
+            string arrng = ArrangementLabel(f.ArrangementOrder.OrderEnum);
+            string target = "";
+
+            if (f.TargetFormation != null && f.TargetFormation.CountOfUnits > 0)
             {
-                var f = formations[i];
-                var tag = f == current ? "*" : "";
-                sb.Append($"{tag}{i + 1}:{FormationClassName(f)}({f.CountOfUnits})[{GetOrderSummary(f)}] ");
+                float dist = (f.TargetFormation.CachedAveragePosition - f.CachedAveragePosition).Length;
+                target = $"→{ClassLabel(f.TargetFormation.QuerySystem)}@{dist:0}m";
             }
-            return sb.ToString().TrimEnd();
+
+            return $"{order}/{arrng}{target}";
         }
 
-        private static void TransferHeroToFormation(Agent heroAgent, Formation target)
+        private static string ClassLabel(FormationQuerySystem q) => q switch
         {
-            if (heroAgent == null || target == null) return;
-            var oldFormation = heroAgent.Formation;
-            heroAgent.Formation = target;
-            oldFormation?.Team.TriggerOnFormationsChanged(oldFormation);
-            target.Team.TriggerOnFormationsChanged(target);
-        }
+            _ when q.IsInfantryFormationReadOnly => "Inf",
+            _ when q.IsRangedFormationReadOnly => "Rng",
+            _ when q.IsCavalryFormationReadOnly => "Cav",
+            _ when q.IsRangedCavalryFormationReadOnly => "HA",
+            _ => "?"
+        };
 
-        private static string MovementAbbrev(MovementOrder.MovementOrderEnum o) => o switch
+        private static string MovementLabel(MovementOrder.MovementOrderEnum o) => o switch
         {
             MovementOrder.MovementOrderEnum.Charge => "Chrg",
             MovementOrder.MovementOrderEnum.ChargeToTarget => "Chrg",
             MovementOrder.MovementOrderEnum.Advance => "Adv",
             MovementOrder.MovementOrderEnum.FallBack => "Fall",
-            MovementOrder.MovementOrderEnum.Retreat => "Ret",
+            MovementOrder.MovementOrderEnum.Retreat => "Rtr",
             MovementOrder.MovementOrderEnum.Stop => "Hold",
             MovementOrder.MovementOrderEnum.Invalid => "Hold",
-            MovementOrder.MovementOrderEnum.Follow => "Fol",
-            MovementOrder.MovementOrderEnum.FollowEntity => "FolE",
-            MovementOrder.MovementOrderEnum.Move => "Move",
+            MovementOrder.MovementOrderEnum.Follow => "Flw",
+            MovementOrder.MovementOrderEnum.FollowEntity => "Flw",
+            MovementOrder.MovementOrderEnum.Move => "Mov",
             _ => "?"
         };
 
-        private static string ArrangementAbbrev(ArrangementOrder.ArrangementOrderEnum o) => o switch
+        private static string ArrangementLabel(ArrangementOrder.ArrangementOrderEnum o) => o switch
         {
-            ArrangementOrder.ArrangementOrderEnum.Line => "Ln",
-            ArrangementOrder.ArrangementOrderEnum.ShieldWall => "SW",
+            ArrangementOrder.ArrangementOrderEnum.Line => "Line",
+            ArrangementOrder.ArrangementOrderEnum.ShieldWall => "Wall",
             ArrangementOrder.ArrangementOrderEnum.Loose => "Lse",
-            ArrangementOrder.ArrangementOrderEnum.Square => "Sq",
+            ArrangementOrder.ArrangementOrderEnum.Square => "Sqr",
             ArrangementOrder.ArrangementOrderEnum.Circle => "Cir",
             ArrangementOrder.ArrangementOrderEnum.Column => "Col",
             ArrangementOrder.ArrangementOrderEnum.Scatter => "Sct",
-            ArrangementOrder.ArrangementOrderEnum.Skein => "Skn",
-            _ => "--"
+            _ => "?"
         };
-
-        // Move hero to front or back of their current formation rank.
-        private static void SetHeroFormationPosition(Agent heroAgent, string position,
-            Action<string> onSuccess, Action<string> onFailure)
-        {
-            var formation = heroAgent.Formation;
-            if (formation == null) { onFailure("No formation"); return; }
-
-            var unit = heroAgent as IFormationUnit;
-            var arrangement = formation.Arrangement;
-            int rankCount = arrangement.RankCount;
-            int fileCount = arrangement.UnitCount / Math.Max(1, rankCount);
-
-            if (Mission.Current.IsSiegeBattle) { onFailure("Cannot reposition in siege battles"); return; }
-            if (rankCount <= 1 && fileCount <= 1) { onFailure("Formation too small to reposition"); return; }
-
-            try
-            {
-                // Collect non-hero, non-named agents only (don't swap with another named character)
-                var candidates = arrangement.GetAllUnits()
-                    .Select(u => u as Agent)
-                    .Where(a => a != null && a != heroAgent && a.IsActive() && a.GetHero() == null)
-                    .ToList();
-
-                if (candidates.Count == 0) { onFailure("No troops to swap with"); return; }
-
-                Agent swapTarget = null;
-
-                if (position == "front")
-                {
-                    // Pick a random agent from the frontmost file-wide slice
-                    int frontRank = candidates.Min(a => ((IFormationUnit)a).FormationRankIndex);
-                    var frontCandidates = candidates
-                        .Where(a => ((IFormationUnit)a).FormationRankIndex == frontRank)
-                        .ToList();
-                    swapTarget = frontCandidates.Count > 0
-                        ? frontCandidates[MBRandom.RandomInt(frontCandidates.Count)]
-                        : null;
-                }
-                else // back
-                {
-                    int backRank = candidates.Max(a => ((IFormationUnit)a).FormationRankIndex);
-                    var backCandidates = candidates
-                        .Where(a => ((IFormationUnit)a).FormationRankIndex == backRank)
-                        .ToList();
-                    swapTarget = backCandidates.Count > 0
-                        ? backCandidates[MBRandom.RandomInt(backCandidates.Count)]
-                        : null;
-                }
-
-                if (swapTarget == null) { onFailure("No valid swap target found"); return; }
-
-                arrangement.SwitchUnitLocations(unit, swapTarget as IFormationUnit);
-                onSuccess($"Moved to {position} (rank {((IFormationUnit)heroAgent).FormationRankIndex})");
-            }
-            catch (Exception e)
-            {
-                onFailure($"Reposition failed: {e.Message}");
-            }
-        }
     }
 }
