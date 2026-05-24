@@ -392,6 +392,7 @@ namespace BLTAdoptAHero
             public bool HasShield => false;
             public bool HasSpear => false;
             public bool IsUnderPlayersCommand => _isOnPlayerSide;
+            public bool IsInSameArmyAsPlayer => _isOnPlayerSide;
             public Banner Banner => null;
             public int Seed => 0;
             public int UniqueSeed => 0;
@@ -1077,13 +1078,6 @@ namespace BLTAdoptAHero
         //     blow.Position.z += agent.GetEyeGlobalHeight();
         //     agent.RegisterBlow(blow);
         // }
-
-        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionAgentSpawnLogic), nameof(MissionAgentSpawnLogic.IsSideDepleted))]
-        // ReSharper disable once RedundantAssignment
-        public static void IsSideDepletedPostfix(MissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
-        {
-            __result = !__instance.Mission.Teams.Where(t => t.Side == side).Any(t => t.ActiveAgents.Any());
-        }
 
         // TODO: Disabled for updating
         // [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(SandboxBattleMoraleModel), nameof(SandboxBattleMoraleModel.morale))]

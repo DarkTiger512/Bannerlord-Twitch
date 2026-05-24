@@ -280,15 +280,14 @@ namespace BLTAdoptAHero
                 // 1) Try noble templates first
                 var roster = rosters.FirstOrDefault(r =>
                     r.EquipmentCulture == hero.Culture &&
-                    r.HasEquipmentFlags(EquipmentFlags.IsNobleTemplate) &&
-                    r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
+                    r.EquipmentCategories.HasFlag(EquipmentCategories.IsLordTemplate));
 
-                // 2) Fallback to combatant if no noble found
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
                         r.EquipmentCulture == hero.Culture &&
-                        r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsChildEquipmentTemplate) &&
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsTeenagerEquipmentTemplate));
                 }
 
                 if (roster?.AllEquipments?.Count > 0)
