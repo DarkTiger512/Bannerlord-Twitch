@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.SaveSystem;
+using BannerlordTwitch.Util;
 using BLTAdoptAHero.Actions.Util;
 using JetBrains.Annotations;
 using TaleWorlds.CampaignSystem;
@@ -152,17 +153,75 @@ namespace BLTAdoptAHero
                 MountHitPoints = 0,
             });
 
-        public bool IsRegistered(ItemModifier modifier) => modifier != null && customItemModifiers.ContainsKey(modifier);
+        public bool IsRegistered(ItemModifier modifier) =>
+            TryGetRegisteredModifier(modifier, out _, out _);
 
-        public bool ItemCanBeNamed(ItemModifier itemModifier) => itemModifier != null && customItemModifiers.ContainsKey(itemModifier);
+        public bool ItemCanBeNamed(ItemModifier itemModifier) =>
+            IsRegistered(itemModifier);
 
-        public void NameItem(ItemModifier itemModifier, string name)
+        public bool NameItem(ItemModifier itemModifier, string name)
         {
-            if (customItemModifiers.TryGetValue(itemModifier, out ItemModifierData modifierData))
+            if (itemModifier == null)
             {
-                itemModifier.SetName(new(name));
-                modifierData.CustomName = name;
+                Log.Error("NameItem failed: item modifier is null");
+                return false;
             }
+
+            if (TryGetRegisteredModifier(itemModifier, out var registeredModifier, out var modifierData))
+            {
+                if (!ReferenceEquals(registeredModifier, itemModifier))
+                {
+                    Log.Info($"NameItem recovered modifier by StringId, id={itemModifier.StringId}, requestedHash={itemModifier.GetHashCode()}, registeredHash={registeredModifier.GetHashCode()}");
+                }
+                registeredModifier.SetName(new(name));
+                if (!ReferenceEquals(registeredModifier, itemModifier))
+                {
+                    itemModifier.SetName(new(name));
+                }
+                modifierData.CustomName = name;
+                return true;
+            }
+
+            Log.Error($"NameItem failed: modifier is not registered, id={itemModifier.StringId}, name={itemModifier.Name}");
+            return false;
+        }
+
+        private bool TryGetRegisteredModifier(
+            ItemModifier itemModifier,
+            out ItemModifier registeredModifier,
+            out ItemModifierData modifierData)
+        {
+            registeredModifier = null;
+            modifierData = null;
+
+            if (itemModifier == null)
+            {
+                return false;
+            }
+
+            if (customItemModifiers.TryGetValue(itemModifier, out modifierData))
+            {
+                registeredModifier = itemModifier;
+                return true;
+            }
+
+            var modifierId = itemModifier.StringId;
+            if (string.IsNullOrEmpty(modifierId))
+            {
+                return false;
+            }
+
+            var registeredPair = customItemModifiers
+                .FirstOrDefault(kv => string.Equals(kv.Key.StringId, modifierId, StringComparison.Ordinal));
+
+            if (registeredPair.Key == null)
+            {
+                return false;
+            }
+
+            registeredModifier = registeredPair.Key;
+            modifierData = registeredPair.Value;
+            return true;
         }
 
         private ItemModifier RegisterModifier(ItemModifierData modifierData)

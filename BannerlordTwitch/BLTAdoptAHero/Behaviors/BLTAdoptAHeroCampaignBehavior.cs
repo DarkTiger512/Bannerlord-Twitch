@@ -9,6 +9,7 @@ using BannerlordTwitch.Localization;
 using BannerlordTwitch.SaveSystem;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero.Achievements;
+using BLTAdoptAHero.Actions.Util;
 using BLTAdoptAHero.UI;
 using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
@@ -370,6 +371,10 @@ namespace BLTAdoptAHero
                         }
                     }
                     h.PostLoad();
+                    foreach (var item in h.CustomItems.Where(i => i.Item?.HasWeaponComponent == true))
+                    {
+                        Log.Info($"Loaded custom weapon: modifierId={item.ItemModifier?.StringId}, {CustomItems.DescribeWeaponMetadata(item.Item)}");
+                    }
                 }
 
                 foreach (var (hero, data) in heroData)
@@ -452,6 +457,10 @@ namespace BLTAdoptAHero
                     {
                         i.ItemSaveIndex = saveItemList.Count;
                         saveItemList.Add(i.Item);
+                        if (i.Item?.HasWeaponComponent == true)
+                        {
+                            Log.Info($"Saving custom weapon: modifierId={i.ItemModifierId}, {CustomItems.DescribeWeaponMetadata(i.Item)}");
+                        }
                     }
                 }
 
