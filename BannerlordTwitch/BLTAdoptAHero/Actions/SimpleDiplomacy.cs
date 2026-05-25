@@ -312,8 +312,6 @@ namespace BLTAdoptAHero
                             onFailure($"Not enough influence:{influenceCost}");
                             return;
                         }
-                        BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
-
                         Clan proposer = adoptedHero.Clan;
                         var diplomacy = Campaign.Current.Models.DiplomacyModel;
                         Clan recipient = desiredKingdom.RulingClan;
@@ -322,6 +320,8 @@ namespace BLTAdoptAHero
 
                         if (desiredKingdom == Hero.MainHero.Clan.Kingdom && Hero.MainHero.IsKingdomLeader)
                         {
+                            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
+                            adoptedHero.Clan.Influence -= influenceCost;
                             CampaignEventDispatcher.Instance.OnPeaceOfferedToPlayer(kingdom, dailyTribute, tributeDurationInDays);
 
                             onSuccess("Peace offer sent to the player.");
@@ -352,9 +352,18 @@ namespace BLTAdoptAHero
                                 return;
                             }
 
-                            MakePeaceAction.ApplyByKingdomDecision(kingdom, desiredKingdom, dailyTribute, tributeDurationInDays);
+                            AdoptedHeroFlags._allowDiplomacyAction = true;
+                            try
+                            {
+                                MakePeaceAction.ApplyByKingdomDecision(kingdom, desiredKingdom, dailyTribute, tributeDurationInDays);
+                            }
+                            finally
+                            {
+                                AdoptedHeroFlags._allowDiplomacyAction = false;
+                            }
+
+                            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
                             adoptedHero.Clan.Influence -= influenceCost;
-                            influenceCost *= -1;
                             onSuccess("{=BLTTribute}Peace applied between {Proposer} and {Recipient}. Daily tribute: {DailyTribute}, Duration: {Days} days."
                                 .Translate(
                                     ("Proposer", proposer.Name),
@@ -363,7 +372,6 @@ namespace BLTAdoptAHero
                                     ("Days", tributeDurationInDays)
                                 ));
                         }
-                        BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
                         break;
                     }
                 case "policy":
@@ -397,7 +405,7 @@ namespace BLTAdoptAHero
                         {
                             if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero) < settings.PolicyPrice)
                             {
-                                onFailure(Naming.NotEnoughGold(settings.PeacePrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero)));
+                                onFailure(Naming.NotEnoughGold(settings.PolicyPrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero)));
                                 return;
                             }
                             if (adoptedHero.Clan.Influence < policyCost)
@@ -408,12 +416,16 @@ namespace BLTAdoptAHero
                             if (kingdom.ActivePolicies.Contains(desiredPolicy))
                             {
                                 kingdom.RemovePolicy(desiredPolicy);
+                                BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PolicyPrice, true);
+                                adoptedHero.Clan.Influence -= policyCost;
                                 onSuccess($"Removed {desiredPolicy}");
                                 return;
                             }
                             else
                             {
                                 kingdom.AddPolicy(desiredPolicy);
+                                BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PolicyPrice, true);
+                                adoptedHero.Clan.Influence -= policyCost;
                                 onSuccess($"Added {desiredPolicy}");
                                 return;
                             }
