@@ -161,7 +161,7 @@ namespace BLTAdoptAHero
                     continue;
 
                 StanceLink stance = desiredKingdom.GetStanceWith(k);
-                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k))
+                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k, out _))
                 {
                     var tradeDate = tradeBehavior.GetTradeAgreementEndDate(desiredKingdom, k);
                     int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;
@@ -567,7 +567,12 @@ namespace BLTAdoptAHero
                         ships += party.Ships.Count;
                     }
                 }
-                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.CommanderLimit)));
+                var partyLimit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(desiredClan, desiredClan.Tier);
+
+                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(
+                    ("cparties", parties),
+                    ("mparties", partyLimit)
+                ));
                 clanSb.Append("{=TESTING}Ships: {ships} |".Translate(("ships", ships)));
                 if (desiredClan.Fiefs.Count >= 1)
                 {
