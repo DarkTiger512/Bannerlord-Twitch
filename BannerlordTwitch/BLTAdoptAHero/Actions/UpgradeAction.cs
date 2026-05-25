@@ -375,7 +375,7 @@ namespace BLTAdoptAHero.Actions
             if (Mission.Current != null) { onFailure("{=BLT_NoMission}Cannot use this command during a mission".Translate()); return; }
             if (context.Args.IsEmpty())
             {
-                onFailure("Usage: [auto|bulk] fief [all|allk] <settlement_name> <upgrade_id> | clan <upgrade_id|all> | kingdom <upgrade_id|all> | info <fief|clan|kingdom> <name> | list [fief|clan|kingdom] | remove <fief|clan|kingdom> <name> <upgrade_id>");
+                onFailure("Usage: [auto|bulk] all | fief <settlement_name|all> [upgrade_id] | clan <upgrade_id|all> | kingdom <upgrade_id|all> | info <fief|clan|kingdom> <name> | list [fief|clan|kingdom] | remove <fief|clan|kingdom> <name> <upgrade_id>");
                 return;
             }
 
@@ -407,7 +407,7 @@ namespace BLTAdoptAHero.Actions
 
             var command = rawWithoutAuto[0].ToLowerInvariant();
 
-            bool applyAll = command == "fief" && rawWithoutAuto.Any(a => a.Equals("all", OIC));
+            bool applyAll = command == "fief" && rawWithoutAuto.Length == 2 && rawWithoutAuto[1].Equals("all", OIC);
             bool applyAllK = command == "fief" && rawWithoutAuto.Any(a => a.Equals("allk", OIC));
 
             if (applyAll && applyAllK)
@@ -465,6 +465,19 @@ namespace BLTAdoptAHero.Actions
             }
 
             // ── purchase (fief / clan / kingdom) ────────────────────────────────
+            if (command == "all")
+            {
+                if (cleanArgs.Length != 1) { onFailure("Usage: [auto|bulk] all"); return; }
+                PurchaseAllAvailableUpgrades(adoptedHero, settings, globalConfig, autoBuy, onSuccess, onFailure);
+                return;
+            }
+
+            if (command == "fief" && applyAll)
+            {
+                PurchaseAllFiefUpgrades(adoptedHero, settings, globalConfig, autoBuy, onSuccess, onFailure);
+                return;
+            }
+
             bool needsSettlementName = command == "fief" && !applyAll && !applyAllK;
 
             if (needsSettlementName && cleanArgs.Length < 3)
@@ -479,7 +492,7 @@ namespace BLTAdoptAHero.Actions
             }
             else if (command != "fief" && command != "clan" && command != "kingdom")
             {
-                onFailure($"Unknown command '{command}'. Use fief, clan, or kingdom");
+                onFailure($"Unknown command '{command}'. Use all, fief, clan, or kingdom");
                 return;
             }
 
@@ -706,7 +719,9 @@ namespace BLTAdoptAHero.Actions
             switch (type)
             {
                 case "fief":
-                    if (applyAll || applyAllK)
+                    if (applyAll)
+                        PurchaseAllFiefUpgrades(hero, settings, gc, autoBuy, ok, fail);
+                    else if (applyAllK)
                         PurchaseFiefUpgradeMulti(upgradeId, hero, settings, gc, autoBuy, applyAllK, ok, fail);
                     else
                         PurchaseFiefUpgrade(name, upgradeId, hero, settings, gc, autoBuy, ok, fail);
@@ -714,7 +729,7 @@ namespace BLTAdoptAHero.Actions
                 case "clan":
                     if (upgradeId.Equals("all", OIC))
                     {
-                        PurchaseAllClanUpgrades(hero, gc, autoBuy, ok, fail);
+                        PurchaseAllClanUpgrades(hero, settings, gc, autoBuy, ok, fail);
                         return;
                     }
                     PurchaseClanUpgrade(upgradeId, hero, settings, gc, autoBuy, ok, fail);
@@ -800,11 +815,139 @@ namespace BLTAdoptAHero.Actions
         }
 
         // ════════════════════════════════════════════════════════════════════════
-        // Fief purchase — multi-settlement (all / allk)
+        // Bulk purchase
         // ════════════════════════════════════════════════════════════════════════
-        
+
+        private void PurchaseAllAvailableUpgrades(
+            Hero hero, Settings settings, GlobalCommonConfig gc, bool autoBuy,
+            Action<string> ok, Action<string> fail)
+        {
+            var sections = new List<string>();
+            int successes = 0;
+
+            void Capture(string label, Action<Action<string>, Action<string>> action)
+            {
+                action(
+                    message =>
+                    {
+                        successes++;
+                        sections.Add($"{label}: {message}");
+                    },
+                    message => sections.Add($"{label}: {message}"));
+            }
+
+            Capture("Fiefs", (s, f) => PurchaseAllFiefUpgrades(hero, settings, gc, autoBuy, s, f));
+            Capture("Clan", (s, f) => PurchaseAllClanUpgrades(hero, settings, gc, autoBuy, s, f));
+            Capture("Kingdom", (s, f) => PurchaseAllKingdomUpgrades(hero, gc, s, f));
+
+            var report = string.Join("\n", sections.Where(s => !string.IsNullOrWhiteSpace(s)));
+            if (successes > 0)
+                ok(report);
+            else
+                fail(string.IsNullOrWhiteSpace(report) ? "No upgrades could be purchased." : report);
+        }
+
+        private void PurchaseAllFiefUpgrades(
+            Hero hero, Settings settings, GlobalCommonConfig gc, bool autoBuy,
+            Action<string> ok, Action<string> fail)
+        {
+            if (hero?.Clan == null) { fail("You are not in a clan!"); return; }
+            if (gc.FiefUpgrades == null || gc.FiefUpgrades.Count == 0) { fail("No fief upgrades configured"); return; }
+
+            var targetSet = new HashSet<Settlement>();
+
+            if (hero.IsClanLeader)
+            {
+                var allowedClans = new HashSet<Clan> { hero.Clan };
+                if (VassalBehavior.Current != null)
+                    foreach (var v in VassalBehavior.Current.GetVassalClans(hero.Clan))
+                        allowedClans.Add(v);
+
+                foreach (var settlement in Settlement.All.Where(s => s.Town != null && allowedClans.Contains(s.OwnerClan)))
+                    targetSet.Add(settlement);
+            }
+
+            bool isKingdomLeader = settings.AllowKingdomLeadersForFiefs
+                && hero.Clan.Kingdom != null
+                && hero.Clan.Kingdom.Leader == hero;
+
+            if (isKingdomLeader)
+                foreach (var settlement in Settlement.All.Where(s => s.Town != null && s.OwnerClan?.Kingdom == hero.Clan.Kingdom))
+                    targetSet.Add(settlement);
+
+            var targets = targetSet.ToList();
+            if (targets.Count == 0) { fail("No valid settlements found"); return; }
+
+            int settlementsUpdated = 0;
+            int totalBought = 0;
+            var failed = new List<string>();
+
+            foreach (var settlement in targets)
+            {
+                var owned = new HashSet<string>(
+                    UpgradeBehavior.Current?.GetFiefUpgrades(settlement) ?? new List<string>(),
+                    StringComparer.OrdinalIgnoreCase);
+
+                if (CapitalBehavior.Current != null)
+                    owned.UnionWith(CapitalBehavior.Current.GetCapitalUpgrades(hero.Clan));
+
+                bool isCapital = CapitalBehavior.Current?.IsCapital(settlement, hero.Clan) == true;
+                int boughtHere = 0;
+
+                foreach (var up in gc.FiefUpgrades.OrderBy(u => u.TierLevel))
+                {
+                    if (owned.Contains(up.ID)) continue;
+                    if (up.CoastalOnly && !settlement.HasPort) continue;
+                    if (up.CapitalOnly && !isCapital) continue;
+
+                    var chain = BuildFiefPurchaseChain(up.ID, owned, gc);
+                    if (chain.Count == 0) continue;
+
+                    bool chainApplies = true;
+                    foreach (var id in chain)
+                    {
+                        var chainUpgrade = gc.FiefUpgrades.FirstOrDefault(u => string.Equals(u.ID, id, OIC));
+                        if (chainUpgrade == null) continue;
+                        if (chainUpgrade.CoastalOnly && !settlement.HasPort) { chainApplies = false; break; }
+                        if (chainUpgrade.CapitalOnly && !isCapital) { chainApplies = false; break; }
+                    }
+                    if (!chainApplies) continue;
+
+                    var results = ExecuteFiefChain(settlement, chain, hero, gc, owned);
+                    boughtHere += results.Count(r => r.Success);
+
+                    var blocked = results.FirstOrDefault(r => !r.Success);
+                    if (blocked != null)
+                    {
+                        failed.Add($"{settlement.Name}: {blocked.Message}");
+                        break;
+                    }
+                }
+
+                if (boughtHere > 0)
+                {
+                    settlementsUpdated++;
+                    totalBought += boughtHere;
+                }
+            }
+
+            if (totalBought > 0)
+            {
+                var message = $"Purchased {totalBought} fief upgrade(s) across {settlementsUpdated} settlement(s).";
+                if (failed.Count > 0)
+                    message += $" Stopped: {failed[0]}";
+
+                ok(message);
+                Log.ShowInformation($"{hero.Name} purchased all available fief upgrades", hero.CharacterObject, Log.Sound.Notification1);
+                return;
+            }
+
+            fail(failed.Count > 0 ? failed[0] : "No fief upgrades could be purchased.");
+        }
+
         private void PurchaseAllClanUpgrades(
             Hero hero,
+            Settings settings,
             GlobalCommonConfig gc,
             bool autoBuy,
             Action<string> ok,
@@ -814,6 +957,18 @@ namespace BLTAdoptAHero.Actions
             if (clan == null)
             {
                 fail("You are not in a clan!");
+                return;
+            }
+
+            if (!settings.AllowAnyClanMemberForClanUpgrades && !hero.IsClanLeader)
+            {
+                fail("Only clan leaders can purchase clan upgrades");
+                return;
+            }
+
+            if (gc.ClanUpgrades == null || gc.ClanUpgrades.Count == 0)
+            {
+                fail("No clan upgrades configured");
                 return;
             }
 
