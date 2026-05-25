@@ -635,13 +635,13 @@ namespace BLTAdoptAHero
 
                             if (hasMagicReward)
                             {
-                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 10);
+                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20);
                                 if (silentGold > 0)
                                 {
                                     BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
                                 }
 
-                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 25);
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
                                 if (silentXp > 0)
                                 {
                                     SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
@@ -1003,13 +1003,13 @@ namespace BLTAdoptAHero
 
                             if (hasMagicReward)
                             {
-                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 5);
+                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20);
                                 if (silentGold > 0)
                                 {
                                     BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
                                 }
 
-                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 10);
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
                                 if (silentXp > 0)
                                 {
                                     SkillXP.ImproveSkill(adoptedHero, silentXp, SkillsEnum.All, auto: true);
