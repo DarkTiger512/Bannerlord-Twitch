@@ -172,6 +172,18 @@
         <string id="ssmJ9c5L" text="Предмет аукциона" original="Auction Item"/>
         <!-- Interval at which to output a reminder of the auction -->
         <string id="ijkjWj5q" text="Интервал, через который выводится напоминание об аукционе" original="Interval at which to output a reminder of the auction"/>
+        <!-- Extend Auction On Bid -->
+        <string id="BLT_AuctionExtendOnBid_Name" text="Продлевать аукцион при ставке" original="Extend Auction On Bid"/>
+        <!-- Add time to the auction whenever a valid bid is placed -->
+        <string id="BLT_AuctionExtendOnBid_Desc" text="Добавлять время к аукциону после каждой действительной ставки" original="Add time to the auction whenever a valid bid is placed"/>
+        <!-- Bid Extension In Seconds -->
+        <string id="BLT_AuctionBidExtensionSeconds_Name" text="Продление ставки в секундах" original="Bid Extension In Seconds"/>
+        <!-- How many seconds to add to the auction after each valid bid -->
+        <string id="BLT_AuctionBidExtensionSeconds_Desc" text="Сколько секунд добавлять к аукциону после каждой действительной ставки" original="How many seconds to add to the auction after each valid bid"/>
+        <!-- Minimum Bid Increment -->
+        <string id="BLT_AuctionMinimumBidIncrement_Name" text="Минимальный шаг ставки" original="Minimum Bid Increment"/>
+        <!-- Minimum amount a new bid must exceed the current highest bid by -->
+        <string id="BLT_AuctionMinimumBidIncrement_Desc" text="Минимальная сумма, на которую новая ставка должна превышать текущую максимальную ставку" original="Minimum amount a new bid must exceed the current highest bid by"/>
         <!-- Another auction is already in progress -->
         <string id="T2R35HHV" text="Другой аукцион уже идет" original="Another auction is already in progress"/>
         <!-- You have no items to auction -->
@@ -194,6 +206,8 @@
         <string id="ewjqhPqj" text="(сумма ставки)" original="(bid amount)"/>
         <!-- Invalid bid amount -->
         <string id="dgG5WPrC" text="Неверная сумма ставки" original="Invalid bid amount"/>
+        <!-- Bid must be at least {MinimumBid}{GoldIcon}. Current high bid is {CurrentBid}{GoldIcon}. -->
+        <string id="BLT_AuctionBidTooLow" text="Ставка должна быть не меньше {MinimumBid}{GoldIcon}. Текущая максимальная ставка: {CurrentBid}{GoldIcon}." original="Bid must be at least {MinimumBid}{GoldIcon}. Current high bid is {CurrentBid}{GoldIcon}."/>
         <!-- EquipHero -->
         <!-- Equip Hero -->
         <string id="3zBXys4m" text="Снарядить героя" original="Equip Hero"/>
