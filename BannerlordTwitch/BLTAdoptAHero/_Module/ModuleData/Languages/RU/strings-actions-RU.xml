@@ -1149,6 +1149,62 @@
 		<string id="Gf2Lk9aP" text="Недостаточно прав" original="Insufficient permissions"/>
 		<string id="Yt7mPp4E" text="Команда отключена" original="Command is disabled"/>
 
+		<!-- FormationCommand -->
+		<string id="BLTFormationCommandName" text="Команда формации" original="Formation Command"/>
+		<string id="BLTFormationCommandDesc" text="Показать и изменить формацию вашего героя" original="Show and change your hero formation"/>
+		<string id="BLTFormationRespectClassName" text="Учитывать класс" original="Respect class"/>
+		<string id="BLTFormationRespectClassDesc" text="Выключите, чтобы разрешить любые формации; иначе пехота сможет переходить только в пехотные формации" original="Turn off to allow any formation; otherwise infantry can only change to other infantry formations"/>
+		<string id="BLTFormationDetachmentsName" text="Отделение героя" original="Detachments"/>
+		<string id="BLTFormationDetachmentsDesc" text="Разрешить команды для отделенного героя" original="Allow detached hero commands"/>
+		<string id="BLTFormationUsageNumber" text="&lt;strong&gt;Использование:&lt;/strong&gt; номер" original="&lt;strong&gt;Usage:&lt;/strong&gt; number"/>
+		<string id="BLTFormationUsageFrontBack" text="- вперед/назад" original="- front/back"/>
+		<string id="BLTFormationUsageDetachAttach" text="- отделиться/вернуться" original="- detach/attach"/>
+		<string id="BLTFormationUsageDetached" text="- пока герой отделен: атака/стоять/следовать/ворота/стены" original="- (while detached): charge/hold/follow/gate/walls"/>
+		<string id="BLTFormationSubFront" text="вперед" original="front"/>
+		<string id="BLTFormationSubBack" text="назад" original="back"/>
+		<string id="BLTFormationSubDetach" text="отделиться" original="detach"/>
+		<string id="BLTFormationSubAttach" text="вернуться" original="attach"/>
+		<string id="BLTFormationSubCharge" text="атака" original="charge"/>
+		<string id="BLTFormationSubHold" text="стоять" original="hold"/>
+		<string id="BLTFormationSubFollow" text="следовать" original="follow"/>
+		<string id="BLTFormationSubGate" text="ворота" original="gate"/>
+		<string id="BLTFormationSubWalls" text="стены" original="walls"/>
+		<string id="BLTFormationNoNaval" text="Нельзя менять формацию в морском бою" original="Cannot change formation in naval battle"/>
+		<string id="BLTFormationNoTournament" text="Нельзя менять формацию в турнире" original="Cannot change formation in tournament"/>
+		<string id="BLTFormationNoHero" text="Герой не найден в бою" original="No hero"/>
+		<string id="BLTFormationNoFormation" text="Формация не найдена" original="No formation"/>
+		<string id="BLTFormationDetachOff" text="Команды отделения отключены" original="Detach commands are off"/>
+		<string id="BLTFormationDetachInactive" text="Система отделения героя не активна" original="Detachment system not active"/>
+		<string id="BLTFormationNoDetachDeploying" text="Нельзя отделиться во время расстановки войск" original="Cannot detach while deploying"/>
+		<string id="BLTFormationCommandOk" text="Команда выполнена: {command}" original="{command} ok"/>
+		<string id="BLTFormationAttachBeforeMoving" text="Сначала вернитесь в строй" original="Reattach before moving"/>
+		<string id="BLTFormationAttachBeforeChanging" text="Сначала вернитесь в строй перед сменой формации" original="Reattach before changing formations"/>
+		<string id="BLTFormationInvalidNumber" text="Неверный номер формации" original="Invalid number"/>
+		<string id="BLTFormationMoved" text="Герой переведен. Бойцов в формации: {troops}" original="Moved. {troops} troops"/>
+		<string id="BLTFormationNotUnit" text="Герой не является бойцом формации" original="Not a formation unit"/>
+		<string id="BLTFormationNoTroop" text="Не найден боец для обмена местами" original="No troop found"/>
+		<string id="BLTFormationMovedFront" text="Герой перемещен вперед" original="Moved to front"/>
+		<string id="BLTFormationMovedBack" text="Герой перемещен назад" original="Moved to back"/>
+		<string id="BLTFormationUnsupported" text="Этот тип формации не поддерживает операцию ({message})" original="Formation type does not support this operation ({message})"/>
+		<string id="BLTFormationClassInfantry" text="Пехота" original="Infantry"/>
+		<string id="BLTFormationClassRanged" text="Стрелки" original="Ranged"/>
+		<string id="BLTFormationClassCavalry" text="Кавалерия" original="Cavalry"/>
+		<string id="BLTFormationClassHorseArcher" text="Конные лучники" original="Horse archer"/>
+		<string id="BLTFormationClassUnknown" text="неизвестно" original="unknown"/>
+		<string id="BLTFormationTarget" text="Цель" original="Target"/>
+		<string id="BLTFormationOrderCharge" text="Атака" original="Charge"/>
+		<string id="BLTFormationOrderAdvance" text="Наступление" original="Advance"/>
+		<string id="BLTFormationOrderRetreat" text="Отступление" original="Retreat"/>
+		<string id="BLTFormationOrderHold" text="Удержание" original="Hold"/>
+		<string id="BLTFormationOrderFollow" text="Следование" original="Follow"/>
+		<string id="BLTFormationOrderMove" text="Движение" original="Move"/>
+		<string id="BLTFormationArrangementLine" text="Линия" original="Line"/>
+		<string id="BLTFormationArrangementWall" text="Стена щитов" original="Wall"/>
+		<string id="BLTFormationArrangementLoose" text="Свободный строй" original="Loose"/>
+		<string id="BLTFormationArrangementSquare" text="Каре" original="Square"/>
+		<string id="BLTFormationArrangementCircle" text="Круг" original="Circle"/>
+		<string id="BLTFormationArrangementColumn" text="Колонна" original="Column"/>
+		<string id="BLTFormationArrangementScatter" text="Врассыпную" original="Scatter"/>
         <string id="Yp3nKs8W" text="Команда смены формации отключена, пока включено автоматическое распределение BLT героев по формациям." />
     </strings>
 </base>

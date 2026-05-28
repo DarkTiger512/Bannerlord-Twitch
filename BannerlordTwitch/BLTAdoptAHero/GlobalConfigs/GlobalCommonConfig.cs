@@ -279,7 +279,7 @@ namespace BLTAdoptAHero
 
         [LocDisplayName("{=GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Name}Auto Formation For BLT Heroes"),
          LocCategory("Battle", "{=GlobalCommonConfig_Category_Battle}Battle"),
-         LocDescription("{=GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Desc}Automatically assign adopted BLT heroes to predefined formations during battle. Field battles: infantry (4), ranged (5), cavalry (6), horse archers (7). Sieges: infantry (6), ranged (7). When enabled, the formation command is disabled."),
+         LocDescription("{=GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Desc}Automatically assign adopted BLT heroes to predefined formations during battle. Field battles: infantry (4), ranged (5), cavalry (6), horse archers (7). Sieges: infantry (6), ranged (7). Manual formation commands override this for that hero until the mission ends."),
          PropertyOrder(14), Document, UsedImplicitly]
         public bool AutoFormationForHeroes { get; set; } = true;
         

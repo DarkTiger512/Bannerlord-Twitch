@@ -27,6 +27,13 @@ namespace BLTAdoptAHero
         }
 
         private readonly Dictionary<Agent, bool> _retinueResolution = new();
+        private static readonly HashSet<Agent> ManualFormationOverrides = new();
+
+        internal static void MarkManualFormationOverride(Agent agent)
+        {
+            if (agent != null)
+                ManualFormationOverrides.Add(agent);
+        }
 
         public class HeroSummonState
         {
@@ -137,6 +144,8 @@ namespace BLTAdoptAHero
         {
             SafeCall(() =>
             {
+                ManualFormationOverrides.Remove(affectedAgent);
+
                 var heroSummonState = heroSummonStates.FirstOrDefault(h => h.CurrentAgent == affectedAgent);
                 if (heroSummonState != null)
                 {
@@ -335,6 +344,9 @@ namespace BLTAdoptAHero
                 if (adoptedHero == null)
                     continue;
 
+                if (agent.IsDetachedFromFormation || ManualFormationOverrides.Contains(agent))
+                    continue;
+
                 FormationClass fClass;
                 if (agent.HasMount && HasRanged(agent) && HasAmmo(agent))
                     fClass = FormationClass.HorseArcher;
@@ -516,6 +528,8 @@ namespace BLTAdoptAHero
         {
             SafeCall(() =>
             {
+                ManualFormationOverrides.Clear();
+
                 // Remove still living retinue troops from their parties
                 foreach (var h in heroSummonStates)
                 {

@@ -64,7 +64,7 @@
         <string id="GlobalCommonConfig_Category_Battle_NametagKey_Name" text="Nametag Toggle Key"/>
         <string id="GlobalCommonConfig_Category_Battle_NametagKey_Desc" text="Key used to toggle nametags (case sensitive)"/>
         <string id="GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Name" text="Auto Formation For BLT Heroes"/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Desc" text="Automatically assign adopted BLT heroes to predefined formations during battle. Field battles: infantry (4), ranged (5), cavalry (6), horse archers (7). Sieges: infantry (6), ranged (7). When enabled, the formation command is disabled."/>
+        <string id="GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Desc" text="Automatically assign adopted BLT heroes to predefined formations during battle. Field battles: infantry (4), ranged (5), cavalry (6), horse archers (7). Sieges: infantry (6), ranged (7). Manual formation commands override this for that hero until the mission ends."/>
         <string id="GlobalCommonConfig_Category_Battle_EnableEnemyBltAttack_Name" text="Enable Enemy BLT Attack"/>
         <string id="GlobalCommonConfig_Category_Battle_EnableEnemyBltAttack_Desc" text="Continuously moves all enemy adopted BLT heroes into the last formation and forces that formation to attack during field battles. Siege battles are ignored. Non-BLT units already assigned to that formation may also be sent into attack."/>
         <string id="GlobalCommonConfig_Category_Battle_AutoSummonStreamerOnly_Name" text="Auto Summon Streamer Only"/>
