@@ -236,6 +236,9 @@ namespace BLTAdoptAHero
         {
             customKeepFilter ??= _ => true;
             restrictedItemIds ??= new HashSet<string>();
+            var previousEquipment = adoptedHero.BattleEquipment
+                .YieldEquipmentSlots()
+                .ToDictionary(slot => slot.index, slot => slot.element);
 
             // Collect currently equipped item StringIds to avoid duplicates
             var currentlyEquippedItemIds = new HashSet<string>(
@@ -409,7 +412,9 @@ namespace BLTAdoptAHero
             // Always want armor obviously
             foreach (var (index, itemType) in SkillGroup.ArmorIndexType)
             {
-                adoptedHero.BattleEquipment[index] = FindNewEquipmentByType(itemType);
+                var replacement = FindNewEquipmentByType(itemType);
+                previousEquipment.TryGetValue(index, out var previousItem);
+                adoptedHero.BattleEquipment[index] = KeepPreviousEquipmentIfReplacementMissing(previousItem, replacement);
             }
 
             // We should assign a horse if using a class definition that specifies riding, OR 
@@ -441,6 +446,40 @@ namespace BLTAdoptAHero
 
             UpgradeCivilian(adoptedHero, targetTier, replaceSameTier, cultureFilter, cultureFilterSpecified, restrictedItemIds);
         }
+
+        internal static bool ShouldKeepPreviousEquipmentIfReplacementMissing(bool previousIsEmpty, bool replacementIsEmpty)
+            => !previousIsEmpty && replacementIsEmpty;
+
+        internal static EquipmentElement KeepPreviousEquipmentIfReplacementMissing(
+            EquipmentElement previousItem,
+            EquipmentElement replacement)
+            => ShouldKeepPreviousEquipmentIfReplacementMissing(previousItem.IsEmpty, replacement.IsEmpty)
+                ? previousItem
+                : replacement;
+
+#if DEBUG
+        [CommandLineFunctionality.CommandLineArgumentFunction("test_armor_replacement_fallback", "blt")]
+        [UsedImplicitly]
+        public static string TestArmorReplacementFallback(List<string> strings)
+        {
+            var cases = new[]
+            {
+                (previousIsEmpty: false, replacementIsEmpty: true, expected: true, name: "keeps previous filled item when replacement is missing"),
+                (previousIsEmpty: false, replacementIsEmpty: false, expected: false, name: "uses replacement when replacement exists"),
+                (previousIsEmpty: true, replacementIsEmpty: true, expected: false, name: "keeps empty slot empty when both are missing"),
+                (previousIsEmpty: true, replacementIsEmpty: false, expected: false, name: "uses replacement for empty slot")
+            };
+
+            var failures = cases
+                .Where(c => ShouldKeepPreviousEquipmentIfReplacementMissing(c.previousIsEmpty, c.replacementIsEmpty) != c.expected)
+                .Select(c => c.name)
+                .ToList();
+
+            return failures.Any()
+                ? "FAIL: " + string.Join("; ", failures)
+                : "PASS: armor replacement fallback";
+        }
+#endif
 
         public static bool HeroShouldUseHorse(Hero adoptedHero, HeroClassDef classDef)
         {

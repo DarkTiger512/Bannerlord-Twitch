@@ -62,6 +62,7 @@ namespace BLTAdoptAHero
         }
 
         private Dictionary<ItemModifier, ItemModifierData> customItemModifiers = new();
+        private readonly Dictionary<string, ItemModifier> customItemModifiersById = new(StringComparer.Ordinal);
 
         public override void RegisterEvents() { }
 
@@ -77,6 +78,7 @@ namespace BLTAdoptAHero
 
                 // ItemModifier is hashed by string id, so we need to initialize them BEFORE putting them into the dictionary
                 customItemModifiers = new();
+                customItemModifiersById.Clear();
                 foreach (var (modifier, data) in savedModiferList
                     .Zip(savedModiferDataList, (modifier, data) => (modifier, data)))
                 {
@@ -84,7 +86,7 @@ namespace BLTAdoptAHero
                     var registeredModifier = MBObjectManager.Instance.RegisterObject(modifier);
                     registeredModifier.IsReady = true;
                     data.Apply(registeredModifier);
-                    customItemModifiers.Add(registeredModifier, data);
+                    AddRegisteredModifier(registeredModifier, data);
                 }
             }
             else
@@ -199,29 +201,21 @@ namespace BLTAdoptAHero
                 return false;
             }
 
+            var modifierId = itemModifier.StringId;
+            if (!string.IsNullOrEmpty(modifierId)
+                && customItemModifiersById.TryGetValue(modifierId, out registeredModifier)
+                && customItemModifiers.TryGetValue(registeredModifier, out modifierData))
+            {
+                return true;
+            }
+
             if (customItemModifiers.TryGetValue(itemModifier, out modifierData))
             {
                 registeredModifier = itemModifier;
                 return true;
             }
 
-            var modifierId = itemModifier.StringId;
-            if (string.IsNullOrEmpty(modifierId))
-            {
-                return false;
-            }
-
-            var registeredPair = customItemModifiers
-                .FirstOrDefault(kv => string.Equals(kv.Key.StringId, modifierId, StringComparison.Ordinal));
-
-            if (registeredPair.Key == null)
-            {
-                return false;
-            }
-
-            registeredModifier = registeredPair.Key;
-            modifierData = registeredPair.Value;
-            return true;
+            return false;
         }
 
         private ItemModifier RegisterModifier(ItemModifierData modifierData)
@@ -230,8 +224,18 @@ namespace BLTAdoptAHero
             var modifier = new ItemModifier();
             modifierData.Apply(modifier);
             var registeredModifier = MBObjectManager.Instance.RegisterObject(modifier);
-            customItemModifiers.Add(registeredModifier, modifierData);
+            AddRegisteredModifier(registeredModifier, modifierData);
             return registeredModifier;
+        }
+
+        private void AddRegisteredModifier(ItemModifier registeredModifier, ItemModifierData modifierData)
+        {
+            customItemModifiers.Add(registeredModifier, modifierData);
+
+            if (!string.IsNullOrEmpty(registeredModifier.StringId))
+            {
+                customItemModifiersById[registeredModifier.StringId] = registeredModifier;
+            }
         }
 
         // public void InitializeCraftingElements()

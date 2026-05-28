@@ -252,12 +252,12 @@ namespace BLTAdoptAHero
                     var armorEquipment = GetStandardNobleArmor(child);
                     if (armorEquipment != null)
                     {
-                        // Copy armor pieces only
-                        child.BattleEquipment[EquipmentIndex.Head] = armorEquipment[EquipmentIndex.Head];
-                        child.BattleEquipment[EquipmentIndex.Cape] = armorEquipment[EquipmentIndex.Cape];
-                        child.BattleEquipment[EquipmentIndex.Body] = armorEquipment[EquipmentIndex.Body];
-                        child.BattleEquipment[EquipmentIndex.Gloves] = armorEquipment[EquipmentIndex.Gloves];
-                        child.BattleEquipment[EquipmentIndex.Leg] = armorEquipment[EquipmentIndex.Leg];
+                        // Copy armor pieces only, but do not let sparse templates clear existing gear.
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Head);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Cape);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Body);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Gloves);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Leg);
                     }
                 }
                     
@@ -268,6 +268,15 @@ namespace BLTAdoptAHero
                 if (child.GetSkillValue(DefaultSkills.Riding) > 100)
                 {
                     EquipHorse(child);
+                }
+            }
+
+            private static void CopyArmorSlotIfPresent(Hero hero, Equipment sourceEquipment, EquipmentIndex index)
+            {
+                var sourceItem = sourceEquipment[index];
+                if (!sourceItem.IsEmpty)
+                {
+                    hero.BattleEquipment[index] = sourceItem;
                 }
             }
 
