@@ -605,7 +605,8 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        if (Mission.Current?.MissionResult != null)
+                        // No rewards when defender pulled back to keep
+                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
@@ -972,7 +973,8 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        if (Mission.Current?.MissionResult != null)
+                        // No rewards when defender pulled back to keep
+                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
