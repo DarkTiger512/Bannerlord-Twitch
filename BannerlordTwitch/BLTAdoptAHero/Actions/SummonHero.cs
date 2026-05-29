@@ -605,8 +605,7 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        // No rewards when defender pulled back to keep
-                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
+                        if (Mission.Current?.MissionResult != null)
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
@@ -635,7 +634,7 @@ namespace BLTAdoptAHero
 
                             if (hasMagicReward)
                             {
-                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20);
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
                                 if (silentGold > 0)
                                 {
                                     BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
@@ -647,7 +646,7 @@ namespace BLTAdoptAHero
                                     SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
                                 }
                             }
-                            
+
                             if (settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
                             {
                                 int actualGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold +
@@ -973,8 +972,7 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        // No rewards when defender pulled back to keep
-                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
+                        if (Mission.Current?.MissionResult != null)
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
@@ -1003,7 +1001,7 @@ namespace BLTAdoptAHero
 
                             if (hasMagicReward)
                             {
-                                int silentGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20);
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
                                 if (silentGold > 0)
                                 {
                                     BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
@@ -1012,10 +1010,10 @@ namespace BLTAdoptAHero
                                 int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
                                 if (silentXp > 0)
                                 {
-                                    SkillXP.ImproveSkill(adoptedHero, silentXp, SkillsEnum.All, auto: true);
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
                                 }
                             }
-                            
+
                             if (settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
                             {
                                 int actualGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold +
