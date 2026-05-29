@@ -605,8 +605,13 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        // No rewards when defender pulled back to keep
-                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
+                        bool defenderPulledBack = Mission.Current?.MissionResult?.BattleState == BattleState.DefenderPullBack;
+                        bool summonedOnAttackingSide = Mission.Current?.AttackerTeam?.IsValid == true &&
+                                                       (settings.OnPlayerSide
+                                                           ? Mission.Current.PlayerTeam == Mission.Current.AttackerTeam
+                                                           : Mission.Current.PlayerEnemyTeam == Mission.Current.AttackerTeam);
+
+                        if (Mission.Current?.MissionResult != null && (!defenderPulledBack || summonedOnAttackingSide))
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
@@ -648,7 +653,7 @@ namespace BLTAdoptAHero
                                 }
                             }
 
-                            if (settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
                             {
                                 int actualGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold +
                                                        settings.GoldCost);
@@ -973,8 +978,13 @@ namespace BLTAdoptAHero
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
 
-                        // No rewards when defender pulled back to keep
-                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
+                        bool defenderPulledBack = Mission.Current?.MissionResult?.BattleState == BattleState.DefenderPullBack;
+                        bool summonedOnAttackingSide = Mission.Current?.AttackerTeam?.IsValid == true &&
+                                                       (settings.OnPlayerSide
+                                                           ? Mission.Current.PlayerTeam == Mission.Current.AttackerTeam
+                                                           : Mission.Current.PlayerEnemyTeam == Mission.Current.AttackerTeam);
+
+                        if (Mission.Current?.MissionResult != null && (!defenderPulledBack || summonedOnAttackingSide))
                         {
                             var results = new List<string>();
                             float finalRewardScaling =
@@ -1016,7 +1026,7 @@ namespace BLTAdoptAHero
                                 }
                             }
 
-                            if (settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
                             {
                                 int actualGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold +
                                                        settings.GoldCost);
