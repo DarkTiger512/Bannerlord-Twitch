@@ -117,6 +117,11 @@ namespace BLTAdoptAHero.Actions
 
             if (command == "front" || command == "back")
             {
+                if (Mission.Current.IsSiegeBattle)
+                {
+                    onFailure("{=BLTFormationNoFrontBackSiege}Front/back movement is disabled in sieges".Translate());
+                    return;
+                }
                 if (agent.IsDetachedFromFormation)
                 {
                     onFailure("{=BLTFormationAttachBeforeMoving}Reattach before moving".Translate());

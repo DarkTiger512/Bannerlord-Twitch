@@ -1256,6 +1256,7 @@
 		<string id="BLTFormationSubWalls" text="walls"/>
 		<string id="BLTFormationNoNaval" text="Cannot change formation in naval battle"/>
 		<string id="BLTFormationNoTournament" text="Cannot change formation in tournament"/>
+		<string id="BLTFormationNoFrontBackSiege" text="Front/back movement is disabled in sieges"/>
 		<string id="BLTFormationNoHero" text="No hero"/>
 		<string id="BLTFormationNoFormation" text="No formation"/>
 		<string id="BLTFormationDetachOff" text="Detach commands are off"/>

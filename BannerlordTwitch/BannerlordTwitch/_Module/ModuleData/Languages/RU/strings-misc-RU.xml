@@ -348,6 +348,10 @@
         <string id="D1lt1bSQ" text="Имя" original="Name"/>
         <!-- The command itself, not including the ! -->
         <string id="u1Ua0LXJ" text="Сама команда, не считая !" original="The command itself, not including the !"/>
+        <!-- Aliases -->
+        <string id="BLT_Command_Aliases_Name" text="Синонимы команды" original="Aliases"/>
+        <!-- Enter command aliases separated by commas -->
+        <string id="BLT_Command_Aliases_Desc" text="Введите синонимы команды через запятую" original="Enter command aliases separated by commas"/>
         <!-- HideHelp -->
         <string id="TpnV5Mpi" text="Скрывать помощь" original="HideHelp"/>
         <!-- Hides the command from the !help action -->

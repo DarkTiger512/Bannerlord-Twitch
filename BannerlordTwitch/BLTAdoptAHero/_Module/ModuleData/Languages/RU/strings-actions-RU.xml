@@ -1171,6 +1171,7 @@
 		<string id="BLTFormationSubWalls" text="стены" original="walls"/>
 		<string id="BLTFormationNoNaval" text="Нельзя менять формацию в морском бою" original="Cannot change formation in naval battle"/>
 		<string id="BLTFormationNoTournament" text="Нельзя менять формацию в турнире" original="Cannot change formation in tournament"/>
+		<string id="BLTFormationNoFrontBackSiege" text="Перемещение вперед/назад отключено в осадах" original="Front/back movement is disabled in sieges"/>
 		<string id="BLTFormationNoHero" text="Герой не найден в бою" original="No hero"/>
 		<string id="BLTFormationNoFormation" text="Формация не найдена" original="No formation"/>
 		<string id="BLTFormationDetachOff" text="Команды отделения отключены" original="Detach commands are off"/>
