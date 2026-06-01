@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using BannerlordTwitch;
 using BannerlordTwitch.Localization;
 using BannerlordTwitch.UI;
 using BannerlordTwitch.Util;
@@ -101,7 +102,7 @@ namespace BLTBuffet
             }
         }
 
-        internal class Config
+        internal class Config : IDocumentable
         {
             [LocDisplayName("{=uUzmy7Lh}Name"),
              LocDescription("{=KdxwhYu6}Name to use when referring to this effect"),
@@ -194,6 +195,20 @@ namespace BLTBuffet
              LocDescription("{=K0vIkJBp}Whether this summon is allowed when no vanilla troops are left, only applies to battles and sieges"),
              PropertyOrder(3), UsedImplicitly]
             public bool AllowWhenDepleted { get; set; } = false;
+
+            public void GenerateDocumentation(IDocumentationGenerator generator)
+            {
+                generator.Value($"<strong>Target:</strong> {Target}");
+
+                if (HealPerSecond > 0)
+                    generator.Value($"<strong>Heal/s:</strong> {HealPerSecond}");
+
+                if (HealPercent > 0)
+                    generator.Value($"<strong>Max HP% heal/s :</strong> {HealPercent}");
+
+                if (Duration > 0)
+                    generator.Value($"<strong>Duration:</strong> {Duration}");
+            }
         }
     }
 }

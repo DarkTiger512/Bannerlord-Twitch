@@ -223,16 +223,18 @@ namespace BLTAdoptAHero
                 foreach (var bltHero in bltHeroes)
                 {
                     var spouse = bltHero.Spouse;
-                    if (spouse != null)
+                    if (spouse != null && !spouse.IsAdopted())
                     {                     
                         EquipBLTChildren(spouse);
                     }
                     foreach (var child in bltHero.Children)
                     {
-                        EquipBLTChildren(child);
+                        if (!child.IsAdopted())
+                            EquipBLTChildren(child);
                         foreach (var grandchild in child.Children)
                         {
-                            EquipBLTChildren(grandchild);
+                            if (!grandchild.IsAdopted())
+                                EquipBLTChildren(grandchild);
                         }
                     }
                 }
@@ -291,6 +293,7 @@ namespace BLTAdoptAHero
                         r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
                 }
 
+                //roster = roster.AllEquipments.RemoveAll(e => e as ItemObject && )
                 if (roster?.AllEquipments?.Count > 0)
                 {
                     return roster.AllEquipments[MBRandom.RandomInt(roster.AllEquipments.Count)];

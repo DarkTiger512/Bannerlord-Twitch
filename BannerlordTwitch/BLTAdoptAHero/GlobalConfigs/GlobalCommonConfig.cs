@@ -76,6 +76,18 @@ namespace BLTAdoptAHero
          PropertyOrder(4), UsedImplicitly]
         public string RestrictedItems { get; set; } = "";
 
+        [LocDisplayName("{=Abc123}Forbidden Races"),
+         LocCategory("General", "{=C5T5nnix}General"),
+         LocDescription("{=Desc123}List of race IDs that are forbidden. Usage: 0,1,2"),
+         PropertyOrder(4)]
+        public string ForbiddenRaces { get; set; } = "";
+
+        [LocDisplayName("{=Abc123}Forbidden Cultures"),
+         LocCategory("General", "{=C5T5nnix}General"),
+         LocDescription("{=Desc123}List of cultures that are forbidden. Usage: Vlandia,Battania"),
+         PropertyOrder(4)]
+        public string ForbiddenCultures { get; set; } = "";
+
         [LocDisplayName("{=}Custom Companion Limit"),
          LocCategory("General", "{=C5T6nnix}General"),
          LocDescription("{=}Flat number increase to companion limit"),
@@ -155,6 +167,34 @@ namespace BLTAdoptAHero
                     StringComparer.OrdinalIgnoreCase
                 );
             }
+        }
+
+        [YamlIgnore, Browsable(false)]
+        public HashSet<int> RestrictedRacesIds 
+        {
+            get
+            {
+                return new HashSet<int>(
+                    ForbiddenRaces
+                            .Split(',')
+                            .Select(s => s.Trim())
+                            .Where(s => int.TryParse(s, out _))
+                            .Select(int.Parse)                            
+                );
+            }
+        }
+        [YamlIgnore, Browsable(false)]
+        public HashSet<string> RestrictedCulturesStrings
+        {
+            get
+            {
+                return new HashSet<string>(
+                    ForbiddenCultures
+                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(s => s.Trim())
+                            .ToHashSet(StringComparer.OrdinalIgnoreCase)
+                );
+            }        
         }
 
         #endregion
@@ -852,7 +892,14 @@ namespace BLTAdoptAHero
             
             var kingdoms = MapHub.CurrentMapData?.Kingdoms;
             if (kingdoms == null || kingdoms.Count == 0)
+            {
+                MapHub.UpdateMapData(true);
+                kingdoms = MapHub.CurrentMapData?.Kingdoms;
+            }
+
+            if (kingdoms == null || kingdoms.Count == 0)
                 return;
+
             generator.H1("Campaign Map");
             generator.H2("Legend".Translate());
 
@@ -890,9 +937,17 @@ namespace BLTAdoptAHero
             // Map
             var settlements = MapHub.CurrentMapData?.Settlements;
             if (settlements == null || settlements.Count == 0)
+            {
+                MapHub.UpdateMapData(true);
+                settlements = MapHub.CurrentMapData?.Settlements;
+            }
+
+            if (settlements == null || settlements.Count == 0)
                 return;
 
             var segments = MapHub.CurrentMapData.Coastline;
+
+
             generator.H2("Map");
 
             generator.Div(() =>

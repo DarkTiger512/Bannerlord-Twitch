@@ -131,6 +131,8 @@ namespace BLTAdoptAHero
                     {
                         AdoptedHeroFlags._allowKingdomMove = true;
                         ChangeKingdomAction.ApplyByLeaveKingdom(clan);
+                        if (clan.Kingdom != null)
+                            clan.Kingdom = null;
                         AdoptedHeroFlags._allowKingdomMove = false;
 #if DEBUG
                         Log.Trace("[BLT] DiscontinueKingdom success ");

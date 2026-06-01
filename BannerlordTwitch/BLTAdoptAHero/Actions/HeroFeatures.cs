@@ -82,11 +82,11 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(9)]
             public bool RaceEnabled { get; set; } = true;
 
-            [LocDisplayName("{=Abc123}Forbidden Races"),
-             LocCategory("Race", "{=RaceSettings}Race"),
-             LocDescription("{=Desc123}List of race IDs that are forbidden. Usage: 0,1,2"),
-             PropertyOrder(10)]
-            public string ForbiddenRaces { get; set; } = "";
+            //[LocDisplayName("{=Abc123}Forbidden Races"),
+            // LocCategory("Race", "{=RaceSettings}Race"),
+            // LocDescription("{=Desc123}List of race IDs that are forbidden. Usage: 0,1,2"),
+            // PropertyOrder(10)]
+            //public string ForbiddenRaces { get; set; } = "";
 
             [LocDisplayName("{=Abc123}Enabled"),
              LocCategory("Culture", "{=RaceSettings}Culture"),
@@ -94,11 +94,11 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(11)]
             public bool CultureEnabled { get; set; } = true;
 
-            [LocDisplayName("{=Abc123}Forbidden Cultures"),
-             LocCategory("Culture", "{=RaceSettings}Culture"),
-             LocDescription("{=Desc123}List of cultures that are forbidden. Usage: Vlandia,Battania"),
-             PropertyOrder(12)]
-            public string ForbiddenCultures { get; set; } = "";
+            //[LocDisplayName("{=Abc123}Forbidden Cultures"),
+            // LocCategory("Culture", "{=RaceSettings}Culture"),
+            // LocDescription("{=Desc123}List of cultures that are forbidden. Usage: Vlandia,Battania"),
+            // PropertyOrder(12)]
+            //public string ForbiddenCultures { get; set; } = "";
 
             //[locdisplayname("{=testing}allow viewer marriage"),
             // loccategory("marriage", "{=testing}marriage"),
@@ -537,12 +537,8 @@ namespace BLTAdoptAHero.Actions
                             onFailure("Race command is disabled");
                             return;
                         }
-                        var forbiddenRaces = settings.ForbiddenRaces
-                            .Split(',')
-                            .Select(s => s.Trim())
-                            .Where(s => int.TryParse(s, out _))
-                            .Select(int.Parse)
-                            .ToHashSet();
+                        var forbiddenRaces = GlobalCommonConfig.Get().RestrictedRacesIds;
+                            
 
                         var validRaces = Enumerable.Range(0, 32)
                             .Select(r => (RaceId: r, Monster: TaleWorlds.Core.FaceGen.GetBaseMonsterFromRace(r)))
@@ -552,7 +548,7 @@ namespace BLTAdoptAHero.Actions
                         if (splitArgs.Length < 2 || !int.TryParse(splitArgs[1], out int race) || !validRaces.Any(x => x.RaceId == race))
                         {
                             string list = string.Join(", ", validRaces.Select(x => $"{x.RaceId} ({x.Monster.StringId})"));
-                            onFailure($"{TaleWorlds.Core.FaceGen.GetBaseMonsterFromRace(adoptedHero.CharacterObject.Race)?.StringId} .Valid races: {list}");
+                            onFailure($"{TaleWorlds.Core.FaceGen.GetBaseMonsterFromRace(adoptedHero.CharacterObject.Race)?.StringId} - Valid races: {list}");
                             return;
                         }
 
@@ -568,12 +564,10 @@ namespace BLTAdoptAHero.Actions
                             onFailure("Culture command is disabled");
                             return;
                         }
-                        var forbidden = settings.ForbiddenCultures
-                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(s => s.Trim())
-                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        var forbidden = GlobalCommonConfig.Get().RestrictedCulturesStrings;
+                            
                         var allowedCultures = CampaignHelpers.MainCultures
-                            .Where(c => !forbidden.Contains(c.StringId))
+                            .Where(c => !forbidden.Contains(c.Name.ToString()))
                             .ToList();
 
 
@@ -591,7 +585,8 @@ namespace BLTAdoptAHero.Actions
                         }
 
                         adoptedHero.Culture = cult;
-                        adoptedHero.Clan.Culture = cult;
+                        if (adoptedHero.Clan != null)
+                            adoptedHero.Clan.Culture = cult;
                         onSuccess($"Changed culture to {cult.Name}");
 
                         break;
