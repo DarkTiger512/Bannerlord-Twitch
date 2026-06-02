@@ -683,6 +683,7 @@
     <Compile Include="Twitch\TwitchEventSubSocket.cs" />
     <Compile Include="Twitch\TwitchService.Bot.cs" />
     <Compile Include="Twitch\TwitchService.cs" />
+    <Compile Include="Twitch\TwitchSharedState.cs" />
     <Compile Include="UI\CollectionPropertyEditor.xaml.cs">
       <DependentUpon>CollectionPropertyEditor.xaml</DependentUpon>
     </Compile>

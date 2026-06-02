@@ -71,7 +71,7 @@ namespace BLTAdoptAHero.Actions
                 onFailure("{=BLTFormationNoTournament}Cannot change formation in tournament".Translate());
                 return;
             }
-
+            
             var splitArgs = context.Args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string num = splitArgs.Length > 0 ? splitArgs[0] : "";
 
@@ -93,7 +93,7 @@ namespace BLTAdoptAHero.Actions
             string command = GetFormationCommand(num);
             var keywords = new[] { "detach", "attach", "charge", "hold", "follow", "gate", "walls" };
             if (keywords.Contains(command))
-            {
+            {      
                 if (!settings.Detach) { onFailure("{=BLTFormationDetachOff}Detach commands are off".Translate()); return; }
                 if (behavior == null) { onFailure("{=BLTFormationDetachInactive}Detachment system not active".Translate()); return; }
                 if (!Mission.Current.IsDeploymentFinished) { onFailure("{=BLTFormationNoDetachDeploying}Cannot detach while deploying".Translate()); return; }
@@ -127,7 +127,7 @@ namespace BLTAdoptAHero.Actions
                     onFailure("{=BLTFormationAttachBeforeMoving}Reattach before moving".Translate());
                     return;
                 }
-                //BLTSummonBehavior.MarkManualFormationOverride(agent);
+                BLTSummonBehavior.MarkManualFormationOverride(agent);
                 SetHeroFormationPosition(agent, command, onSuccess, onFailure);
                 return;
             }
@@ -247,7 +247,7 @@ namespace BLTAdoptAHero.Actions
 
             var oldFormation = heroAgent.Formation;
             heroAgent.Formation = target;
-            //BLTSummonBehavior.MarkManualFormationOverride(heroAgent);
+            BLTSummonBehavior.MarkManualFormationOverride(heroAgent);
 
             oldFormation?.Team.TriggerOnFormationsChanged(oldFormation);
             target.Team.TriggerOnFormationsChanged(target);
@@ -357,13 +357,13 @@ namespace BLTAdoptAHero.Actions
             _ => command
         };
 
-        private static void SetHeroFormationPosition(Agent heroAgent, string position,
-            Action<string> onSuccess, Action<string> onFailure)
+        private void SetHeroFormationPosition(Agent heroAgent, string position, Action<string> onSuccess, Action<string> onFailure)
         {
- 
+            var formation = heroAgent.Formation;
+            if (formation == null) { onFailure("{=BLTFormationNoFormation}No formation".Translate()); return; }
 
-            var arrangement = heroAgent.Formation?.Arrangement;
-            if (arrangement == null) { onFailure("No arrangement"); return; }
+            var unit = heroAgent as IFormationUnit;
+            if (unit == null) { onFailure("{=BLTFormationNotUnit}Not a formation unit".Translate()); return; }
 
             var unit = (IFormationUnit)heroAgent;
             int fileWidth = Math.Max(1, arrangement.UnitCount / Math.Max(1, arrangement.RankCount));
@@ -402,7 +402,7 @@ namespace BLTAdoptAHero.Actions
             }
             catch (Exception e)
             {
-                onFailure($"Arrangement does not support position shifting ({e.Message})");
+                onFailure("{=BLTFormationUnsupported}Formation type does not support this operation ({message})".Translate(("message", e.Message)));
             }
         }
     }

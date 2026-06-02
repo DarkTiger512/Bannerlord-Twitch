@@ -573,8 +573,19 @@ namespace BLTAdoptAHero.Behaviors
                 // Settlement owners
                 CampaignEvents.OnSettlementOwnerChangedEvent.AddNonSerializedListener(this, (fief, claim, newOwner, oldOwner, capturerHero, detail) =>
                 {
-                    var oldKingdom = oldOwner.Clan.Kingdom;
-                    var newKingdom = newOwner.Clan.Kingdom;
+                    var oldClan = oldOwner?.Clan;
+                    var newClan = newOwner?.Clan;
+                    if (oldClan == null && newClan == null)
+                    {
+                        Log.Error(
+                            $"[BLT SettlementOwnerChanged] null owner clans: fief={fief?.Name}, claim={claim}, " +
+                            $"newOwner={newOwner?.Name}, newClan={newClan?.Name}, oldOwner={oldOwner?.Name}, " +
+                            $"oldClan={oldClan?.Name}, capturer={capturerHero?.Name}, detail={detail}");
+                        return;
+                    }
+
+                    var oldKingdom = oldClan?.Kingdom;
+                    var newKingdom = newClan?.Kingdom;
                     if (oldKingdom == null && newKingdom == null) return;
                     if (oldKingdom == newKingdom) return;
 
@@ -592,7 +603,7 @@ namespace BLTAdoptAHero.Behaviors
                     var date = CampaignTime.Now;
                     if (oldKingdom != null)
                     {
-                        string kingdomOwnerLog1 = $"[{date}]{fief.Name} has been lost by: {reason}{(newOwner.MapFaction != null ? $" to {newOwner.MapFaction.Name}" : "")}";
+                        string kingdomOwnerLog1 = $"[{date}]{fief?.Name} has been lost by: {reason}{(newOwner?.MapFaction != null ? $" to {newOwner.MapFaction.Name}" : "")}";
 
                         if (!_kingdomLogs.TryGetValue(oldKingdom.StringId, out var logs))
                         {
@@ -605,7 +616,7 @@ namespace BLTAdoptAHero.Behaviors
                     }
                     if (newKingdom != null)
                     {
-                        string kingdomOwnerLog2 = $"[{date}]{fief.Name} has been obtained by: {reason}{(oldOwner.MapFaction != null ? $" from {oldOwner.MapFaction?.Name}" : "")}";
+                        string kingdomOwnerLog2 = $"[{date}]{fief?.Name} has been obtained by: {reason}{(oldOwner?.MapFaction != null ? $" from {oldOwner.MapFaction?.Name}" : "")}";
 
                         if (!_kingdomLogs.TryGetValue(newKingdom.StringId, out var logs))
                         {
@@ -633,8 +644,17 @@ namespace BLTAdoptAHero.Behaviors
                 CampaignEvents.OnSettlementOwnerChangedEvent.AddNonSerializedListener(this, (fief, claim, newOwner, oldOwner, capturerHero, detail) =>
                 {
                     var date = CampaignTime.Now;
-                    var newClan = newOwner.Clan;
-                    var oldClan = oldOwner.Clan;
+                    var newClan = newOwner?.Clan;
+                    var oldClan = oldOwner?.Clan;
+                    if (newClan == null || oldClan == null || fief?.Town == null)
+                    {
+                        Log.Error(
+                            $"[BLT FiefOwnerChanged] null data: fief={fief?.Name}, town={fief?.Town?.StringId}, " +
+                            $"claim={claim}, newOwner={newOwner?.Name}, newClan={newClan?.Name}, " +
+                            $"oldOwner={oldOwner?.Name}, oldClan={oldClan?.Name}, capturer={capturerHero?.Name}, detail={detail}");
+                        return;
+                    }
+
                     var newKingdom = newClan.Kingdom;
                     var oldKingdom = oldClan.Kingdom;
                     if (oldClan == newClan) return;

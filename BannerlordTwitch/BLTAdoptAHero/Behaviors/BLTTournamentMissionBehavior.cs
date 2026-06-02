@@ -22,6 +22,7 @@ namespace BLTAdoptAHero
     [HarmonyPatch]
     public class BLTTournamentMissionBehavior : AutoMissionBehavior<BLTTournamentMissionBehavior>
     {
+        private readonly HashSet<Agent> ammoApplied = new();
         private readonly List<BLTTournamentQueueBehavior.TournamentQueueEntry> activeTournament = new();
 
         private bool isPlayerParticipating;
@@ -32,6 +33,54 @@ namespace BLTAdoptAHero
         {
             this.isPlayerParticipating = isPlayerParticipating;
             SetPlaceholderPrize(tournamentGame);
+        }
+        
+        public override void OnMissionTick(float dt)
+        {
+            var config = BLTAdoptAHeroModule.TournamentConfig;
+
+            if (!config.OverrideAmmo)
+                return;
+
+            var amount = config.AmmoAmount;
+            if (amount <= 0)
+                return;
+
+            var mission = MissionState.Current?.CurrentMission;
+            if (mission == null)
+                return;
+
+            foreach (var agent in mission.Agents)
+            {
+                if (agent == null || !agent.IsHuman || agent.IsMount)
+                    continue;
+
+                if (!ammoApplied.Add(agent))
+                    continue;
+
+                bool first = false;
+
+                for (var i = EquipmentIndex.Weapon0; i <= EquipmentIndex.Weapon3; i++)
+                {
+                    var eq = agent.Equipment[i];
+                    if (eq.IsEmpty)
+                        continue;
+
+                    var item = eq.CurrentUsageItem;
+                    if (item == null || !item.IsConsumable)
+                        continue;
+
+                    if (!first)
+                    {
+                        agent.SetWeaponAmountInSlot(i, (short)amount, true);
+                        first = true;
+                    }
+                    else
+                    {
+                        agent.SetWeaponAmountInSlot(i, 0, true);
+                    }
+                }
+            }
         }
 
         public List<CharacterObject> GetParticipants()
@@ -199,7 +248,32 @@ namespace BLTAdoptAHero
                 {
                     foreach (var (_, index) in e.YieldWeaponSlots())
                     {
-                        e[index] = tournamentSet[index];
+                        var element = tournamentSet[index];
+                        var item = element.Item;
+
+                        var shouldReplace =
+                            BLTAdoptAHeroModule.TournamentConfig.NoUnarmed && item == null ||
+                            BLTAdoptAHeroModule.TournamentConfig.NoRanged && IsRangedItem(item);
+
+                        if (shouldReplace)
+                        {
+                            var replacement = availableEquipment
+                                .Shuffle()
+                                .SelectMany(x => x.equipment.YieldWeaponSlots())
+                                .Select(s => s.element)
+                                .FirstOrDefault(replacementElement =>
+                                    replacementElement.Item != null &&
+                                    (!BLTAdoptAHeroModule.TournamentConfig.NoRanged || !IsRangedItem(replacementElement.Item)));
+
+                            if (!replacement.IsEmpty)
+                            {
+                                e[index] = replacement;
+                            }
+
+                            continue;
+                        }
+
+                        e[index] = element;
                     }
                 }
             }
@@ -221,8 +295,62 @@ namespace BLTAdoptAHero
                     }
                 }
             }
-        }
+            if (!BLTAdoptAHeroModule.TournamentConfig.RandomizeWeaponTypes &&
+                (BLTAdoptAHeroModule.TournamentConfig.NoRanged ||
+                 BLTAdoptAHeroModule.TournamentConfig.NoUnarmed))
+            {
+                foreach (var e in equipments)
+                {
+                    foreach (var (element, index) in e.YieldWeaponSlots().ToList())
+                    {
+                        var item = element.Item;
 
+                        if (BLTAdoptAHeroModule.TournamentConfig.NoRanged &&
+                            IsRangedItem(item))
+                        {
+                            var replacement = GetAllTournamentEquipment()
+                                .SelectMany(x => x.equipment.YieldWeaponSlots())
+                                .Select(x => x.element)
+                                .FirstOrDefault(x =>
+                                    x.Item != null &&
+                                    !IsRangedItem(x.Item));
+
+                            if (!replacement.IsEmpty)
+                                e[index] = replacement;
+
+                            continue;
+                        }
+
+                        if (BLTAdoptAHeroModule.TournamentConfig.NoUnarmed &&
+                            item == null)
+                        {
+                            var replacement = GetAllTournamentEquipment()
+                                .SelectMany(x => x.equipment.YieldWeaponSlots())
+                                .Select(x => x.element)
+                                .FirstOrDefault(x =>
+                                    x.Item != null &&
+                                    !IsRangedItem(x.Item));
+
+                            if (!replacement.IsEmpty)
+                                e[index] = replacement;
+                        }
+                    }
+                }
+            }
+        }
+        
+        private static bool IsRangedItem(ItemObject it)
+        {
+            if (it == null) return false;
+
+            if (it.ItemType == ItemObject.ItemTypeEnum.Arrows ||
+                it.ItemType == ItemObject.ItemTypeEnum.Bolts ||
+                it.ItemType == ItemObject.ItemTypeEnum.Thrown)
+                return true;
+
+            var w = it.PrimaryWeapon;
+            return w != null && w.IsRangedWeapon;
+        }
 
         private bool AddRandomClothesPrefixImpl(CultureObject culture, TournamentParticipant participant)
         {
@@ -398,6 +526,7 @@ namespace BLTAdoptAHero
             }
 
             MissionInfoHub.Clear();
+            ammoApplied.Clear();
         }
 
         private ItemObject originalPrize;

@@ -94,6 +94,7 @@ namespace BLTAdoptAHero.Actions
             
             VassalBehavior.MercenaryIncomeSharePercent = settings.VassalMercIncomeShare;
             VassalBehavior.FiefIncomeSharePercent = settings.VassalFiefIncomeShare;
+            VassalBehavior.KingdomVassals = settings.KingdomVassals;
             var behavior = VassalBehavior.Current;
             
             if (adoptedHero == null)
@@ -131,7 +132,12 @@ namespace BLTAdoptAHero.Actions
             }
             
 
-            var splitArgs = context.Args.Split(' ');
+            var splitArgs = context.Args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splitArgs.Length == 0)
+            {
+                onFailure("Usage: create/rename/banner");
+                return;
+            }
             var command = splitArgs[0];       
             var desiredName = string.Join(" ", splitArgs.Skip(1)).Trim();
 
@@ -160,18 +166,23 @@ namespace BLTAdoptAHero.Actions
                 return;
             }
 
-            var splitargs = args.Split(' ');
+            var splitargs = args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splitargs.Length < 2)
+            {
+                onFailure("{=ETfJQatX}Usage: (vassal) (hero name) (clan name)".Translate());
+                return;
+            }
             var childName = splitargs[0];
             var setname = string.Join(" ", splitargs.Skip(1)).Trim();
 
-            if (settings.KingVassalsOnly && adoptedHero.Clan.Kingdom.Leader != adoptedHero)
-            {
-                onFailure("{=GEGrsLPm}You must be a king to create vassals".Translate());
-                return;
-            }
             if (adoptedHero.Clan.Kingdom == null)
             {
                 onFailure("{=RvkJO6J9}Your clan is not in a kingdom".Translate());
+                return;
+            }
+            if (settings.KingVassalsOnly && adoptedHero.Clan.Kingdom?.Leader != adoptedHero)
+            {
+                onFailure("{=GEGrsLPm}You must be a king to create vassals".Translate());
                 return;
             }
             if (!adoptedHero.IsClanLeader)
@@ -190,9 +201,10 @@ namespace BLTAdoptAHero.Actions
                 onFailure("{=TESTING}A clan with the name {name} already exists".Translate(("name", setname)));
                 return;
             }
-            if (VassalBehavior.Current.GetVassalClans(adoptedHero.Clan).Count >= (settings.VassalAmount + UpgradeBehavior.Current.GetTotalMaxVassalsBonus(adoptedHero.Clan)))
+            int maxVassals = settings.VassalAmount + (UpgradeBehavior.Current?.GetTotalMaxVassalsBonus(adoptedHero.Clan) ?? 0);
+            if (VassalBehavior.Current.GetVassalClans(adoptedHero.Clan).Count >= maxVassals)
             {
-                onFailure($"Max vassals: {settings.VassalAmount + UpgradeBehavior.Current.GetTotalMaxVassalsBonus(adoptedHero.Clan)}");
+                onFailure($"Max vassals: {maxVassals}");
                 return;
             }
             if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero) < settings.VassalPrice)
@@ -308,12 +320,18 @@ namespace BLTAdoptAHero.Actions
             vassal.Gold += 50000;
             if (adoptedHero.Clan.Kingdom != null)
             {
-                AdoptedHeroFlags._allowKingdomMove = true;
-                if (adoptedHero.Clan.IsUnderMercenaryService)
-                    ChangeKingdomAction.ApplyByJoinFactionAsMercenary(newClan, adoptedHero.Clan.Kingdom);
-                else
-                    ChangeKingdomAction.ApplyByJoinToKingdom(newClan, adoptedHero.Clan.Kingdom);
-                AdoptedHeroFlags._allowKingdomMove = false;
+                try
+                {
+                    AdoptedHeroFlags._allowKingdomMove = true;
+                    if (adoptedHero.Clan.IsUnderMercenaryService)
+                        ChangeKingdomAction.ApplyByJoinFactionAsMercenary(newClan, adoptedHero.Clan.Kingdom);
+                    else
+                        ChangeKingdomAction.ApplyByJoinToKingdom(newClan, adoptedHero.Clan.Kingdom);
+                }
+                finally
+                {
+                    AdoptedHeroFlags._allowKingdomMove = false;
+                }
             }
             CampaignEventDispatcher.Instance.OnClanCreated(newClan, false);
             ChangeRelationAction.ApplyRelationChangeBetweenHeroes(adoptedHero, vassal, 100, false);

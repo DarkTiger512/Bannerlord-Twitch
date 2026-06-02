@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Util;
+using BannerlordTwitch;
+using BannerlordTwitch.Twitch;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.AgentOrigins;
@@ -10,7 +12,6 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using NavalDLC.Missions.MissionLogics;
 
 namespace BLTAdoptAHero
 {
@@ -26,6 +27,13 @@ namespace BLTAdoptAHero
         }
 
         private readonly Dictionary<Agent, bool> _retinueResolution = new();
+        private static readonly HashSet<Agent> ManualFormationOverrides = new();
+
+        internal static void MarkManualFormationOverride(Agent agent)
+        {
+            if (agent != null)
+                ManualFormationOverrides.Add(agent);
+        }
 
         public class HeroSummonState
         {
@@ -142,6 +150,8 @@ namespace BLTAdoptAHero
         {
             SafeCall(() =>
             {
+                ManualFormationOverrides.Remove(affectedAgent);
+
                 var heroSummonState = heroSummonStates.FirstOrDefault(h => h.CurrentAgent == affectedAgent);
                 if (heroSummonState != null)
                 {
@@ -245,6 +255,10 @@ namespace BLTAdoptAHero
         {
             onTickActions.Add(action);
         }
+        
+        private float autoSummonTimer = 0f;
+        private float autoFormationTimer = 0f;
+        private float autoAttackTimer = 0f;
 
         public override void OnMissionTick(float dt)
         {
@@ -256,13 +270,272 @@ namespace BLTAdoptAHero
                 {
                     action();
                 }
+
+                var mission = Mission.Current;
+                if (mission == null || mission.IsNavalBattle)
+                    return;
+                
+                if (BLTAdoptAHeroModule.CommonConfig.AutoFormationForHeroes && !IsDeploymentPhase())
+                {
+                    autoFormationTimer += dt;
+                    if (autoFormationTimer >= 1f)
+                    {
+                        autoFormationTimer = 0f;
+                        EnforceHeroFormationRules();
+                    }
+                }
+                else
+                {
+                    autoFormationTimer = 0f;
+                }
+                
+                if (BLTAdoptAHeroModule.CommonConfig.EnableEnemyBltAttackCommand
+                    && !IsDeploymentPhase()
+                    && !mission.IsSiegeBattle)
+                {
+                    autoAttackTimer += dt;
+                    if (autoAttackTimer >= 1f)
+                    {
+                        autoAttackTimer = 0f;
+                        EnforceEnemyBltAttackFormationRules();
+                    }
+                }
+                else
+                {
+                    autoAttackTimer = 0f;
+                }
+                
+                if (BLTAdoptAHeroModule.CommonConfig.AutoSummonStreamerOnly)
+                {
+                    AutoSummonHeroes(dt);
+                }
+                else
+                {
+                    autoSummonTimer = 0f;
+                }
             });
+        }
+
+        private void EnforceHeroFormationRules()
+        {
+            if (Mission.Current?.PlayerTeam == null)
+                return;
+
+            var targetIndices = Mission.Current.IsSiegeBattle
+                ? new[] { 6, 7 }
+                : new[] { 4, 5, 6, 7 };
+
+            foreach (var i in targetIndices)
+            {
+                var fc = (FormationClass)i;
+                if (Mission.Current.PlayerTeam.GetFormation(fc) == null)
+                {
+                    Mission.Current.PlayerTeam.FormationsIncludingEmpty
+                        .Add(new Formation(Mission.Current.PlayerTeam, i));
+                }
+            }
+
+            foreach (var agent in Mission.Current.Agents)
+            {
+                if (!agent.IsActive() || !agent.IsHuman || !agent.IsAIControlled)
+                    continue;
+
+                if (agent.Character == null || !agent.Character.IsHero)
+                    continue;
+
+                if (agent.Team == null || !agent.Team.IsFriendOf(Mission.Current.PlayerTeam))
+                    continue;
+
+                var adoptedHero = agent.GetAdoptedHero();
+                if (adoptedHero == null)
+                    continue;
+
+                if (agent.IsDetachedFromFormation || ManualFormationOverrides.Contains(agent))
+                    continue;
+
+                FormationClass fClass;
+                if (agent.HasMount && HasRanged(agent) && HasAmmo(agent))
+                    fClass = FormationClass.HorseArcher;
+                else if (HasRanged(agent) && HasAmmo(agent))
+                    fClass = FormationClass.Ranged;
+                else if (agent.HasMount)
+                    fClass = FormationClass.Cavalry;
+                else
+                    fClass = FormationClass.Infantry;
+
+                int index = Mission.Current.IsSiegeBattle
+                    ? (fClass == FormationClass.Ranged ? 7 : 6)
+                    : 4 + (int)fClass;
+
+                var form = Mission.Current.PlayerTeam.GetFormation((FormationClass)index);
+                if (form != null && agent.Formation != form)
+                {
+                    agent.Formation = form;
+                }
+            }
+        }
+
+        private bool HasAmmo(Agent agent)
+        {
+            if (agent.Equipment == null)
+                return false;
+
+            foreach (var index in new[]
+            {
+        EquipmentIndex.Weapon0,
+        EquipmentIndex.Weapon1,
+        EquipmentIndex.Weapon2,
+        EquipmentIndex.Weapon3
+    })
+            {
+                var item = agent.Equipment[index];
+                if (item.IsAnyAmmo() && item.Amount > 0)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool HasRanged(Agent agent)
+        {
+            var eq = agent.SpawnEquipment;
+            return eq?.HasWeaponOfClass(WeaponClass.Bow) == true
+                || eq?.HasWeaponOfClass(WeaponClass.Crossbow) == true;
+        }
+        
+        private void EnforceEnemyBltAttackFormationRules()
+        {
+            if (Mission.Current?.PlayerEnemyTeam == null)
+                return;
+
+            var enemyTeam = Mission.Current.PlayerEnemyTeam;
+
+            const int targetIndex = 7;
+            var targetClass = (FormationClass)targetIndex;
+
+            if (enemyTeam.GetFormation(targetClass) == null)
+            {
+                enemyTeam.FormationsIncludingEmpty.Add(new Formation(enemyTeam, targetIndex));
+            }
+
+            var targetFormation = enemyTeam.GetFormation(targetClass);
+            if (targetFormation == null)
+                return;
+
+            bool hasAnyBltHeroes = false;
+
+            foreach (var agent in Mission.Current.Agents)
+            {
+                if (!agent.IsActive() || !agent.IsHuman || !agent.IsAIControlled)
+                    continue;
+
+                if (agent.Team != enemyTeam)
+                    continue;
+
+                if (agent.Character?.IsHero != true)
+                    continue;
+
+                var adoptedHero = agent.GetAdoptedHero();
+                if (adoptedHero == null)
+                    continue;
+
+                hasAnyBltHeroes = true;
+
+                if (agent.Formation != targetFormation)
+                {
+                    agent.Formation = targetFormation;
+                }
+            }
+
+            if (!hasAnyBltHeroes)
+                return;
+
+            var controller = enemyTeam.MasterOrderController;
+            if (controller == null)
+                return;
+
+            controller.ClearSelectedFormations();
+            controller.SelectFormation(targetFormation);
+            controller.SetOrder(OrderType.Charge);
+        }
+
+        private bool IsDeploymentPhase()
+        {
+            return Mission.Current?.Mode == MissionMode.Deployment;
+        }
+        
+        private void AutoSummonHeroes(float dt)
+        {
+            autoSummonTimer += dt;
+            if (autoSummonTimer < 3f)
+                return;
+
+            autoSummonTimer = 0f;
+
+            var mission = Mission.Current;
+            if (mission == null)
+                return;
+
+            if (!mission.IsFieldBattle && !mission.IsSiegeBattle)
+                return;
+
+            var cfg = BLTAdoptAHeroModule.CommonConfig;
+            if (cfg == null || !cfg.AutoSummonStreamerOnly)
+                return;
+
+            var streamerLogin = TwitchSharedState.StreamerLogin;
+            if (string.IsNullOrWhiteSpace(streamerLogin))
+                return;
+
+            var expectedHeroName = streamerLogin + " [BLT]";
+
+            var targetHero = Hero.AllAliveHeroes
+                .Where(h => h.IsAdopted())
+                .FirstOrDefault(h =>
+                    string.Equals(h.Name?.ToString(), expectedHeroName, StringComparison.OrdinalIgnoreCase));
+
+            if (targetHero == null)
+                return;
+
+            var targetState = GetHeroSummonState(targetHero);
+
+            if (targetState != null && (targetState.State == AgentState.Active || targetState.InCooldown))
+                return;
+
+            var summonCfg = new SummonHero.Settings
+            {
+                AllowFieldBattle = true,
+                AllowSiegeBattle = true,
+                AllowVillageBattle = false,
+                AllowFriendlyMission = false,
+                AllowHideOut = false,
+
+                OnPlayerSide = !cfg.AutoSummonStreamerEnemySide,
+                WithRetinue = true,
+                AllowWhenDepleted = true,
+                HealPerSecond = 2,
+                GoldCost = 0,
+                PreferredFormation = "Infantry"
+            };
+
+            var fakeContext = ReplyContext.FromUser(null, targetHero.Name.ToString(), "");
+
+            try
+            {
+                SummonHero.AutoSummon(targetHero, summonCfg, fakeContext);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[AutoSummon] Exception during summon: {ex}");
+            }
         }
 
         protected override void OnEndMission()
         {
             SafeCall(() =>
             {
+                ManualFormationOverrides.Clear();
+
                 // Remove still living retinue troops from their parties
                 foreach (var h in heroSummonStates)
                 {
@@ -404,7 +677,6 @@ namespace BLTAdoptAHero
                 , formationTroopIndex: 0
                 , isAlarmed: isAlarmed
                 , wieldInitialWeapons: true
-                , forceDismounted: false
                 , initialPosition: null
                 , initialDirection: null
             );
@@ -426,16 +698,5 @@ namespace BLTAdoptAHero
         }
 
         public static bool RetinueAllowed() => MissionHelpers.InSiegeMission() || MissionHelpers.InFieldBattleMission();
-
-        [HarmonyPatch(typeof(ShipAgentSpawnLogic), "IsAnyTeamsUnfilled")]
-        public static class Patch_IsAnyTeamsUnfilled
-        {
-            static bool Prefix(ref bool __result)
-            {
-                // Always return true, ignoring original logic
-                __result = true;
-                return false; // skip original method
-            }
-        }
     }
 }

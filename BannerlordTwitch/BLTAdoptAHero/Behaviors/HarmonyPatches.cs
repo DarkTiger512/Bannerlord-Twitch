@@ -666,6 +666,10 @@ namespace BLTAdoptAHero
                 return false; // blocked — no re-declare needed, war never ended
             }
 
+            var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+            if (k1 == playerKingdom || k2 == playerKingdom)
+                return true;
+
             // ── Case 2: AI trying to make peace with a BLT kingdom ───────────────
             if (k1IsBLT != k2IsBLT)
             {
