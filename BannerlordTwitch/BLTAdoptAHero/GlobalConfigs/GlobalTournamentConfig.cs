@@ -12,6 +12,7 @@ using BannerlordTwitch.UI;
 using BannerlordTwitch.Util;
 using JetBrains.Annotations;
 using TaleWorlds.CampaignSystem.TournamentGames;
+using TaleWorlds.Core;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using YamlDotNet.Serialization;
 
@@ -27,7 +28,7 @@ namespace BLTAdoptAHero
      CategoryOrder("Prize", 8),
      CategoryOrder("Prize Tier", 9),
      CategoryOrder("Custom Prize", 10),
-     LocDisplayName("{=AkDCrLgg}Tournament Config")]
+     LocDisplayName("{=GlobalTournamentConfig_Name}Tournament Config")]
     internal class GlobalTournamentConfig : IDocumentable
     {
         #region Static
@@ -39,62 +40,86 @@ namespace BLTAdoptAHero
 
         #region User Editable
         #region General
-        [LocDisplayName("{=P1ZCMZbp}Start Health Multiplier"),
-         LocCategory("General", "{=C5T5nnix}General"),
-         LocDescription("{=n6Bc5M3s}Amount to multiply normal starting health by"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_General_StartHealthMultiplier_Name}Start Health Multiplier"),
+         LocCategory("General", "{=GlobalTournamentConfig_Category_General}General"),
+         LocDescription("{=GlobalTournamentConfig_Category_General_StartHealthMultiplier_Desc}Amount to multiply normal starting health by"),
          PropertyOrder(1), Range(0.5, 10),
          Editor(typeof(SliderFloatEditor), typeof(SliderFloatEditor)), UsedImplicitly, Document]
         public float StartHealthMultiplier { get; set; } = 2;
 
-        [LocDisplayName("{=x3wiU1LY}Disable Kill Rewards In Tournament"),
-         LocCategory("General", "{=C5T5nnix}General"),
-         LocDescription("{=j63d8DuH}Heroes won't get any kill rewards in tournaments"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_General_DisableKillRewardsInTournament_Name}Disable Kill Rewards In Tournament"),
+         LocCategory("General", "{=GlobalTournamentConfig_Category_General}General"),
+         LocDescription("{=GlobalTournamentConfig_Category_General_DisableKillRewardsInTournament_Desc}Heroes won't get any kill rewards in tournaments"),
          PropertyOrder(2), Document, UsedImplicitly]
         public bool DisableKillRewardsInTournament { get; set; } = true;
 
-        [LocDisplayName("{=ksB1FmZV}Disable Tracking Kills Tournament"),
-         LocCategory("General", "{=C5T5nnix}General"),
-         LocDescription("{=o5aH9rTO}Tournament kills / deaths won't be counted towards achievements or kill streaks"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_General_DisableTrackingKillsTournament_Name}Disable Tracking Kills In Tournament"),
+         LocCategory("General", "{=GlobalTournamentConfig_Category_General}General"),
+         LocDescription("{=GlobalTournamentConfig_Category_General_DisableTrackingKillsTournament_Desc}Tournament kills/deaths won't be counted towards achievements or kill streaks"),
          PropertyOrder(3), Document, UsedImplicitly]
         public bool DisableTrackingKillsTournament { get; set; } = true;
         #endregion
 
         #region Equipment
-        [LocDisplayName("{=bBipANlh}No Horses"),
-         LocCategory("Equipment", "{=i7ZDVTaw}Equipment"),
-         LocDescription("{=sJ68yZs1}Remove horses completely from the BLT tournaments (the horse AI is terrible)"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NoHorses_Name}No Horses"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NoHorses_Desc}Remove horses completely from BLT tournaments"),
          PropertyOrder(2), UsedImplicitly, Document]
         public bool NoHorses { get; set; } = true;
 
-        [LocDisplayName("{=CYVy4Hhx}No Spears"),
-         LocCategory("Equipment", "{=i7ZDVTaw}Equipment"),
-         LocDescription("{=BjMC8Htn}Replaces all lances and spears with swords, because lance and spear combat is terrible"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NoSpears_Name}No Spears"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NoSpears_Desc}Replaces all lances and spears with swords"),
          PropertyOrder(3), UsedImplicitly, Document]
         public bool NoSpears { get; set; } = true;
 
-        [LocDisplayName("{=Ed55OyZ5}Normalize Armor"),
-         LocCategory("Equipment", "{=i7ZDVTaw}Equipment"),
-         LocDescription("{=kYFdZ8Yx}Replaces all armor with fixed tier armor, based on Culture if possible (tier specified by Normalized Armor Tier below)"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NormalizeArmor_Name}Normalize Armor"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NormalizeArmor_Desc}Replace all armor with fixed tier armor based on culture (see tier below)"),
          PropertyOrder(4), UsedImplicitly, Document]
         public bool NormalizeArmor { get; set; }
 
-        [LocDisplayName("{=xHJbcOaV}Normalize Armor Tier"),
-         LocCategory("Equipment", "{=i7ZDVTaw}Equipment"),
-         LocDescription("{=HnqCyrDD}Armor tier to set all contenstants to (1 to 6), if Normalize Armor is enabled"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NormalizeArmorTier_Name}Normalize Armor Tier"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NormalizeArmorTier_Desc}Armor tier applied to all contestants (1 to 6) if normalization is enabled"),
          PropertyOrder(5), Range(1, 6), UsedImplicitly, Document]
         public int NormalizeArmorTier { get; set; } = 3;
 
-        [LocDisplayName("{=5Y08IsDl}Randomize Weapon Types"),
-         LocCategory("Equipment", "{=i7ZDVTaw}Equipment"),
-         LocDescription("{=oSCPOoqi}Randomizes the weapons used in each round, weighted based on the classes of the participants"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_RandomizeWeaponTypes_Name}Randomize Weapon Types"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_RandomizeWeaponTypes_Desc}Randomize weapons each round based on participant classes"),
          PropertyOrder(6), UsedImplicitly, Document]
         public bool RandomizeWeaponTypes { get; set; } = true;
+        
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NoUnarmed_Name}No Unarmed"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NoUnarmed_Desc}Disable unarmed (fist) rounds in tournaments"),
+         PropertyOrder(4), UsedImplicitly, Document]
+        public bool NoUnarmed { get; set; } = false;
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_NoRanged_Name}No Ranged Weapons"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_NoRanged_Desc}Disable bows, crossbows and throwing weapons in tournaments"),
+         PropertyOrder(5), UsedImplicitly, Document]
+        public bool NoRanged { get; set; } = false;
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_OverrideAmmo_Name}Override Ammo"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_OverrideAmmo_Desc}Force all ranged ammo to a fixed amount"),
+         PropertyOrder(6), UsedImplicitly, Document]
+        public bool OverrideAmmo { get; set; } = false;
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Equipment_AmmoAmount_Name}Ammo Amount"),
+         LocCategory("Equipment", "{=GlobalTournamentConfig_Category_Equipment}Equipment"),
+         LocDescription("{=GlobalTournamentConfig_Category_Equipment_AmmoAmount_Desc}Amount of ammo for bows, crossbows and throwing weapons"),
+         PropertyOrder(7), Range(0, 200), UsedImplicitly, Document]
+        public int AmmoAmount { get; set; } = 20;
         #endregion
 
         #region Balancing
-        [LocDisplayName("{=UCAbZYqU}Previous Winner Debuffs"),
-         LocCategory("Balancing", "{=Zwh9GYUE}Balancing"),
-         LocDescription("{=FrloGGew}Applies skill debuffers to previous tournament winners"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_Balancing_PreviousWinnerDebuffs_Name}Previous Winner Debuffs"),
+         LocCategory("Balancing", "{=GlobalTournamentConfig_Category_Balancing}Balancing"),
+         LocDescription("{=GlobalTournamentConfig_Category_Balancing_PreviousWinnerDebuffs_Desc}Applies skill debuffs to previous tournament winners"),
          Editor(typeof(DefaultCollectionEditor), typeof(DefaultCollectionEditor)), PropertyOrder(1), UsedImplicitly, Document]
         public ObservableCollection<SkillDebuffDef> PreviousWinnerDebuffs { get; set; } = new() { new() };
         #endregion
@@ -102,45 +127,51 @@ namespace BLTAdoptAHero
         #region Round Types
         public class Round1Def
         {
-            [LocDisplayName("{=WUQRg4yA}Vanilla"),
-             LocDescription("{=nfYBftnO}Allow the vanilla round setup"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla"),
+             LocDescription("{=GlobalTournamentConfig_RoundType_Vanilla_Desc}Allow the vanilla round setup"),
              PropertyOrder(1), UsedImplicitly, Document]
             public bool EnableVanilla { get; set; } = true;
-            [LocDisplayName("{=ErBd0iuP}1 Match 4 Teams"),
-             LocDescription("{=5E1lXDYh}Allow 1 match with 4 teams of 4"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_1Match4Teams_Desc}Allow 1 match with 4 teams of 4"),
              PropertyOrder(3), UsedImplicitly, Document]
             public bool Enable1Match4Teams { get; set; }
-            [LocDisplayName("{=SsArdTT9}2 Matches 2 Teams"),
-             LocDescription("{=jEghMKUV}Allow 2 matches with 2 teams of 4"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_2Match2Teams_Desc}Allow 2 matches with 2 teams of 4"),
              PropertyOrder(4), UsedImplicitly, Document]
             public bool Enable2Match2Teams { get; set; }
-            [LocDisplayName("{=qb1yo7DZ}2 Matches 4 Teams"),
-             LocDescription("{=f8rXSGwN}Allow 2 matches with 4 teams of 2"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_2Match4Teams_Name}2 Matches 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_2Match4Teams_Desc}Allow 2 matches with 4 teams of 2"),
              PropertyOrder(5), UsedImplicitly, Document]
             public bool Enable2Match4Teams { get; set; }
-            [LocDisplayName("{=WAzvdvAJ}4 Matches 2 Teams"),
-             LocDescription("{=GPCYzshA}Allow 4 matches with 2 teams of 2"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_4Match2Teams_Name}4 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_4Match2Teams_Desc}Allow 4 matches with 2 teams of 2"),
              PropertyOrder(6), UsedImplicitly, Document]
             public bool Enable4Match2Teams { get; set; }
-            [LocDisplayName("{=sMCb8Xeu}4 Matches 4 Teams"),
-             LocDescription("{=MjsTFwUv}Allow 4 matches with 4 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_4Match4Teams_Name}4 Matches 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_4Match4Teams_Desc}Allow 4 matches with 4 teams of 1"),
              PropertyOrder(7), UsedImplicitly, Document]
             public bool Enable4Match4Teams { get; set; }
-            [LocDisplayName("{=URNM9UqS}8 Matches 2 Teams"),
-             LocDescription("{=otwzXPTQ}Allow 8 matches with 2 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_8Match2Teams_Name}8 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round1Def_8Match2Teams_Desc}Allow 8 matches with 2 teams of 1"),
              PropertyOrder(8), UsedImplicitly, Document]
             public bool Enable8Match2Teams { get; set; }
 
             public override string ToString()
             {
                 var enabled = new List<string>();
-                if (EnableVanilla) enabled.Add("{=WUQRg4yA}Vanilla".Translate());
-                if (Enable1Match4Teams) enabled.Add("{=ErBd0iuP}1 Match 4 Teams".Translate());
-                if (Enable2Match2Teams) enabled.Add("{=SsArdTT9}2 Matches 2 Teams".Translate());
-                if (Enable2Match4Teams) enabled.Add("{=qb1yo7DZ}2 Matches 4 Teams".Translate());
-                if (Enable4Match2Teams) enabled.Add("{=WAzvdvAJ}4 Matches 2 Teams".Translate());
-                if (Enable4Match4Teams) enabled.Add("{=sMCb8Xeu}4 Matches 4 Teams".Translate());
-                if (Enable8Match2Teams) enabled.Add("{=URNM9UqS}8 Matches 2 Teams".Translate());
+                if (EnableVanilla) enabled.Add("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla".Translate());
+                if (Enable1Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams".Translate());
+                if (Enable2Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams".Translate());
+                if (Enable2Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_2Match4Teams_Name}2 Matches 4 Teams".Translate());
+                if (Enable4Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_4Match2Teams_Name}4 Matches 2 Teams".Translate());
+                if (Enable4Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_4Match4Teams_Name}4 Matches 4 Teams".Translate());
+                if (Enable8Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_8Match2Teams_Name}8 Matches 2 Teams".Translate());
                 return string.Join(", ", enabled);
             }
 
@@ -170,40 +201,45 @@ namespace BLTAdoptAHero
 
         public class Round2Def
         {
-            [LocDisplayName("{=WUQRg4yA}Vanilla"),
-             LocDescription("{=nfYBftnO}Allow the vanilla round setup"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla"),
+             LocDescription("{=GlobalTournamentConfig_RoundType_Vanilla_Desc}Allow the vanilla round setup"),
              PropertyOrder(1), UsedImplicitly, Document]
             public bool EnableVanilla { get; set; } = true;
-            [LocDisplayName("{=uuBzCFgM}1 Match 2 Teams"),
-             LocDescription("{=5hLSHeuv}Allow 1 match with 2 teams of 4"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_1Match2Teams_Name}1 Match 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round2Def_1Match2Teams_Desc}Allow 1 match with 2 teams of 4"),
              PropertyOrder(2), UsedImplicitly, Document]
             public bool Enable1Match2Teams { get; set; }
-            [LocDisplayName("{=ErBd0iuP}1 Match 4 Teams"),
-             LocDescription("{=CLbRKpZp}Allow 1 match with 4 teams of 2"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round2Def_1Match4Teams_Desc}Allow 1 match with 4 teams of 2"),
              PropertyOrder(3), UsedImplicitly, Document]
             public bool Enable1Match4Teams { get; set; }
-            [LocDisplayName("{=SsArdTT9}2 Matches 2 Teams"),
-             LocDescription("{=Dr1Js5fB}Allow 2 matches with 2 teams of 2"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round2Def_2Match2Teams_Desc}Allow 2 matches with 2 teams of 2"),
              PropertyOrder(4), UsedImplicitly, Document]
             public bool Enable2Match2Teams { get; set; }
-            [LocDisplayName("{=qb1yo7DZ}2 Matches 4 Teams"),
-             LocDescription("{=nmMzoqeC}Allow 2 matches with 4 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_2Match4Teams_Name}2 Matches 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round2Def_2Match4Teams_Desc}Allow 2 matches with 4 teams of 1"),
              PropertyOrder(5), UsedImplicitly, Document]
             public bool Enable2Match4Teams { get; set; }
-            [LocDisplayName("{=WAzvdvAJ}4 Matches 2 Teams"),
-             LocDescription("{=xMaA76xu}Allow 4 matches with 2 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_4Match2Teams_Name}4 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round2Def_4Match2Teams_Desc}Allow 4 matches with 2 teams of 1"),
              PropertyOrder(6), UsedImplicitly, Document]
             public bool Enable4Match2Teams { get; set; }
 
             public override string ToString()
             {
                 var enabled = new List<string>();
-                if (EnableVanilla) enabled.Add("{=WUQRg4yA}Vanilla".Translate());
-                if (Enable1Match2Teams) enabled.Add("{=uuBzCFgM}1 Match 2 Teams".Translate());
-                if (Enable1Match4Teams) enabled.Add("{=ErBd0iuP}1 Match 4 Teams".Translate());
-                if (Enable2Match2Teams) enabled.Add("{=SsArdTT9}2 Matches 2 Teams".Translate());
-                if (Enable2Match4Teams) enabled.Add("{=qb1yo7DZ}2 Matches 4 Teams".Translate());
-                if (Enable4Match2Teams) enabled.Add("{=WAzvdvAJ}4 Matches 2 Teams".Translate());
+                if (EnableVanilla) enabled.Add("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla".Translate());
+                if (Enable1Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_1Match2Teams_Name}1 Match 2 Teams".Translate());
+                if (Enable1Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams".Translate());
+                if (Enable2Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams".Translate());
+                if (Enable2Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_2Match4Teams_Name}2 Matches 4 Teams".Translate());
+                if (Enable4Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_4Match2Teams_Name}4 Matches 2 Teams".Translate());
                 return string.Join(", ", enabled);
             }
 
@@ -231,30 +267,33 @@ namespace BLTAdoptAHero
 
         public class Round3Def
         {
-            [LocDisplayName("{=WUQRg4yA}Vanilla"),
-             LocDescription("{=nfYBftnO}Allow the vanilla round setup"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla"),
+             LocDescription("{=GlobalTournamentConfig_RoundType_Vanilla_Desc}Allow the vanilla round setup"),
              PropertyOrder(1), UsedImplicitly, Document]
             public bool EnableVanilla { get; set; } = true;
-            [LocDisplayName("{=uuBzCFgM}1 Match 2 Teams"),
-             LocDescription("{=t9yLB8gB}Allow 1 match with 2 teams of 2"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_1Match2Teams_Name}1 Match 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round3Def_1Match2Teams_Desc}Allow 1 match with 2 teams of 2"),
              PropertyOrder(2), UsedImplicitly, Document]
             public bool Enable1Match2Teams { get; set; }
-            [LocDisplayName("{=ErBd0iuP}1 Match 4 Teams"),
-             LocDescription("{=YfOnzOH6}Allow 1 match with 4 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round3Def_1Match4Teams_Desc}Allow 1 match with 4 teams of 1"),
              PropertyOrder(3), UsedImplicitly, Document]
             public bool Enable1Match4Teams { get; set; }
-            [LocDisplayName("{=SsArdTT9}2 Matches 2 Teams"),
-             LocDescription("{=OrZaS458}Allow 2 matches with 2 teams of 1"),
+
+            [LocDisplayName("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams"),
+             LocDescription("{=GlobalTournamentConfig_Round3Def_2Match2Teams_Desc}Allow 2 matches with 2 teams of 1"),
              PropertyOrder(4), UsedImplicitly, Document]
             public bool Enable2Match2Teams { get; set; }
 
             public override string ToString()
             {
                 var enabled = new List<string>();
-                if (EnableVanilla) enabled.Add("{=WUQRg4yA}Vanilla".Translate());
-                if (Enable1Match2Teams) enabled.Add("{=uuBzCFgM}1 Match 2 Teams".Translate());
-                if (Enable1Match4Teams) enabled.Add("{=ErBd0iuP}1 Match 4 Teams".Translate());
-                if (Enable2Match2Teams) enabled.Add("{=SsArdTT9}2 Matches 2 Teams".Translate());
+                if (EnableVanilla) enabled.Add("{=GlobalTournamentConfig_RoundType_Vanilla_Name}Vanilla".Translate());
+                if (Enable1Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_1Match2Teams_Name}1 Match 2 Teams".Translate());
+                if (Enable1Match4Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_1Match4Teams_Name}1 Match 4 Teams".Translate());
+                if (Enable2Match2Teams) enabled.Add("{=GlobalTournamentConfig_RoundType_2Match2Teams_Name}2 Matches 2 Teams".Translate());
                 return string.Join(", ", enabled);
             }
 
@@ -276,19 +315,21 @@ namespace BLTAdoptAHero
             }
         }
 
-        [LocDisplayName("{=eivyBgAa}Round 1 Type"),
-         LocCategory("Round Type", "{=KOIu6Q7d}Round Type"),
-         LocDescription("{=eivyBgAa}Round 1 Type"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundType_Round1Type_Name}Round 1 Type"),
+         LocCategory("Round Type", "{=GlobalTournamentConfig_Category_RoundType}Round Type"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundType_Round1Type_Desc}Configuration for the first round"),
          PropertyOrder(1), ExpandableObject, UsedImplicitly, Document]
         public Round1Def Round1Type { get; set; } = new();
-        [LocDisplayName("{=pefX6BdQ}Round 2 Type"),
-         LocCategory("Round Type", "{=KOIu6Q7d}Round Type"),
-         LocDescription("{=pefX6BdQ}Round 2 Type"),
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundType_Round2Type_Name}Round 2 Type"),
+         LocCategory("Round Type", "{=GlobalTournamentConfig_Category_RoundType}Round Type"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundType_Round2Type_Desc}Configuration for the second round"),
          PropertyOrder(2), ExpandableObject, UsedImplicitly, Document]
         public Round2Def Round2Type { get; set; } = new();
-        [LocDisplayName("{=GpV7pKPY}Round 3 Type"),
-         LocCategory("Round Type", "{=KOIu6Q7d}Round Type"),
-         LocDescription("{=GpV7pKPY}Round 3 Type"),
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundType_Round3Type_Name}Round 3 Type"),
+         LocCategory("Round Type", "{=GlobalTournamentConfig_Category_RoundType}Round Type"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundType_Round3Type_Desc}Configuration for the third round"),
          PropertyOrder(3), ExpandableObject, UsedImplicitly, Document]
         public Round3Def Round3Type { get; set; } = new();
 
@@ -297,48 +338,51 @@ namespace BLTAdoptAHero
         #region Round Rewards
         public class RoundRewardsDef
         {
-            [LocDisplayName("{=IQTT5vYE}Win Gold"),
-             LocDescription("{=i7Ns7K2i}Gold won if the hero wins thier match in the round"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundRewards_WinGold_Name}Win Gold"),
+             LocDescription("{=GlobalTournamentConfig_RoundRewards_WinGold_Desc}Gold awarded if the hero wins their match in the round"),
              PropertyOrder(1), UsedImplicitly, Document]
             public int WinGold { get; set; } = 10000;
 
-            [LocDisplayName("{=h8I3PWkV}Win XP"),
-             LocDescription("{=b0MeEmOS}XP given if the hero wins thier match in the round"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundRewards_WinXP_Name}Win XP"),
+             LocDescription("{=GlobalTournamentConfig_RoundRewards_WinXP_Desc}XP awarded if the hero wins their match in the round"),
              PropertyOrder(2), UsedImplicitly, Document]
             public int WinXP { get; set; } = 10000;
 
-            [LocDisplayName("{=Vobr36Bl}Lose XP"),
-             LocDescription("{=Oq7LMvoF}XP given if the hero loses thier match in a round"),
+            [LocDisplayName("{=GlobalTournamentConfig_RoundRewards_LoseXP_Name}Lose XP"),
+             LocDescription("{=GlobalTournamentConfig_RoundRewards_LoseXP_Desc}XP awarded if the hero loses their match in the round"),
              PropertyOrder(3), UsedImplicitly, Document]
             public int LoseXP { get; set; } = 2500;
 
             public override string ToString() =>
-                "{=IQTT5vYE}Win Gold".Translate() +
+                "{=GlobalTournamentConfig_RoundRewards_WinGold_Name}Win Gold".Translate() +
                 $" {WinGold}, " +
-                "{=h8I3PWkV}Win XP".Translate() +
+                "{=GlobalTournamentConfig_RoundRewards_WinXP_Name}Win XP".Translate() +
                 $" {WinXP}, " +
-                "{=Vobr36Bl}Lose XP".Translate() +
+                "{=GlobalTournamentConfig_RoundRewards_LoseXP_Name}Lose XP".Translate() +
                 $" {LoseXP}";
         }
 
-        [LocDisplayName("{=VeSh8k7c}Round 1 Rewards"),
-         LocCategory("Round Rewards", "{=g0A4pXY2}Round Rewards"),
-         LocDescription("{=VeSh8k7c}Round 1 Rewards"),
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundRewards_Round1Rewards_Name}Round 1 Rewards"),
+         LocCategory("Round Rewards", "{=GlobalTournamentConfig_Category_RoundRewards}Round Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundRewards_Round1Rewards_Desc}Rewards for round 1"),
          PropertyOrder(1), ExpandableObject, UsedImplicitly, Document]
         public RoundRewardsDef Round1Rewards { get; set; } = new() { WinGold = 5000, WinXP = 5000, LoseXP = 5000 };
-        [LocDisplayName("{=gQ9YX7my}Round 2 Rewards"),
-         LocCategory("Round Rewards", "{=g0A4pXY2}Round Rewards"),
-         LocDescription("{=gQ9YX7my}Round 2 Rewards"),
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundRewards_Round2Rewards_Name}Round 2 Rewards"),
+         LocCategory("Round Rewards", "{=GlobalTournamentConfig_Category_RoundRewards}Round Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundRewards_Round2Rewards_Desc}Rewards for round 2"),
          PropertyOrder(2), ExpandableObject, UsedImplicitly, Document]
         public RoundRewardsDef Round2Rewards { get; set; } = new() { WinGold = 7500, WinXP = 7500, LoseXP = 7500 };
-        [LocDisplayName("{=17pTC7NS}Round 3 Rewards"),
-         LocCategory("Round Rewards", "{=g0A4pXY2}Round Rewards"),
-         LocDescription("{=17pTC7NS}Round 3 Rewards"),
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundRewards_Round3Rewards_Name}Round 3 Rewards"),
+         LocCategory("Round Rewards", "{=GlobalTournamentConfig_Category_RoundRewards}Round Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundRewards_Round3Rewards_Desc}Rewards for round 3"),
          PropertyOrder(3), ExpandableObject, UsedImplicitly, Document]
         public RoundRewardsDef Round3Rewards { get; set; } = new() { WinGold = 10000, WinXP = 10000, LoseXP = 10000 };
-        [LocDisplayName("{=pxMWYe5J}Round 4 Rewards"),
-         LocCategory("Round Rewards", "{=g0A4pXY2}Round Rewards"),
-         LocDescription("{=pxMWYe5J}Round 4 Rewards"),
+
+        [LocDisplayName("{=GlobalTournamentConfig_Category_RoundRewards_Round4Rewards_Name}Round 4 Rewards"),
+         LocCategory("Round Rewards", "{=GlobalTournamentConfig_Category_RoundRewards}Round Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Category_RoundRewards_Round4Rewards_Desc}Rewards for round 4"),
          PropertyOrder(4), ExpandableObject, UsedImplicitly, Document]
         public RoundRewardsDef Round4Rewards { get; set; } = new() { WinGold = 0, WinXP = 0, LoseXP = 0 };
 
@@ -347,27 +391,27 @@ namespace BLTAdoptAHero
         #endregion
 
         #region Rewards
-        [LocDisplayName("{=IQTT5vYE}Win Gold"),
-         LocCategory("Rewards", "{=FHkvQbcR}Rewards"),
-         LocDescription("{=F8g49VCy}Gold won if the hero wins the tournaments"),
+        [LocDisplayName("{=GlobalTournamentConfig_Rewards_WinGold_Name}Win Gold"),
+         LocCategory("Rewards", "{=GlobalTournamentConfig_Category_Rewards}Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Rewards_WinGold_Desc}Gold awarded if the hero wins the tournament"),
          PropertyOrder(1), UsedImplicitly, Document]
         public int WinGold { get; set; } = 50000;
 
-        [LocDisplayName("{=h8I3PWkV}Win XP"),
-         LocCategory("Rewards", "{=FHkvQbcR}Rewards"),
-         LocDescription("{=3BudXy0O}XP given if the hero wins the tournaments"),
+        [LocDisplayName("{=GlobalTournamentConfig_Rewards_WinXP_Name}Win XP"),
+         LocCategory("Rewards", "{=GlobalTournamentConfig_Category_Rewards}Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Rewards_WinXP_Desc}XP awarded if the hero wins the tournament"),
          PropertyOrder(2), UsedImplicitly, Document]
         public int WinXP { get; set; } = 50000;
 
-        [LocDisplayName("{=5vMTYqdu}Participate XP"),
-         LocCategory("Rewards", "{=FHkvQbcR}Rewards"),
-         LocDescription("{=TXqjPXh7}XP given if the hero participates in a tournament but doesn't win"),
+        [LocDisplayName("{=GlobalTournamentConfig_Rewards_ParticipateXP_Name}Participate XP"),
+         LocCategory("Rewards", "{=GlobalTournamentConfig_Category_Rewards}Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Rewards_ParticipateXP_Desc}XP awarded if the hero participates but does not win"),
          PropertyOrder(3), UsedImplicitly, Document]
         public int ParticipateXP { get; set; } = 10000;
 
-        [LocDisplayName("{=Xu2KD7Kc}Prize"),
-         LocCategory("Rewards", "{=FHkvQbcR}Rewards"),
-         LocDescription("{=wYzmyUCE}Winners prize"),
+        [LocDisplayName("{=GlobalTournamentConfig_Rewards_Prize_Name}Prize"),
+         LocCategory("Rewards", "{=GlobalTournamentConfig_Category_Rewards}Rewards"),
+         LocDescription("{=GlobalTournamentConfig_Rewards_Prize_Desc}Reward granted to the tournament winner"),
          PropertyOrder(4), ExpandableObject, Expand, UsedImplicitly, Document]
         public GeneratedRewardDef Prize { get; set; } = new()
         {
@@ -381,21 +425,21 @@ namespace BLTAdoptAHero
             Tier5Weight = 0,
             Tier6Weight = 1,
             CustomWeight = 1,
-            CustomItemName = "{=hCNpHVJY}Prize {ITEMNAME}",
+            CustomItemName = "{=GlobalTournamentConfig_Rewards_Prize_CustomItemName}Prize {ITEMNAME}",
             CustomItemPower = 1,
         };
         #endregion
 
         #region Betting
-        [LocDisplayName("{=rne7aMUR}Enable Betting"),
-         LocCategory("Betting", "{=n1Agm9uJ}Betting"),
-         LocDescription("{=FOQEPZD5}Enable betting"),
+        [LocDisplayName("{=GlobalTournamentConfig_Betting_EnableBetting_Name}Enable Betting"),
+         LocCategory("Betting", "{=GlobalTournamentConfig_Category_Betting}Betting"),
+         LocDescription("{=GlobalTournamentConfig_Betting_EnableBetting_Desc}Enable or disable betting"),
          PropertyOrder(1), UsedImplicitly, Document]
         public bool EnableBetting { get; set; } = true;
 
-        [LocDisplayName("{=njh9b5GB}Betting On Final Only"),
-         LocCategory("Betting", "{=n1Agm9uJ}Betting"),
-         LocDescription("{=KGcz71VJ}Only allow betting on the final betting"),
+        [LocDisplayName("{=GlobalTournamentConfig_Betting_BettingOnFinalOnly_Name}Betting On Final Only"),
+         LocCategory("Betting", "{=GlobalTournamentConfig_Category_Betting}Betting"),
+         LocDescription("{=GlobalTournamentConfig_Betting_BettingOnFinalOnly_Desc}Allow betting only on the final round"),
          PropertyOrder(2), UsedImplicitly, Document]
         public bool BettingOnFinalOnly { get; set; }
         #endregion
@@ -413,29 +457,30 @@ namespace BLTAdoptAHero
         #endregion
     }
 
+    #region SkillDebuffDef
     public class SkillDebuffDef : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [LocDisplayName("{=OEMBeawy}Skill"),
-         LocDescription("{=twgHWqU6}Skill or skill group to modifer (all skills in a group will be modified)"),
+        [LocDisplayName("{=GlobalTournamentConfig_SkillDebuffDef_Skill_Name}Skill"),
+         LocDescription("{=GlobalTournamentConfig_SkillDebuffDef_Skill_Desc}Skill or skill group to modify (all skills in a group will be modified)"),
          PropertyOrder(1), UsedImplicitly, Document]
         public SkillsEnum Skill { get; set; } = SkillsEnum.All;
 
-        [LocDisplayName("{=5a40vmYi}Skill Reduction Percent Per Win"),
-         LocDescription("{=zoMHI9O3}Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified."),
+        [LocDisplayName("{=GlobalTournamentConfig_SkillDebuffDef_SkillReductionPercentPerWin_Name}Skill Reduction Percent Per Win"),
+         LocDescription("{=GlobalTournamentConfig_SkillDebuffDef_SkillReductionPercentPerWin_Desc}Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified."),
          PropertyOrder(2), UIRangeAttribute(0, 50, 0.5f),
          Editor(typeof(SliderFloatEditor), typeof(SliderFloatEditor)), UsedImplicitly, Document]
         public float SkillReductionPercentPerWin { get; set; } = 3.2f;
 
-        [LocDisplayName("{=hMB4oFmk}Floor Percent"),
-         LocDescription("{=HebJIfaE}The lower limit (in %) that the skill(s) can be reduced to."),
+        [LocDisplayName("{=GlobalTournamentConfig_SkillDebuffDef_FloorPercent_Name}Floor Percent"),
+         LocDescription("{=GlobalTournamentConfig_SkillDebuffDef_FloorPercent_Desc}The lower limit (in %) that the skill(s) can be reduced to."),
          PropertyOrder(2), UIRangeAttribute(0, 100, 0.5f),
          Editor(typeof(SliderFloatEditor), typeof(SliderFloatEditor)), UsedImplicitly, Document]
         public float FloorPercent { get; set; } = 65f;
 
-        [LocDisplayName("{=L7AKFlpb}Example"),
-         LocDescription("{=vgXMv8oH}Shows the % reduction of the skill over 20 tournaments"),
+        [LocDisplayName("{=GlobalTournamentConfig_SkillDebuffDef_Example_Name}Example"),
+         LocDescription("{=GlobalTournamentConfig_SkillDebuffDef_Example_Desc}Shows the % reduction of the skill over 20 tournaments"),
          PropertyOrder(3), ReadOnly(true), YamlIgnore, UsedImplicitly]
         public string Example => string.Join(", ",
             Enumerable.Range(0, 20)
@@ -457,12 +502,13 @@ namespace BLTAdoptAHero
 
         public override string ToString()
         {
-            return "{=OEMBeawy}Skill".Translate() +
+            return "{=GlobalTournamentConfig_SkillDebuffDef_Skill_Name}Skill".Translate() +
                    $": {Skill}, " +
-                   "{=5a40vmYi}Skill Reduction Percent Per Win".Translate() +
+                   "{=GlobalTournamentConfig_SkillDebuffDef_SkillReductionPercentPerWin_Name}Skill Reduction Percent Per Win".Translate() +
                    $": {SkillReductionPercentPerWin}%, " +
-                   "{=hMB4oFmk}Floor Percent".Translate() +
+                   "{=GlobalTournamentConfig_SkillDebuffDef_FloorPercent_Name}Floor Percent".Translate() +
                    $": {FloorPercent}%";
         }
     }
+    #endregion
 }
