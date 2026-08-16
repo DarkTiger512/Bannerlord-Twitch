@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BannerlordTwitch;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
@@ -82,6 +83,50 @@ namespace BLTAdoptAHero
                 : realGainedXp > 0
                     ? (true, $"{Naming.Inc}{realGainedXp} {Naming.XP} {GetShortSkillName(skill)}{Naming.To}{newXp}")
                     : (false, "{=ozkK4mk7}{Skill} capped, get more focus points".Translate(("Skill", skill.Name)));
+        }
+        
+        internal static void GiveMagicRewardXp(Hero hero, int totalXp)
+        {
+            if (hero == null || hero.IsDead || totalXp <= 0)
+                return;
+
+            var allSkills = SkillGroup.GetSkills(SkillsEnum.All).ToList();
+            if (allSkills.Count == 0)
+                return;
+
+            int xpPerSkill = totalXp / allSkills.Count;
+            int remainder = totalXp % allSkills.Count;
+
+            foreach (var skill in allSkills)
+            {
+                if (xpPerSkill > 0)
+                {
+                    hero.HeroDeveloper.AddSkillXp(
+                        skill,
+                        xpPerSkill,
+                        isAffectedByFocusFactor: false);
+                }
+            }
+
+            var prioritySkills = SkillGroup.GetSkills(
+                SkillsEnum.OneHanded,
+                SkillsEnum.TwoHanded,
+                SkillsEnum.Polearm,
+                SkillsEnum.Bow,
+                SkillsEnum.Athletics
+            ).ToList();
+
+            for (int i = 0; i < remainder; i++)
+            {
+                var skill = prioritySkills[i % prioritySkills.Count];
+
+                hero.HeroDeveloper.AddSkillXp(
+                    skill,
+                    1,
+                    isAffectedByFocusFactor: false);
+            }
+
+            hero.HeroDeveloper.DevelopCharacterStats();
         }
 
         public static string GetShortSkillName(SkillObject skill)

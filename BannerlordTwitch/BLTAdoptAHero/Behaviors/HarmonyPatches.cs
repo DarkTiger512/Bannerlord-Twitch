@@ -131,6 +131,8 @@ namespace BLTAdoptAHero
                     {
                         AdoptedHeroFlags._allowKingdomMove = true;
                         ChangeKingdomAction.ApplyByLeaveKingdom(clan);
+                        if (clan.Kingdom != null)
+                            clan.Kingdom = null;
                         AdoptedHeroFlags._allowKingdomMove = false;
 #if DEBUG
                         Log.Trace("[BLT] DiscontinueKingdom success ");
@@ -709,8 +711,12 @@ namespace BLTAdoptAHero
                 return false; // blocked — war never ended, no re-declare needed
             }
 
-            // ── Case 2: AI trying to make peace with a BLT-side faction ─────────
-            if (f1IsBLT != f2IsBLT)
+            var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+            if (k1 == playerKingdom || k2 == playerKingdom)
+                return true;
+
+            // ── Case 2: AI trying to make peace with a BLT kingdom ───────────────
+            if (k1IsBLT != k2IsBLT)
             {
                 IFaction aiFaction = f1IsBLT ? faction2 : faction1;
                 IFaction bltFaction = f1IsBLT ? faction1 : faction2;

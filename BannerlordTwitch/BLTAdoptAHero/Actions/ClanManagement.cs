@@ -719,7 +719,15 @@ namespace BLTAdoptAHero.Actions
                     ships += party.Ships.Count;
                 }
             }
-            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.CommanderLimit)));
+            var partyLimit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(
+                adoptedHero.Clan,
+                adoptedHero.Clan.Tier
+            );
+
+            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(
+                ("cparties", parties),
+                ("mparties", partyLimit)
+            ));
             clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
             if (adoptedHero.Clan.Fiefs.Count >= 1)
             {

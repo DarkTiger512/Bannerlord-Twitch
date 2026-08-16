@@ -1233,5 +1233,64 @@
 		<string id="lJXxLdFz" text="Please enter the name of the leader you wish to adopt"/>
 		<!-- Error could not find a clan with the name {clanName} -->
 		<string id="bzsT7oy0" text="Error could not find a clan with the name {clanName}"/>
+
+		<!-- FormationCommand -->
+		<string id="BLTFormationCommandName" text="Formation Command"/>
+		<string id="BLTFormationCommandDesc" text="Show and change your hero formation"/>
+		<string id="BLTFormationRespectClassName" text="Respect class"/>
+		<string id="BLTFormationRespectClassDesc" text="Turn off to allow any formation; otherwise infantry can only change to other infantry formations"/>
+		<string id="BLTFormationDetachmentsName" text="Detachments"/>
+		<string id="BLTFormationDetachmentsDesc" text="Allow detached hero commands"/>
+		<string id="BLTFormationUsageNumber" text="&lt;strong&gt;Usage:&lt;/strong&gt; number"/>
+		<string id="BLTFormationUsageFrontBack" text="- front/back"/>
+		<string id="BLTFormationUsageDetachAttach" text="- detach/attach"/>
+		<string id="BLTFormationUsageDetached" text="- (while detached): charge/hold/follow/gate/walls"/>
+		<string id="BLTFormationSubFront" text="front"/>
+		<string id="BLTFormationSubBack" text="back"/>
+		<string id="BLTFormationSubDetach" text="detach"/>
+		<string id="BLTFormationSubAttach" text="attach"/>
+		<string id="BLTFormationSubCharge" text="charge"/>
+		<string id="BLTFormationSubHold" text="hold"/>
+		<string id="BLTFormationSubFollow" text="follow"/>
+		<string id="BLTFormationSubGate" text="gate"/>
+		<string id="BLTFormationSubWalls" text="walls"/>
+		<string id="BLTFormationNoNaval" text="Cannot change formation in naval battle"/>
+		<string id="BLTFormationNoTournament" text="Cannot change formation in tournament"/>
+		<string id="BLTFormationNoFrontBackSiege" text="Front/back movement is disabled in sieges"/>
+		<string id="BLTFormationNoHero" text="No hero"/>
+		<string id="BLTFormationNoFormation" text="No formation"/>
+		<string id="BLTFormationDetachOff" text="Detach commands are off"/>
+		<string id="BLTFormationDetachInactive" text="Detachment system not active"/>
+		<string id="BLTFormationNoDetachDeploying" text="Cannot detach while deploying"/>
+		<string id="BLTFormationCommandOk" text="{command} ok"/>
+		<string id="BLTFormationAttachBeforeMoving" text="Reattach before moving"/>
+		<string id="BLTFormationAttachBeforeChanging" text="Reattach before changing formations"/>
+		<string id="BLTFormationInvalidNumber" text="Invalid number"/>
+		<string id="BLTFormationMoved" text="Moved. {troops} troops"/>
+		<string id="BLTFormationNotUnit" text="Not a formation unit"/>
+		<string id="BLTFormationNoTroop" text="No troop found"/>
+		<string id="BLTFormationMovedFront" text="Moved to front"/>
+		<string id="BLTFormationMovedBack" text="Moved to back"/>
+		<string id="BLTFormationUnsupported" text="Formation type does not support this operation ({message})"/>
+		<string id="BLTFormationClassInfantry" text="Infantry"/>
+		<string id="BLTFormationClassRanged" text="Ranged"/>
+		<string id="BLTFormationClassCavalry" text="Cavalry"/>
+		<string id="BLTFormationClassHorseArcher" text="Horse archer"/>
+		<string id="BLTFormationClassUnknown" text="unknown"/>
+		<string id="BLTFormationTarget" text="Target"/>
+		<string id="BLTFormationOrderCharge" text="Charge"/>
+		<string id="BLTFormationOrderAdvance" text="Advance"/>
+		<string id="BLTFormationOrderRetreat" text="Retreat"/>
+		<string id="BLTFormationOrderHold" text="Hold"/>
+		<string id="BLTFormationOrderFollow" text="Follow"/>
+		<string id="BLTFormationOrderMove" text="Move"/>
+		<string id="BLTFormationArrangementLine" text="Line"/>
+		<string id="BLTFormationArrangementWall" text="Wall"/>
+		<string id="BLTFormationArrangementLoose" text="Loose"/>
+		<string id="BLTFormationArrangementSquare" text="Square"/>
+		<string id="BLTFormationArrangementCircle" text="Circle"/>
+		<string id="BLTFormationArrangementColumn" text="Column"/>
+		<string id="BLTFormationArrangementScatter" text="Scatter"/>
+		<string id="Yp3nKs8W" text="Formation command is disabled while automatic BLT hero formation is enabled." />
     </strings>
 </base>

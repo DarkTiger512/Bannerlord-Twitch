@@ -135,19 +135,29 @@ namespace BLTAdoptAHero
             if (focus + num > 5)
                 num = 5 - focus;
 
-            int cost = 0;
+            int totalCost = 0;
+            int maxAffordable = 0;
+            int viewergold = BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero);
+
             for (int i = 0; i < num; i++)
             {
-                cost += settings.GetFocusCost(focus + i);
+                int stepCost = settings.GetFocusCost(focus + i);
+
+                if (totalCost + stepCost > viewergold)
+                    break;
+
+                totalCost += stepCost;
+                maxAffordable++;
             }
-            if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero) < cost)
+            if (viewergold < totalCost)
             {
-                onFailure(Naming.NotEnoughGold(cost, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero)));
+ 
+                onFailure(Naming.NotEnoughGold(totalCost, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero))+ $". Can afford {maxAffordable} points");
                 return;
             }
             adoptedHero.HeroDeveloper.AddFocus(skill, num, checkUnspentFocusPoints: false);
             int newFocus = adoptedHero.HeroDeveloper.GetFocus(skill);
-            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -cost, true);
+            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -totalCost, true);
             onSuccess($"You have gained {num} focus point in {skill.Name}, you now have {newFocus}!");            
             
         }

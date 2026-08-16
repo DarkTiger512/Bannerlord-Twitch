@@ -2275,11 +2275,12 @@ namespace BLTAdoptAHero
                 // However if we already have a clan alliance with someone in that kingdom, warn.
             }
 
-            if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero) < settings.WarPrice)
-            {
-                onFailure(Naming.NotEnoughGold(settings.WarPrice,
-                BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero))); return;
-            }
+            // Commented this so early clan diplomacy can be achieved with high war price
+            //if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero) < settings.WarPrice)
+            //{
+            //    onFailure(Naming.NotEnoughGold(settings.WarPrice,
+            //    BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero))); return;
+            //}
 
             // Confirmation prompt
             if (!confirmed)
@@ -2292,7 +2293,7 @@ namespace BLTAdoptAHero
                 return;
             }
 
-            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, -settings.WarPrice, true);
+            //BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, -settings.WarPrice, true);
 
             AdoptedHeroFlags._allowDiplomacyAction = true;
             try
@@ -2542,7 +2543,7 @@ namespace BLTAdoptAHero
 
             // Check for existing trade agreement
             TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
-            if (tradeBehavior.HasTradeAgreement(kingdom, target))
+            if (tradeBehavior.HasTradeAgreement(kingdom, target, out _))
             {
                 onFailure($"Already have trade agreement with {target.Name}");
                 return;
