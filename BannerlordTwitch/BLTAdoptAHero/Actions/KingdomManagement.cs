@@ -503,9 +503,6 @@ namespace BLTAdoptAHero.Actions
                 case "create":
                     HandleKCreateCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
                     break;
-                //case "vassal":
-                //    HandleVassalCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
-                        break;
                 case "release":
                     HandleReleaseCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
                     break;
@@ -528,7 +525,7 @@ namespace BLTAdoptAHero.Actions
                     HandlePolicyCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
                     break;
                 default:
-                    onFailure("{=FFxXuX5i}Invalid or empty kingdom action, try (join/merc/rebel/leave/create/vassal/release/expel/stats/armies/tax/sponsor/policy)".Translate());
+                    onFailure("{=FFxXuX5i}Invalid or empty kingdom action, try (join/merc/rebel/leave/create/release/expel/stats/armies/tax/sponsor/policy)".Translate());
                     break;
             }
 

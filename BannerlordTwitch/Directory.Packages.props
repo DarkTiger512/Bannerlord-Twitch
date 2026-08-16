@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Bannerlord.ReferenceAssemblies" Version="1.4.5.115026" />
+  </ItemGroup>
+</Project>

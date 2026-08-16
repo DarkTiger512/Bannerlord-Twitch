@@ -259,6 +259,45 @@ namespace BLTAdoptAHero
                     return;
                 }
 
+                // ── Defend: force-engage the besieger of the target, else patrol ──
+                if (order.Type == PartyOrderType.Defend)
+                {
+                    var defTarget = order.TargetSettlementId != null
+                        ? Settlement.Find(order.TargetSettlementId) : null;
+                    if (defTarget == null || !defTarget.IsFortification)
+                    {
+                        NotifyHero(order, "Defend target is no longer valid.");
+                        ExpireOrder(order, "Invalid target", false);
+                        return;
+                    }
+
+                    var besiegerParty = defTarget.IsUnderSiege
+                        ? defTarget.SiegeEvent?.BesiegerCamp?.LeaderParty
+                        : null;
+                    bool enemyBesieging = besiegerParty != null && besiegerParty.IsActive
+                        && party.MapFaction.IsAtWarWith(besiegerParty.MapFaction);
+
+                    if (enemyBesieging)
+                    {
+                        bool alreadyEngaging = party.TargetParty == besiegerParty
+                            && party.DefaultBehavior == AiBehavior.EngageParty;
+                        if (!alreadyEngaging)
+                            IssueForceDefendOrder(party, defTarget);
+                    }
+                    else
+                    {
+                        bool behaviorOk = party.DefaultBehavior == AiBehavior.PatrolAroundPoint;
+                        bool targetOk = party.TargetSettlement != null
+                                         && party.TargetSettlement.StringId == defTarget.StringId;
+                        if (!behaviorOk || !targetOk)
+                            IssueForceDefendOrder(party, defTarget);
+                    }
+
+                    party.Ai.SetDoNotMakeNewDecisions(true);
+                    order.ReissueAttempts = 0;
+                    return;
+                }
+
                 // ── Garrison: satisfied if party is inside the settlement ──
                 if (order.Type == PartyOrderType.Garrison)
                 {
@@ -478,7 +517,7 @@ namespace BLTAdoptAHero
 
                 case PartyOrderType.Defend:
                     if (target != null)
-                        SetPartyAiAction.GetActionForDefendingSettlement(party, target, nav, isFromPort, false);
+                        IssueForceDefendOrder(party, target);
                     break;
 
                 case PartyOrderType.Patrol:
@@ -574,8 +613,45 @@ namespace BLTAdoptAHero
         }
 
         // ─────────────────────────────────────────────
-        //  REACHABILITY HELPERS  (unchanged)
+        //  REACHABILITY HELPERS
         // ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Forced-defend logic for the (previously-dead) Defend order type.
+        /// Unlike IssueSmartGuardOrder, this does NOT use GetActionForDefendingSettlement —
+        /// that call lets the AI's own strength assessment decide whether to actually
+        /// close in, and it will hold back or retreat if outmatched. SetMoveEngageParty
+        /// is a direct move-order that bypasses that assessment, so the party commits
+        /// to the fight regardless of the strength differential.
+        /// Does NOT count as a re-issue attempt — called every tick for Defend orders.
+        /// </summary>
+        public static void IssueForceDefendOrder(MobileParty party, Settlement fortification)
+        {
+            if (party == null || fortification == null || !fortification.IsFortification) return;
+
+            if (fortification.IsUnderSiege && fortification.SiegeEvent?.BesiegerCamp != null)
+            {
+                var besiegerParty = fortification.SiegeEvent.BesiegerCamp.LeaderParty;
+                if (besiegerParty != null && besiegerParty.IsActive
+                    && party.MapFaction.IsAtWarWith(besiegerParty.MapFaction))
+                {
+                    bool atSea = party.IsCurrentlyAtSea;
+                    bool needsWaterCrossing = !atSea && LandPartyNeedsWaterCrossing(party, besiegerParty.CurrentSettlement ?? fortification);
+                    var nav = (atSea || needsWaterCrossing) ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
+
+                    // Force engagement — ignores strength difference entirely.
+                    party.SetMoveEngageParty(besiegerParty, nav);
+                    return;
+                }
+            }
+
+            // No hostile siege on the target right now: patrol it instead.
+            bool patrolAtSea = party.IsCurrentlyAtSea;
+            bool patrolNeedsWater = !patrolAtSea && LandPartyNeedsWaterCrossing(party, fortification);
+            bool patrolFromPort = patrolAtSea || patrolNeedsWater;
+            var patrolNav = patrolFromPort ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
+            SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification, patrolNav, patrolFromPort, false);
+        }
 
         public static bool IsSettlementReachable(MobileParty party, Settlement target)
         {

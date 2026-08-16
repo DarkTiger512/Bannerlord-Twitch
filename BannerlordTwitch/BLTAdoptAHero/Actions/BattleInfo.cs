@@ -257,12 +257,16 @@ namespace BLTAdoptAHero
             {
                 try
                 {
-                    string playerFaction = (isDefend ? mapEvent.DefenderSide.MapFaction.Name.ToString() : mapEvent.AttackerSide.MapFaction.Name.ToString()); string enemyFaction = (isDefend ? mapEvent.AttackerSide.MapFaction.Name.ToString() : mapEvent.DefenderSide.MapFaction.Name.ToString());
-                    message += $"{playerFaction} vs {enemyFaction}(P/E):" + (isDefend ? $"{defendCount}/{attackCount} - " : $"{attackCount}/{defendCount} - ");
+                    string playerFaction = (isDefend ? mapEvent.DefenderSide.MapFaction.Name.ToString() : mapEvent.AttackerSide.MapFaction.Name.ToString());
+                    string enemyFaction = (isDefend ? mapEvent.AttackerSide.MapFaction.Name.ToString() : mapEvent.DefenderSide.MapFaction.Name.ToString());
+                    message += $"{playerFaction} vs {enemyFaction}(P/E):" +
+                        (isDefend
+                            ? $"{allyTotal}({defendCount})/{enemyTotal}({attackCount}) - "
+                            : $"{allyTotal}({attackCount})/{enemyTotal}({defendCount}) - ");
                 }
                 catch (Exception e) { message += "Error getting factions - "; Log.Trace(e.StackTrace); }
             }
-                
+
             message +=
                 $"Class: {adoptedHero.GetClass()?.Name.ToString() ?? "No class"}\n" +
                 $"- HP: {(int)agent.Health}/{(int)agent.HealthLimit}\n";

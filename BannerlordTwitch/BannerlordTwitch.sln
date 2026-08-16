@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BannerlordTwitch", "BannerlordTwitch\BannerlordTwitch.csproj", "{A858B7FE-DD3E-4969-9D30-670042C75B16}"
 EndProject
@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		BLTBuildTargets.targets = BLTBuildTargets.targets
 		BLTProperties.targets = BLTProperties.targets
+		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
 Global

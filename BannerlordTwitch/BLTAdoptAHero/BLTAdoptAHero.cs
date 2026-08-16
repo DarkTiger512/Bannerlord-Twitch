@@ -81,6 +81,9 @@ namespace BLTAdoptAHero
                 mission.AddMissionBehavior(new BLTRemoveAgentsBehavior());
                 mission.AddMissionBehavior(new BLTHeroPowersMissionBehavior());
                 mission.AddMissionBehavior(new BLTHeroDetachmentBehavior());
+                mission.AddMissionBehavior(new BLTFollowBehavior());
+                mission.AddMissionBehavior(new BLTGuardBehavior());
+                mission.AddMissionBehavior(new BLTDuelBehavior());
                 //if (mission.CombatType == Mission.MissionCombatType.Combat && mission.PlayerTeam != null && mission.HasMissionBehavior<BLTAdoptAHeroCommonMissionBehavior>())
                 //{
                 //    mission.AddMissionBehavior(new HeroWidgetMissionView());
@@ -221,6 +224,7 @@ namespace BLTAdoptAHero
                     campaignStarter.AddBehavior(new BLTAllianceBehavior());      // 3. Alliance auto-join
                     campaignStarter.AddBehavior(new BLTDiplomacyBehavior());     // 4. Cleanup
                     campaignStarter.AddBehavior(new BLTClanDiplomacyBehavior()); // Additional behavior for independent clans - disable as needed
+                    campaignStarter.AddBehavior(new BLTPlayerOffersBehavior());
 
                     gameStarterObject.AddModel(new BLTAgentApplyDamageModel(gameStarterObject.Models.OfType<AgentApplyDamageModel>().FirstOrDefault()));
                     gameStarterObject.AddModel(new BLTPartySizeLimitModel(gameStarterObject.Models.OfType<PartySizeLimitModel>().FirstOrDefault()));

@@ -157,6 +157,50 @@ namespace BLTAdoptAHero
         {
             if (agent == null || !agent.IsActive()) return "Invalid agent";
             if (!_detachments.TryGetValue(agent, out var state)) return "Not detached";
+            try
+            {
+                agent.DisableScriptedMovement();
+                agent.DisableScriptedCombatMovement();
+                agent.SetScriptedCombatFlags(Agent.AISpecialCombatModeFlags.None);
+                agent.SetScriptedFlags(Agent.AIScriptedFrameFlags.None);
+                agent.SetAutomaticTargetSelection(true);
+                agent.HumanAIComponent?.SetBehaviorValueSet(HumanAIComponent.BehaviorValueSet.Default);
+
+                Agent closestEnemy = null;
+                float closestDist = float.MaxValue;
+
+                //foreach (var team in Mission.Current.Teams)
+                //{
+                //    if (team == null || !team.IsEnemyOf(agent.Team)) continue;
+                //    foreach (var enemy in team.ActiveAgents)
+                //    {
+                //        if (enemy == null || !enemy.IsActive() || enemy.IsMount) continue;
+                //        float dist = enemy.Position.DistanceSquared(agent.Position);
+                //        if (dist < closestDist)
+                //        {
+                //            closestDist = dist;
+                //            closestEnemy = enemy;
+                //        }
+                //    }
+                //}
+
+                if (closestEnemy != null)
+                {
+                    var targetPos = closestEnemy.GetWorldPosition();
+                    agent.SetScriptedPosition(ref targetPos, false, Agent.AIScriptedFrameFlags.NeverSlowDown);
+                    state.NavigationTarget = targetPos;
+                    state.LastNavigationReissueTime = Mission.Current.CurrentTime;
+                    state.Order = DetachmentOrder.Navigate;
+                }
+                else
+                {
+                    var closestFormation = state.Detachment?.ParentFormation?.CachedClosestEnemyFormation;
+                    if (closestFormation != null)
+                        agent.SetTargetFormationIndex(closestFormation.Formation.Index);
+                    state.Order = DetachmentOrder.None;
+                }
+            }
+            catch { }
 
             agent.HumanAIComponent?.SetBehaviorValueSet(HumanAIComponent.BehaviorValueSet.Charge);
             agent.SetAutomaticTargetSelection(true);

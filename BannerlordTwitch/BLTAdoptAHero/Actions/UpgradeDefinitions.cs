@@ -377,28 +377,34 @@ namespace BLTAdoptAHero.Actions.Upgrades
          PropertyOrder(8), UsedImplicitly, DefaultValue(0)]
         public float MercIncomePercent { get; set; } = 0;
 
+        [LocDisplayName("{=BLT_PassiveIncome}Passive Income (Flat)"),
+         LocCategory("Clan Effects", "{=BLT_ClanEffects}Clan Effects"),
+         LocDescription("{=BLT_PassiveIncomeDesc}Flat daily gold income granted directly to the clan, independent of settlements or mercenary contracts"),
+         PropertyOrder(9), UsedImplicitly, DefaultValue(0)]
+        public int PassiveIncomeDaily { get; set; } = 0;
+
         [LocDisplayName("{=BLT_PartyAmountBonus}Max Parties Bonus"),
          LocCategory("Clan Effects", "{=BLT_ClanEffects}Clan Effects"),
          LocDescription("{=BLT_PartyAmountBonusDesc}Increases the maximum amount of parties the upgraded clan can have at once"),
-         PropertyOrder(9), UsedImplicitly, DefaultValue(0)]
+         PropertyOrder(10), UsedImplicitly, DefaultValue(0)]
         public int PartyAmountBonus { get; set; } = 0;
 
         [LocDisplayName("{=BLT_MaxVassalsBonus}Max Vassals Bonus"),
          LocCategory("Clan Effects", "{=BLT_ClanEffects}Clan Effects"),
          LocDescription("{=BLT_MaxVassalsBonusDesc}Increases the maximum amount of vassal clans the upgraded clan can have"),
-         PropertyOrder(10), UsedImplicitly, DefaultValue(0)]
+         PropertyOrder(11), UsedImplicitly, DefaultValue(0)]
         public int MaxVassalsBonus { get; set; } = 0;
 
         [LocDisplayName("{=BLT_ApplyToVassals}Apply to Vassals (Under Development)"),
          LocCategory("Clan Effects", "{=BLT_ClanEffects}Clan Effects"),
          LocDescription("{=BLT_ApplyToVassalsDesc}(CURRENTLY DISABLED) Makes this upgrade apply to ALL vassal clans of the upgraded clan (Does not affect upgraded clan itself)"),
-         PropertyOrder(11), UsedImplicitly, DefaultValue(false)]
+         PropertyOrder(12), UsedImplicitly, DefaultValue(false)]
         public bool ApplyToVassals { get; set; } = false;
 
         [LocDisplayName("{=BLT_RetinueSizeBonus}Retinue Size Bonus"),
          LocCategory("Clan Effects", "{=BLT_ClanEffects}Clan Effects"),
          LocDescription("{=BLT_RetinueSizeBonusDesc}Increases the maximum retinue size for all adopted heroes in this clan."),
-         PropertyOrder(12), UsedImplicitly, DefaultValue(0)]
+         PropertyOrder(13), UsedImplicitly, DefaultValue(0)]
         public int RetinueSizeBonus { get; set; } = 0;
 
         [LocDisplayName("{=BLT_ArmySpeedBonus}Army Speed Bonus"),
@@ -407,7 +413,7 @@ namespace BLTAdoptAHero.Actions.Upgrades
             "{=BLT_ArmySpeedBonusDesc}Flat movement-speed bonus contributed to any army this clan's parties participate in. " +
             "Bonuses from all parties in the army are summed. " +
             "This bonus is ONLY active while in an army; the regular Party Speed Bonus does not apply in armies."),
-         PropertyOrder(13), UsedImplicitly, DefaultValue(0f)]
+         PropertyOrder(14), UsedImplicitly, DefaultValue(0f)]
         public float ArmySpeedBonus { get; set; } = 0f;
 
         [LocDisplayName("{=BLT_ArmySpeedOncePerClan}Army Speed Once Per Clan"),
@@ -416,7 +422,7 @@ namespace BLTAdoptAHero.Actions.Upgrades
             "{=BLT_ArmySpeedOncePerClanDesc}When ON (recommended), this upgrade's army speed bonus is counted at most once per clan " +
             "even if that clan has multiple parties in the army. " +
             "When OFF, every individual party from this clan adds the bonus independently."),
-         PropertyOrder(14), UsedImplicitly, DefaultValue(false)]
+         PropertyOrder(15), UsedImplicitly, DefaultValue(false)]
         public bool ArmySpeedOncePerClan { get; set; } = false;
 
         // ── Settlement Effects ────────────────────────────────────────────────

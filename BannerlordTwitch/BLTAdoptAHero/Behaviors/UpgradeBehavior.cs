@@ -5,6 +5,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using BLTAdoptAHero.Actions.Upgrades;
+using TaleWorlds.CampaignSystem.Actions;
 
 namespace BLTAdoptAHero
 {
@@ -197,39 +198,64 @@ namespace BLTAdoptAHero
         }
 
         #region Troop tree traversal
+        private IEnumerable<CharacterObject> GetTroopTree(CharacterObject root)
+        {
+            if (root == null) yield break;
+            var visited = new HashSet<CharacterObject>();
+            var queue = new Queue<CharacterObject>();
+            queue.Enqueue(root);
+            while (queue.Count > 0)
+            {
+                var troop = queue.Dequeue();
+                if (!visited.Add(troop)) continue;
+                yield return troop;
+                if (troop.UpgradeTargets != null)
+                    foreach (var t in troop.UpgradeTargets)
+                        if (t != null) queue.Enqueue(t);
+            }
+        }
+
         private CharacterObject GetTroopForCulture(CultureObject culture, TroopTreeType treeType, int tier)
         {
             if (culture == null) return null;
             if (culture.BasicTroop == null && culture.EliteBasicTroop == null) return null;
             if (culture.BasicTroop == null) treeType = TroopTreeType.Noble;
+            if (tier <= 0) return null;
+
             try
             {
-                if (treeType == TroopTreeType.Noble)
-                {
-                    tier = Math.Min(Math.Max(tier, 2), 6);
-                    return tier switch
-                    {
-                        2 => culture.EliteBasicTroop,
-                        3 => culture.EliteBasicTroop?.UpgradeTargets?.GetRandomElement(),
-                        4 => culture.EliteBasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        5 => culture.EliteBasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        6 => culture.EliteBasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        _ => null
-                    };
-                }
-                else
-                {
-                    tier = Math.Min(Math.Max(tier, 1), 5);
-                    return tier switch
-                    {
-                        1 => culture.BasicTroop,
-                        2 => culture.BasicTroop?.UpgradeTargets?.GetRandomElement(),
-                        3 => culture.BasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        4 => culture.BasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        5 => culture.BasicTroop?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement()?.UpgradeTargets?.GetRandomElement(),
-                        _ => null
-                    };
-                }
+                var root = treeType == TroopTreeType.Noble ? culture.EliteBasicTroop : culture.BasicTroop;
+                if (root == null) return null;
+
+                var byTier = GetTroopTree(root)
+                    .Where(t => t != null && t.Tier > 0)
+                    .GroupBy(t => t.Tier)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                CharacterObject Pick(int t) =>
+                    byTier.TryGetValue(t, out var lst) ? lst.GetRandomElement() : null;
+
+                // 1. Exact tier
+                var result = Pick(tier);
+                if (result != null) return result;
+
+                // 2. One tier below
+                result = Pick(tier - 1);
+                if (result != null) return result;
+
+                // 3. One tier above
+                result = Pick(tier + 1);
+                if (result != null) return result;
+
+                // 4. Next lowest available (highest tier strictly below tier - 1)
+                var nextLowest = byTier.Keys
+                    .Where(t => t < tier - 1)
+                    .OrderByDescending(t => t)
+                    .FirstOrDefault();
+                if (nextLowest > 0) return Pick(nextLowest);
+
+                // 5. No valid unit found
+                return null;
             }
             catch
             {
@@ -381,7 +407,11 @@ namespace BLTAdoptAHero
                 {
                     var up = ConfigSafe.ClanUpgrades?.FirstOrDefault(u => u.ID == upgradeId);
                     if (up == null) continue;
-                    if (!IsClanUpgradeActive(up, clan)) continue;       // ← unified filter
+                    if (!IsClanUpgradeActive(up, clan)) continue;
+                    if (up.PassiveIncomeDaily != 0)
+                    {
+                        clan.Leader.Gold += up.PassiveIncomeDaily;
+                    }
 
                     if (up.DailyTroopSpawnAmount > 0)
                     {
