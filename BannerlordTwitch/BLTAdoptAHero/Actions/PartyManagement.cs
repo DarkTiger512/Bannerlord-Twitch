@@ -1498,10 +1498,14 @@ namespace BLTAdoptAHero.Actions
             var vassalClans = VassalBehavior.Current?.GetVassalClans(h.Clan) ?? new List<Clan>();
             var modelParties = GetPartiesToCallToArmy(leaderParty);
             var members = candidates
-                .Where(p => p != leaderParty)
-                .Concat(modelParties.Where(p => p != leaderParty && p != null))
-                .Where(p => p.Army == null && p.AttachedTo == null && p.MapEvent == null && !p.IsDisbanding)
-                .Distinct().ToMBList();
+                .Where(p => p != leaderParty
+                            && p != null
+                            && p.Army == null
+                            && p.AttachedTo == null
+                            && p.MapEvent == null
+                            && !p.IsDisbanding)
+                .Distinct()
+                .ToMBList();
 
             var gather = leaderParty.CurrentSettlement
                 ?? SettlementHelper.FindNearestSettlementToMobileParty(leaderParty, leaderParty.NavigationCapability)
@@ -2190,18 +2194,20 @@ namespace BLTAdoptAHero.Actions
             // ── Kingdom army creation ──────────────────────────────────────────────
             if (h.Clan.Kingdom != null)
             {
-                var vassals = VassalBehavior.Current.GetVassalClans(h.Clan);
                 MBList<MobileParty> merged;
                 if (settings.AutoCallPartiesOnCreate)
                 {
-                    var vassalParties = h.Clan.Kingdom.AllParties
-                        .Where(p => (p.ActualClan == h.Clan || vassals.Contains(p.ActualClan))
+                    var kingdomParties = h.Clan.Kingdom.AllParties
+                        .Where(p => p.ActualClan?.Kingdom == h.Clan.Kingdom
                             && p != party && p.Army == null && p.AttachedTo == null
-                            && p.LeaderHero != null && p.MapEvent == null && !p.IsDisbanding)
+                            && p.LeaderHero != null && p.MapEvent == null && !p.IsDisbanding
+                            && p.IsLordParty && p.MemberRoster.TotalHealthyCount > 0)
                         .ToList();
                     var modelParties = GetPartiesToCallToArmy(party).Where(p => p != null);
                     var ldrPos = party.GetPosition2D;
-                    var sorted = vassalParties.Concat(modelParties).Distinct()
+
+                    var sorted = kingdomParties
+                        .Distinct()
                         .OrderBy(p => p.GetPosition2D.Distance(ldrPos));
                     merged = (createCount.HasValue ? sorted.Take(createCount.Value) : sorted).ToMBList();
                 }

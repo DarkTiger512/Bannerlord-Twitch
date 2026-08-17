@@ -35,8 +35,9 @@ namespace BannerlordTwitch
 
         public bool DisableAutomaticFulfillment { get; set; }
 
-        public Command GetCommand(string id) => EnabledCommands.FirstOrDefault(c =>
-            string.Equals(c.Name.ToString(), id, StringComparison.CurrentCultureIgnoreCase));
+        public Command GetCommand(string id) =>
+            EnabledCommands.FirstOrDefault(c => c.HasName(id))
+            ?? EnabledCommands.FirstOrDefault(c => c.HasAlias(id));
 
         public T GetGlobalConfig<T>(string id) => (T)GlobalConfigs.First(c => c.Id == id).Config;
 

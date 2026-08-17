@@ -1189,6 +1189,7 @@ Commands:
   Enabled: true
   Handler: FormationCommand
   HandlerConfig:
+    Detach: true
     Filter: false
   Help: ''
   HideHelp: false

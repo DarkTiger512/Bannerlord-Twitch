@@ -113,22 +113,22 @@ namespace BLTAdoptAHero.UI
             }
         }
 
-        public static void UpdateMapData()
+        public static void UpdateMapData(bool forceUpdate = false)
         {
-            UpdateMapDataInternal(false);
+            UpdateMapDataInternal(forceUpdate);
         }
 
         private static void UpdateMapDataInternal(bool forceUpdate)
         {
             var context = GlobalHost.ConnectionManager.GetHubContext<MapHub>();
 
-            if (BLTAdoptAHeroModule.CommonConfig?.ShowCampaignMapOverlay != true)
+            if (BLTAdoptAHeroModule.CommonConfig?.ShowCampaignMapOverlay != true && !forceUpdate)
             {
                 if (currentMapData != null)
                 {
                     context.Clients.All.updateMap(null);
                     currentMapData = null;
-                    lastMission = null;
+                    lastMission = null;                                     
                 }
                 return;
             }

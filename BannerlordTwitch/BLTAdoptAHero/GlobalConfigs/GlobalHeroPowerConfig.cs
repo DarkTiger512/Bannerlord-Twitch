@@ -13,7 +13,7 @@ using JetBrains.Annotations;
 
 namespace BLTAdoptAHero
 {
-    [LocDisplayName("{=v75UOuDM}Power Config")]
+    [LocDisplayName("{=GlobalHeroPowerConfig_Name}Power Config")]
     public class GlobalHeroPowerConfig : IUpdateFromDefault, ILoaded
     {
         #region Static
@@ -24,15 +24,15 @@ namespace BLTAdoptAHero
         #endregion
 
         #region User Editable
-        [LocDisplayName("{=9vUtdRu2}Power Definitions"),
-         LocDescription("{=ymGZUjoU}Defined powers"),
+        [LocDisplayName("{=GlobalHeroPowerConfig_PowerDefs_Name}Power Definitions"),
+         LocDescription("{=GlobalHeroPowerConfig_PowerDefs_Desc}Defined powers"),
          Editor(typeof(DerivedClassCollectionEditor<HeroPowerDefBase>),
              typeof(DerivedClassCollectionEditor<HeroPowerDefBase>)),
          UsedImplicitly]
         public ObservableCollection<HeroPowerDefBase> PowerDefs { get; set; } = new();
 
-        [LocDisplayName("{=5CD7bmuC}Disable Powers In Tournaments"),
-         LocDescription("{=K7uKtO90}Whether powers are disabled in a tournament"),
+        [LocDisplayName("{=GlobalHeroPowerConfig_DisablePowersInTournaments_Name}Disable Powers In Tournaments"),
+         LocDescription("{=GlobalHeroPowerConfig_DisablePowersInTournaments_Desc}Whether powers are disabled in a tournament"),
          UsedImplicitly]
         public bool DisablePowersInTournaments { get; set; } = true;
 

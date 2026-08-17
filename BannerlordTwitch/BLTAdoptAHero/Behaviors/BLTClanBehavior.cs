@@ -224,16 +224,18 @@ namespace BLTAdoptAHero
                 foreach (var bltHero in bltHeroes)
                 {
                     var spouse = bltHero.Spouse;
-                    if (spouse != null)
+                    if (spouse != null && !spouse.IsAdopted())
                     {                     
                         EquipBLTChildren(spouse);
                     }
                     foreach (var child in bltHero.Children)
                     {
-                        EquipBLTChildren(child);
+                        if (!child.IsAdopted())
+                            EquipBLTChildren(child);
                         foreach (var grandchild in child.Children)
                         {
-                            EquipBLTChildren(grandchild);
+                            if (!grandchild.IsAdopted())
+                                EquipBLTChildren(grandchild);
                         }
                     }
                 }
@@ -253,12 +255,12 @@ namespace BLTAdoptAHero
                     var armorEquipment = GetStandardNobleArmor(child);
                     if (armorEquipment != null)
                     {
-                        // Copy armor pieces only
-                        child.BattleEquipment[EquipmentIndex.Head] = armorEquipment[EquipmentIndex.Head];
-                        child.BattleEquipment[EquipmentIndex.Cape] = armorEquipment[EquipmentIndex.Cape];
-                        child.BattleEquipment[EquipmentIndex.Body] = armorEquipment[EquipmentIndex.Body];
-                        child.BattleEquipment[EquipmentIndex.Gloves] = armorEquipment[EquipmentIndex.Gloves];
-                        child.BattleEquipment[EquipmentIndex.Leg] = armorEquipment[EquipmentIndex.Leg];
+                        // Copy armor pieces only, but do not let sparse templates clear existing gear.
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Head);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Cape);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Body);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Gloves);
+                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Leg);
                     }
                 }
                     
@@ -269,6 +271,15 @@ namespace BLTAdoptAHero
                 if (child.GetSkillValue(DefaultSkills.Riding) > 100)
                 {
                     EquipHorse(child);
+                }
+            }
+
+            private static void CopyArmorSlotIfPresent(Hero hero, Equipment sourceEquipment, EquipmentIndex index)
+            {
+                var sourceItem = sourceEquipment[index];
+                if (!sourceItem.IsEmpty)
+                {
+                    hero.BattleEquipment[index] = sourceItem;
                 }
             }
 
@@ -284,13 +295,15 @@ namespace BLTAdoptAHero
                     r.EquipmentCulture == hero.Culture &&
                     r.EquipmentCategories.HasFlag(EquipmentCategories.IsLordTemplate));
 
-                // 2) Fallback to any if no noble found
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
-                        r.EquipmentCulture == hero.Culture);
+                        r.EquipmentCulture == hero.Culture &&
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsChildEquipmentTemplate) &&
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsTeenagerEquipmentTemplate));
                 }
 
+                //roster = roster.AllEquipments.RemoveAll(e => e as ItemObject && )
                 if (roster?.AllEquipments?.Count > 0)
                 {
                     return roster.AllEquipments[MBRandom.RandomInt(roster.AllEquipments.Count)];
