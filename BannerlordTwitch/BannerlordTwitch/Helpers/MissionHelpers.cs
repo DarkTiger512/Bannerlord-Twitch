@@ -2,7 +2,6 @@
 using SandBox.Conversation.MissionLogics;
 using SandBox.Missions.MissionLogics;
 using SandBox.Tournaments.MissionLogics;
-using SandBox.Missions.MissionLogics.Hideout;
 using SandBox;
 using SandBox.Missions;
 using StoryMode.Missions;

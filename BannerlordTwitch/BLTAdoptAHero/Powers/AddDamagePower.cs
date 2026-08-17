@@ -163,33 +163,12 @@ namespace BLTAdoptAHero.Powers
             Agent agent = null, DeactivationHandler deactivationHandler = null)
         {
             handlers.OnDoMeleeHit += OnDoMeleeHit;
-            handlers.OnDecideCrushedThrough += OnDecideCrushedThroughDelegate;
-            handlers.OnDecideMissileWeaponFlags += OnDecideMissileWeaponFlags;
             handlers.OnDoMissileHit += OnDoMissileHit;
             handlers.OnDecideWeaponCollisionReaction += OnDecideWeaponCollisionReaction;
             handlers.OnDoDamage += OnDoDamage;
             handlers.OnMissileCollision += OnMissileCollisionReaction;
             handlers.OnAddMissile += OnAddMissile;
             handlers.OnPostDoMeleeHit += OnPostDoMeleeHit;
-        }
-
-        private void OnDecideMissileWeaponFlags(Agent attackerAgent,
-            BLTAgentApplyDamageModel.DecideMissileWeaponFlagsParams args)
-        {
-            if (CutThroughChancePercent != 0 && MBRandom.RandomFloat * 100f < CutThroughChancePercent)
-            {
-                args.missileWeaponFlags |= WeaponFlags.CanPenetrateShield;
-                args.missileWeaponFlags |= WeaponFlags.MultiplePenetration;
-            }
-        }
-
-        private void OnDecideCrushedThroughDelegate(Agent attackerAgent,
-            Agent victimAgent, BLTAgentApplyDamageModel.DecideCrushedThroughParams meleeHitParams)
-        {
-            if (UnblockableChancePercent != 0 && MBRandom.RandomFloat * 100f < UnblockableChancePercent)
-            {
-                meleeHitParams.crushThrough = true;
-            }
         }
 
         private void OnDoMissileHit(Agent attackerAgent, Agent victimAgent,

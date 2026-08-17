@@ -179,7 +179,7 @@ namespace BLTAdoptAHero
             MissionAgentHandler instance,
             LocationCharacter locationCharacter,
             MatrixFrame spawnPointFrame,
-            WeakGameEntity spawnEntity,
+            GameEntity spawnEntity,
             bool noHorses,
             bool hasTorch
 );
@@ -188,7 +188,7 @@ namespace BLTAdoptAHero
         = (MissionAgentHandler_SpawnWanderingAgentWithInitialFrameDelegate)AccessTools.Method(
             typeof(MissionAgentHandler),
             "SpawnWanderingAgentWithInitialFrame",
-            new[] { typeof(LocationCharacter), typeof(MatrixFrame), typeof(WeakGameEntity), typeof(bool), typeof(bool) })
+            new[] { typeof(LocationCharacter), typeof(MatrixFrame), typeof(GameEntity), typeof(bool), typeof(bool) })
           .CreateDelegate(typeof(MissionAgentHandler_SpawnWanderingAgentWithInitialFrameDelegate));
 
 
@@ -323,14 +323,6 @@ namespace BLTAdoptAHero
                 return;
             }
 
-            if (CampaignHelpers.NavalDLC())
-            {
-                if (Mission.Current.IsNavalBattle)
-                    BLTSummonBehavior.Current.DoNextTick(() =>
-                    {
-                        NavalSummonHero.SummonInNavalBattle(adoptedHero, settings, context, onSuccess, onFailure);
-                    });
-            }
             else if (CampaignMission.Current.Location != null)
             {
                 SummonInLocation(adoptedHero, settings, context, onSuccess, onFailure);
@@ -403,14 +395,12 @@ namespace BLTAdoptAHero
             public Banner Banner => null;
             public int Seed => 0;
             public int UniqueSeed => 0;
-            public bool IsInSameArmyAsPlayer => false;
-
-            public TroopTraitsMask GetTraitsMask() => TroopTraitsMask.None;
             public void OnAgentRemoved(float agentHealth) { }
             public void OnScoreHit(BasicCharacterObject victim, BasicCharacterObject formationCaptain, int damage, bool isFatal, bool isTeamKill, WeaponComponentData attackerWeapon) { }
             public void SetBanner(Banner banner) { }
             public void SetKilled() { }
-            public void SetRouted(bool isOrderRetreat) { }
+            public void SetRouted() { }
+
             public void SetWounded() { }
         }
 
@@ -444,7 +434,7 @@ namespace BLTAdoptAHero
             Agent agent;
             if (MissionHelpers.InArenaPracticeMission())
             {
-                WeakGameEntity spawnEntity = default;
+                GameEntity spawnEntity = default;
                 var controller = Mission.Current.GetMissionBehavior<ArenaPracticeFightMissionController>();
                 var pos = ArenaPracticeFightMissionController_GetSpawnFrame(controller, false, false);
                 agent = MissionAgentHandler_SpawnWanderingAgentWithInitialFrame(missionAgentHandler, locationCharacter, pos, spawnEntity, true, false);
@@ -456,7 +446,7 @@ namespace BLTAdoptAHero
             else
             {
                 //agent = missionAgentHandler.SpawnLocationCharacter(locationCharacter);
-                agent = missionAgentHandler.SpawnDefaultLocationCharacter(locationCharacter);
+                agent = missionAgentHandler.SpawnLocationCharacter(locationCharacter);
             }
 
             agent.SetTeam(settings.OnPlayerSide
@@ -834,9 +824,9 @@ namespace BLTAdoptAHero
         //     agent.RegisterBlow(blow);
         // }
 
-        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(DefaultBattleMissionAgentSpawnLogic), nameof(DefaultBattleMissionAgentSpawnLogic.IsSideDepleted))]
+        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionAgentSpawnLogic), nameof(MissionAgentSpawnLogic.IsSideDepleted))]
         // ReSharper disable once RedundantAssignment
-        public static void IsSideDepletedPostfix(DefaultBattleMissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
+        public static void IsSideDepletedPostfix(MissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
         {
             __result = !__instance.Mission.Teams.Where(t => t.Side == side).Any(t => t.ActiveAgents.Any());
         }

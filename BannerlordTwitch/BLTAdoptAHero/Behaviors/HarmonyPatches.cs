@@ -6,7 +6,6 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Map;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -15,7 +14,6 @@ using BannerlordTwitch.Util;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Election;
 using TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Diplomacy;
-using static TaleWorlds.MountAndBlade.Launcher.Library.NativeMessageBox;
 using TaleWorlds.CampaignSystem.CampaignBehaviors.AiBehaviors;
 using TaleWorlds.CampaignSystem.Siege;
 using System.Linq;
@@ -688,12 +686,11 @@ namespace BLTAdoptAHero
                 return false; // blocked — war never ended, no re-declare needed
             }
 
-            var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
             if (k1 == playerKingdom || k2 == playerKingdom)
                 return true;
 
             // ── Case 2: AI trying to make peace with a BLT kingdom ───────────────
-            if (k1IsBLT != k2IsBLT)
+            if (k1.Leader.IsAdopted() != k2.Leader.IsAdopted())
             {
                 IFaction aiFaction = f1IsBLT ? faction2 : faction1;
                 IFaction bltFaction = f1IsBLT ? faction1 : faction2;
@@ -759,9 +756,7 @@ namespace BLTAdoptAHero
 
                 // If no active wars with real factions, allow normal disbanding
                 var kingdom = __instance.LeaderParty.MapFaction as Kingdom;
-                if (kingdom == null
-                    || !kingdom.FactionsAtWarWith.Any(f =>
-                        f.IsKingdomFaction || (f.IsClan && f.Fiefs.Any())))
+                if (kingdom == null || !kingdom.IsAtWarWith(Campaign.Current.Factions.Where(f => f.IsKingdomFaction || (f.IsClan && f.Fiefs.Any())).FirstOrDefault()))
                 {
                     ArmyCreationTimes.Remove(__instance);
                     return true;
@@ -843,7 +838,7 @@ namespace BLTAdoptAHero
 
             foreach (MobileParty mobileParty in town.Settlement.Parties)
             {
-                if (mobileParty.MapFaction.IsAtWarWith(town.Settlement.SiegeEvent.BesiegerCamp.MapFaction)
+                if (mobileParty.MapFaction.IsAtWarWith(town.Settlement.SiegeEvent.BesiegerCamp.LeaderParty.MapFaction)
                     && mobileParty.IsActive
                     && !mobileParty.IsVillager
                     && !mobileParty.IsCaravan
@@ -887,8 +882,8 @@ namespace BLTAdoptAHero
                 if (!__instance.HasWinner)
                     return;
 
-                if (__instance.RetreatingSide != BattleSideEnum.None)
-                    return;
+                //if (__instance.RetreatingSide != BattleSideEnum.None)
+                //    return;
 
                 var defeatedSide = __instance.GetMapEventSide(__instance.DefeatedSide);
                 if (defeatedSide == null)
@@ -951,10 +946,6 @@ namespace BLTAdoptAHero
                     return true;
 
                 var mapEvent = party.MapEvent ?? party.Army?.LeaderParty?.MapEvent;
-
-                // Ignore naval blockades
-                if (mapEvent != null && (mapEvent.IsBlockade || mapEvent.IsBlockadeSallyOut))
-                    return true;
 
                 bool isInSiegingParty =
                     party.BesiegedSettlement != null ||
@@ -1042,45 +1033,45 @@ namespace BLTAdoptAHero
     ///   • Moves the leader party toward it (replicating SendLeaderPartyToReachablePointAroundPosition).
     ///   • Returns false to skip the vanilla body entirely.
     /// </summary>
-    [HarmonyPatch(typeof(Army), "FindBestGatheringSettlementAndMoveTheLeader")]
-    internal static class BLT_ClanArmyFindGatheringPatch
-    {
-        [HarmonyPrefix]
-        static bool Prefix(Army __instance, Settlement focusSettlement)
-        {
-            try
-            {
-                if (__instance.Kingdom != null) return true;
-
-                var gather = BLTClanArmyBehavior.FindClanGatherSettlement(__instance)
-                             ?? focusSettlement;
-
-                if (gather == null)
-                {
-                    __instance.LeaderParty.SetMoveModeHold();
-                    return false;
-                }
-
-                __instance.AiBehaviorObject = gather;
-
-                __instance.LeaderParty.SetMoveGoToPoint(
-                    NavigationHelper.FindReachablePointAroundPosition(
-                        gather.GatePosition,
-                        MobileParty.NavigationType.Default,
-                        __instance.GatheringPositionMaxDistanceToTheSettlement,
-                        __instance.GatheringPositionMinDistanceToTheSettlement,
-                        false),
-                    __instance.LeaderParty.NavigationCapability);
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_ClanArmyFindGatheringPatch error: {ex}");
-                return true;
-            }
-        }
-    }
+    //[HarmonyPatch(typeof(Army), "FindBestGatheringSettlementAndMoveTheLeader")]
+    //internal static class BLT_ClanArmyFindGatheringPatch
+    //{
+    //    [HarmonyPrefix]
+    //    static bool Prefix(Army __instance, Settlement focusSettlement)
+    //    {
+    //        try
+    //        {
+    //            if (__instance.Kingdom != null) return true;
+    //
+    //            var gather = BLTClanArmyBehavior.FindClanGatherSettlement(__instance)
+    //                         ?? focusSettlement;
+    //
+    //            if (gather == null)
+    //            {
+    //                __instance.LeaderParty.SetMoveModeHold();
+    //                return false;
+    //            }
+    //
+    //            __instance.AiBehaviorObject = gather;
+    //
+    //            __instance.LeaderParty.SetMoveGoToPoint(
+    //                NavigationHelper.FindReachablePointAroundPosition(
+    //                    gather.GatePosition,
+    //                    MobileParty.NavigationType.Default,
+    //                    __instance.GatheringPositionMaxDistanceToTheSettlement,
+    //                    __instance.GatheringPositionMinDistanceToTheSettlement,
+    //                    false),
+    //                __instance.LeaderParty.NavigationCapability);
+    //
+    //            return false;
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            Log.Error($"[BLT] BLT_ClanArmyFindGatheringPatch error: {ex}");
+    //            return true;
+    //        }
+    //    }
+    //}
 
     #endregion
 

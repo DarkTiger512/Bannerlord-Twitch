@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug1\</OutputPath>
   </PropertyGroup>
   <Import Project="$(SolutionDir)BLTProperties.targets" />
-  <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
+  <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'false'">
     <PackageReference Include="Bannerlord.ReferenceAssemblies" />
   </ItemGroup>
   <ItemGroup>
@@ -111,8 +111,6 @@
     <Compile Include="Actions\DuelCommand.cs" />
     <Compile Include="Actions\FollowCommand.cs" />
     <Compile Include="Actions\GuardCommand.cs" />
-    <Compile Include="Actions\NavalHarmonyPatches.cs" />
-    <Compile Include="Actions\NavalSummonHero.cs" />
     <Compile Include="Actions\VassalCommand.cs" />
     <Compile Include="Actions\FormationCommand.cs" />
     <Compile Include="Actions\EquipCustomItem.cs" />
@@ -207,8 +205,6 @@
     <Compile Include="GlobalConfigs\GlobalHeroClassConfig.cs" />
     <Compile Include="GlobalConfigs\GlobalHeroPowerConfig.cs" />
     <Compile Include="GlobalConfigs\GlobalTournamentConfig.cs" />
-    <Compile Include="IndependentsOverhaul\BLTClanArmyBehavior.cs" />
-    <Compile Include="IndependentsOverhaul\BLTClanDiplomacyBehavior.cs" />
     <Compile Include="Models\BLTUpgradeModels.cs" />
     <Compile Include="Overlay\CampaignMap\MapHub.cs" />
     <Compile Include="Overlay\MissionInfo\MissionInfo.cs" />

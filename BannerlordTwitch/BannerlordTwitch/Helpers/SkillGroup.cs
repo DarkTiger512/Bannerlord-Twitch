@@ -178,7 +178,6 @@ namespace BannerlordTwitch.Helpers
                         yield return SkillsEnum.Bow;
                         break;
                     case ItemObject.ItemTypeEnum.Thrown:
-                    case ItemObject.ItemTypeEnum.Sling:
                         yield return SkillsEnum.Throwing;
                         break;
                     case ItemObject.ItemTypeEnum.Crossbow:

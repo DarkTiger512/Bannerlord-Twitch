@@ -13,7 +13,6 @@ using BLTAdoptAHero;
 using BLTAdoptAHero.Annotations;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Party.PartyComponents;
@@ -389,10 +388,7 @@ namespace BLTAdoptAHero.Actions
                     HandleBannerCommand(settings, adoptedHero, bannerCode, onSuccess, onFailure);
                     break;
                 case var _ when command.ToLower() == shipCommand:
-                    if (CampaignHelpers.NavalDLC())
-                        HandleShipCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
-                    else
-                        onFailure("NavalDLC not enabled.".Translate());
+                        onFailure("Game version 1.2.12, no naval gameplay available.".Translate());
                     break;
                 case var _ when command.ToLower() == homeCommand:
                     HandleHomeCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
@@ -498,12 +494,10 @@ namespace BLTAdoptAHero.Actions
             }
             var newClan = Clan.CreateClan(fullClanName);
             newClan.ChangeClanName(new TextObject(fullClanName), new TextObject(fullClanName));
-            newClan.Culture = adoptedHero.Culture;
-            newClan.Banner = Banner.CreateRandomBanner();
-            //newClan.Initialize(new TextObject(fullClanName), new TextObject(fullClanName), clanCulture, clanBanner);
+            newClan.InitializeClan(new TextObject(fullClanName), new TextObject(fullClanName), adoptedHero.Culture, Banner.CreateRandomBanner());
             newClan.Kingdom = null;
             newClan.AddRenown(settings.Renown, false);
-            newClan.SetInitialHomeSettlement(Settlement.All.Where(s => s.Culture == adoptedHero.Culture).SelectRandom() ?? (Settlement.All.SelectRandom()));
+            newClan.UpdateHomeSettlement(Settlement.All.Where(s => s.Culture == adoptedHero.Culture).SelectRandom() ?? (Settlement.All.SelectRandom()));
             adoptedHero.Clan = newClan;
             if ((adoptedHero.Occupation != Occupation.Lord) && (adoptedHero.Clan != null))
             {
@@ -512,7 +506,6 @@ namespace BLTAdoptAHero.Actions
             }
             newClan.SetLeader(adoptedHero);
             newClan.IsNoble = true;
-            CampaignEventDispatcher.Instance.OnClanCreated(newClan, false);
 
             adoptedHero.Gold = 50000;
              
@@ -525,7 +518,8 @@ namespace BLTAdoptAHero.Actions
 
             if (adoptedHero?.PartyBelongedTo?.Party?.MobileParty == null && !adoptedHero.IsPartyLeader)
             {
-                var newParty = Helpers.MobilePartyHelper.CreateNewClanMobileParty(adoptedHero, newClan);
+                Helpers.MobilePartyHelper.CreateNewClanMobileParty(adoptedHero, newClan, out bool temp);
+                var newParty = adoptedHero.PartyBelongedTo;
                 
                 var retinue = BLTAdoptAHeroCampaignBehavior.Current.GetRetinue(adoptedHero).ToList();
                 var retinue2 = BLTAdoptAHeroCampaignBehavior.Current.GetRetinue2(adoptedHero).ToList();
@@ -545,13 +539,12 @@ namespace BLTAdoptAHero.Actions
                             newParty.MemberRoster.AddToCounts(retinue2Troop, 1);
                         }
                     }
-                    float num = 2f * Campaign.Current.EstimatedAverageLordPartySpeed * (float)CampaignTime.HoursInDay;
+                    float num = 5f * (float)CampaignTime.HoursInDay;
                     foreach (Settlement settlement in Campaign.Current.Settlements)
                     {
                         if (settlement.IsVillage)
                         {
-                            float num2;
-                            float distance = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, settlement, false, newParty.NavigationCapability, out num2);
+                            float distance = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, settlement);
                             if (distance < num)
                             {
                                 foreach (ValueTuple<ItemObject, float> valueTuple in settlement.Village.VillageType.Productions)
@@ -694,12 +687,12 @@ namespace BLTAdoptAHero.Actions
                 }
             }
             clanStats.Append("{=Sg11nEUe}Tier: {tier}({renown}) | ".Translate(("tier", adoptedHero.Clan.Tier.ToString()), ("renown", Math.Round(adoptedHero.Clan.Renown).ToString())));
-            clanStats.Append("{=ZFGikYn8}Strength: {strength} | ".Translate(("strength", Math.Round(adoptedHero.Clan.CurrentTotalStrength).ToString())));
+            clanStats.Append("{=ZFGikYn8}Strength: {strength} | ".Translate(("strength", Math.Round(adoptedHero.Clan.TotalStrength).ToString())));
             if (adoptedHero.IsPrisoner && adoptedHero.PartyBelongedToAsPrisoner.IsMobile)
                 clanStats.Append("{=zVDODxiN}Prisoner: {prisoner} | ".Translate(("prisoner", adoptedHero.PartyBelongedToAsPrisoner.Name.ToString())));
             if (adoptedHero.IsPrisoner && adoptedHero.PartyBelongedToAsPrisoner.IsSettlement)
                 clanStats.Append("{=zVDODxiN}Prisoner: {prisoner} | ".Translate(("prisoner", adoptedHero.PartyBelongedToAsPrisoner.Settlement.Name.ToString())));
-            int income = Campaign.Current.Models.ClanFinanceModel.CalculateClanGoldChange(adoptedHero.Clan).RoundedResultNumber;
+            int income = (int)Campaign.Current.Models.ClanFinanceModel.CalculateClanGoldChange(adoptedHero.Clan).ResultNumber;
             clanStats.Append("{=SDVLj0nw}Wealth: {wealth}({income}) | ".Translate(("wealth", adoptedHero.Clan.Leader.Gold.ToString()),("income", (income > 0 ? "+" : "")+income)));
             clanStats.Append("{=eHJYAZha}Members: {members} ".Translate(("members", adoptedHero.Clan.Heroes.Count.ToString())));
             int parties = 0;
@@ -713,11 +706,9 @@ namespace BLTAdoptAHero.Actions
                     if (party == null || party.LeaderHero == null) continue;
 
                     if (party.IsLordParty) parties += 1;
-                    if (CampaignHelpers.NavalDLC())
-                        ships += party.Ships.Count;
                 }
             }
-            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.WarPartyLimit)));
+            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.CommanderLimit)));
             if (CampaignHelpers.NavalDLC())
                 clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
             if (adoptedHero.Clan.Fiefs.Count >= 1)
@@ -906,74 +897,6 @@ namespace BLTAdoptAHero.Actions
             onSuccess($"Your hero has left {oldClan.Name}");
         }
 
-        private void HandleShipCommand(Settings settings, Hero adoptedHero, string desiredName, Action<string> onSuccess, Action<string> onFailure)
-        {
-            if (!settings.BuyShipEnabled)
-            {
-                onFailure("Ship buying is disabled");
-                return;
-            }
-            if (adoptedHero.Clan == null)
-            {
-                onFailure("{=yPeUCq8t}You are not in a clan".Translate());
-                return;
-            }
-            var cult = adoptedHero.Culture;
-            var clan = adoptedHero.Clan;
-            var party = adoptedHero.PartyBelongedTo;
-            int limit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(clan, clan.Tier) * 3;
-            if (CampaignHelpers.NavalDLC())
-                if (clan.WarPartyComponents.Sum(w => w.Party.Ships.Count()) >= limit)
-                {
-                    onFailure($"Max ships ({limit})");
-                    return;
-                }
-            if (party == null || party.MapEvent != null)
-            {
-                party = clan.WarPartyComponents.Select(p => p.MobileParty).Where(p => p.MapEvent == null).SelectRandom();
-            }
-            if (party == null)
-            {
-                onFailure("Your clan has no valid parties");
-                return;
-            }
-
-            ShipHull.ShipType type;
-
-            switch (desiredName.ToLower())
-            {
-                case "light":
-                    type = ShipHull.ShipType.Light;
-                    break;
-
-                case "medium":
-                    type = ShipHull.ShipType.Medium;
-                    break;
-
-                case "heavy":
-                    type = ShipHull.ShipType.Heavy;
-                    break;
-
-                default:
-                    onFailure("invalid ship type. light/medium/heavy");
-                    return;
-            }
-
-            var hulls = cult.AvailableShipHulls.Where(h => h.Type == type).ToList();
-            if (hulls == null || hulls.Count == 0) 
-                hulls = MBObjectManager.Instance.GetObjectTypeList<ShipHull>().Where(h => h.Type == type).ToList();
-
-            var hull = hulls.SelectRandom();
-            if (hull == null)
-            {
-                onFailure("No hulls available");
-                return;
-            }
-            Ship newShip = new Ship(hull);
-            ChangeShipOwnerAction.ApplyByProduction(party.Party, newShip);
-            onSuccess($"Bought {desiredName.ToLower()} ship: {hull.Name}");
-        }
-
         private void HandleBuyTitleCommand(Settings settings, Hero adoptedHero, Action<string> onSuccess, Action<string> onFailure)
         {
             if ((adoptedHero.Occupation == Occupation.Lord) && (!settings.BuyTitleEnabled))
@@ -1061,21 +984,22 @@ namespace BLTAdoptAHero.Actions
             }
             try
             {
-                if (Banner.TryGetBannerDataFromCode(bannerCode, out var bannerDataList))
+                if (Banner.GetBannerDataFromBannerCode(bannerCode).IsEmpty())
                 {
                     var newBanner = new Banner(bannerCode);  // creates a Banner object directly from the code                  
                     var color1 = newBanner.GetPrimaryColor();
                     var color2 = newBanner.GetFirstIconColor();
 
-
-                    adoptedHero.Clan.Banner = newBanner;
-                    adoptedHero.Clan.Banner.ChangeBackgroundColor(color1, color2);
-                    adoptedHero.Clan.Color = color1;
-                    adoptedHero.Clan.Color2 = color2;
+                    var clan = adoptedHero.Clan;
+                    var kingdom = clan?.Kingdom;
+                    clan.InitializeClan(clan.Name, clan.InformalName, clan.Culture, newBanner);
+                    clan.Banner.ChangeBackgroundColor(color1, color2);
+                    clan.Color = color1;
+                    clan.Color2 = color2;
                     if (adoptedHero.IsKingdomLeader)
                     {
-                        adoptedHero.Clan.Kingdom.Banner = newBanner;
-                        adoptedHero.Clan.Kingdom.Banner.ChangeBackgroundColor(color1, color2);
+                        kingdom.InitializeKingdom(kingdom.Name, kingdom.InformalName, kingdom.Culture, newBanner, color1, color2, kingdom.InitialHomeLand, kingdom.EncyclopediaText, kingdom.EncyclopediaTitle, kingdom.EncyclopediaRulerTitle);
+                        kingdom.Banner.ChangeBackgroundColor(color1, color2);
                     }
                 }
                 onSuccess("{=BiiO7KQx}Banner updated successfully!".Translate());
@@ -1133,7 +1057,7 @@ namespace BLTAdoptAHero.Actions
                 var vassals = VassalBehavior.Current?.GetVassalClans(adoptedHero.Clan);
                 foreach (Clan vassal in vassals)
                 {
-                    if (vassal.Fiefs.Count > 0) { vassal.ConsiderAndUpdateHomeSettlement(); continue; }
+                    if (vassal.Fiefs.Count > 0) { vassal.UpdateHomeSettlement(vassal.Settlements.FirstOrDefault()); continue; }
 
                     var vassalHomeProp = typeof(Clan).GetProperty(
                         "HomeSettlement",
@@ -1174,7 +1098,7 @@ namespace BLTAdoptAHero.Actions
                 var vassals = VassalBehavior.Current?.GetVassalClans(adoptedHero.Clan);
                 foreach (Clan vassal in vassals)
                 {
-                    if (vassal.Fiefs.Count > 0) { vassal.ConsiderAndUpdateHomeSettlement(); continue; }
+                    if (vassal.Fiefs.Count > 0) { vassal.Settlements.FirstOrDefault(); continue; }
 
                     var vassalHomeProp = typeof(Clan).GetProperty(
                         "HomeSettlement",

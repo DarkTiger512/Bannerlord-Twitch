@@ -170,7 +170,7 @@ namespace BLTAdoptAHero
 
             var equipment = agent.Equipment;
             // --- Main hand ---
-            var mainIndex = agent.GetPrimaryWieldedItemIndex();
+            var mainIndex = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
             var mainItemObj = mainIndex != EquipmentIndex.None ? equipment[mainIndex].Item : null;
             string weaponInfo = "Unarmed";
 
@@ -181,8 +181,7 @@ namespace BLTAdoptAHero
                     || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Crossbow
                     || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Pistol
                     || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Musket
-                    || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Thrown
-                    || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Sling)
+                    || mainItemObj.ItemType == ItemObject.ItemTypeEnum.Thrown)
                 {
                     int ammo = equipment.GetAmmoAmount(mainIndex);
                     int maxAmmo = equipment.GetMaxAmmo(mainIndex);
@@ -193,7 +192,7 @@ namespace BLTAdoptAHero
             }
 
             // --- Off-hand ---
-            var offIndex = agent.GetOffhandWieldedItemIndex();
+            var offIndex = agent.GetWieldedItemIndex(Agent.HandIndex.OffHand);
             var offItemObj = offIndex != EquipmentIndex.None ? equipment[offIndex].Item : null;
 
             if (offItemObj != null)
@@ -228,7 +227,6 @@ namespace BLTAdoptAHero
                 {
                     case ItemObject.ItemTypeEnum.Bow:
                     case ItemObject.ItemTypeEnum.Crossbow:
-                    case ItemObject.ItemTypeEnum.Sling:
                     case ItemObject.ItemTypeEnum.Pistol:
                     case ItemObject.ItemTypeEnum.Musket:
                     case ItemObject.ItemTypeEnum.Thrown:

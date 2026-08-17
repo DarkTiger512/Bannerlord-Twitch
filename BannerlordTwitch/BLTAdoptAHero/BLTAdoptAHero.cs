@@ -12,9 +12,7 @@ using JetBrains.Annotations;
 using SandBox.GauntletUI.Missions;
 using SandBox.Tournaments.MissionLogics;
 using SandBox.View;
-using SandBox.View.Missions.NameMarkers;
 using SandBox.ViewModelCollection.Missions.NameMarker;
-using SandBox.ViewModelCollection.Missions.NameMarker.Targets;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
@@ -25,11 +23,12 @@ using TaleWorlds.MountAndBlade.View;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Localization;
-using static TaleWorlds.MountAndBlade.Launcher.Library.NativeMessageBox;
 using TaleWorlds.CampaignSystem.ComponentInterfaces;
 using BLTAdoptAHero.Models;
 using BLTAdoptAHero.Actions;
 using BLTAdoptAHero.Behaviors;
+using TaleWorlds.MountAndBlade.View.Screens;
+using SandBox.View.Missions;
 
 #pragma warning disable 649
 
@@ -96,67 +95,14 @@ namespace BLTAdoptAHero
         }
 
 
-        //[UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionScreen), "TaleWorlds.MountAndBlade.IMissionSystemHandler.OnMissionAfterStarting")]
-        //static void OnMissionAfterStartingPostFix(MissionScreen __instance)
-        //{
-        //    if (__instance.Mission.GetMissionBehavior<MissionNameMarkerUIHandler>() == null
-        //    && (__instance.Mission.GetMissionBehavior<BattleSpawnLogic>() != null
-        //        || __instance.Mission.GetMissionBehavior<TournamentFightMissionController>() != null))
-        //    {
-        //        __instance.AddMissionView(SandBoxViewCreator.CreateMissionNameMarkerUIHandler(__instance.Mission));
-        //    }
-        //}
-
-        [HarmonyPatch(typeof(MissionAgentMarkerTargetVM))]
-        [HarmonyPatch(MethodType.Constructor)]
-        [HarmonyPatch(new[] { typeof(Agent) })]
-        public static class MissionAgentMarkerTargetVM_Ctor_Patch
+        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionScreen), "TaleWorlds.MountAndBlade.IMissionSystemHandler.OnMissionAfterStarting")]
+        static void OnMissionAfterStartingPostFix(MissionScreen __instance)
         {
-            static void Postfix(MissionAgentMarkerTargetVM __instance, Agent target)
+            if (__instance.Mission.GetMissionBehavior<MissionNameMarkerUIHandler>() == null
+            && (__instance.Mission.GetMissionBehavior<BattleSpawnLogic>() != null
+                || __instance.Mission.GetMissionBehavior<TournamentFightMissionController>() != null))
             {
-                if (!(MissionHelpers.InSiegeMission() ||
-                      MissionHelpers.InFieldBattleMission() /*||
-                      MissionHelpers.InHideOutMission()*/))
-                    return;
-
-                bool isEnemy =
-                    (Agent.Main != null && target.IsEnemyOf(Agent.Main)) ||
-                    (Mission.Current.PlayerTeam?.IsValid == true && target.Team.IsEnemyOf(Mission.Current.PlayerTeam));
-
-                bool isFriendly =
-                    (Agent.Main != null && target.IsFriendOf(Agent.Main)) ||
-                    (Mission.Current.PlayerTeam?.IsValid == true && target.Team.IsFriendOf(Mission.Current.PlayerTeam));
-
-                if (isEnemy)
-                {
-                    __instance.NameType = "Enemy";
-                    if (TwitchDevUsers.Developers.Contains(__instance.Name))
-                    {
-                        __instance.Name = __instance.Name.Replace(" [Dev]", "");
-                    }
-                    else
-                    {
-                        __instance.Name = __instance.Name.Replace(" [BLT]", "");
-                    }
-                    __instance.IsFriendly = false;
-                    __instance.IsEnemy = true;
-                    __instance.IsTracked = true;
-                }
-                else if (isFriendly)
-                {
-                    __instance.NameType = "Friendly";
-                    if (TwitchDevUsers.Developers.Contains(__instance.Name))
-                    {
-                        __instance.Name = __instance.Name.Replace(" [Dev]", "");
-                    }
-                    else
-                    {
-                        __instance.Name = __instance.Name.Replace(" [BLT]", "");
-                    }
-                    __instance.IsFriendly = true;
-                    __instance.IsEnemy = false;
-                    __instance.IsTracked = true;
-                }
+                __instance.AddMissionView(SandBoxViewCreator.CreateMissionNameMarkerUIHandler(__instance.Mission));
             }
         }
 
@@ -185,7 +131,6 @@ namespace BLTAdoptAHero
             {
                 harmony = new Harmony("mod.bannerlord.bltadoptahero");
                 harmony.PatchAll(); 
-                NavalHarmonyPatches.ApplyIfAvailable(harmony);
             }
         }
 
@@ -266,94 +211,39 @@ namespace BLTAdoptAHero
             this.previousModel = previousModel;
         }
 
-        public override float ApplyDamageAmplifications(in AttackInformation attackInformation, in AttackCollisionData collisionData, float baseDamage)
+        public override float CalculateAlternativeAttackDamage(BasicCharacterObject attackerCharacter, WeaponComponentData weapon)
         {
-            return previousModel.ApplyDamageAmplifications(in attackInformation, in collisionData, baseDamage);
+            return previousModel.CalculateAlternativeAttackDamage(attackerCharacter, weapon);
         }
 
-        public override float ApplyDamageReductions(in AttackInformation attackInformation, in AttackCollisionData collisionData, float baseDamage)
+        public override float CalculateDamage(in AttackInformation attackInformation, in AttackCollisionData collisionData, in MissionWeapon weapon, float baseDamage)
         {
-            return previousModel.ApplyDamageReductions(in attackInformation, in collisionData, baseDamage);
+            return previousModel.CalculateDamage(attackInformation, collisionData, weapon, baseDamage);
         }
 
-        public override float ApplyDamageScaling(in AttackInformation attackInformation, in AttackCollisionData collisionData, float baseDamage)
+        public override void CalculateDefendedBlowStunMultipliers(Agent attackerAgent, Agent defenderAgent, CombatCollisionResult collisionResult, WeaponComponentData attackerWeapon, WeaponComponentData defenderWeapon, out float attackerStunMultiplier, out float defenderStunMultiplier)
         {
-            return previousModel.ApplyDamageScaling(in attackInformation, in collisionData, baseDamage);
-        }
-
-        public override float ApplyGeneralDamageModifiers(in AttackInformation attackInformation, in AttackCollisionData collisionData, float baseDamage)
-        {
-            return previousModel.ApplyGeneralDamageModifiers(in attackInformation, in collisionData, baseDamage);
-        }
-
-        public override float CalculateAlternativeAttackDamage(in AttackInformation attackInformation, in AttackCollisionData collisionData, WeaponComponentData weapon)
-        {
-            return previousModel.CalculateAlternativeAttackDamage(in attackInformation, in collisionData, weapon);
-        }
-
-        public new float CalculateDamage(in AttackInformation attackInformation, in AttackCollisionData collisionData, float baseDamage)
-        {
-            return previousModel.CalculateDamage(in attackInformation, in collisionData, baseDamage);
-        }
-
-        public override void CalculateDefendedBlowStunMultipliers(
-        Agent attackerAgent,
-        Agent defenderAgent,
-        CombatCollisionResult collisionResult,
-        WeaponComponentData attackerWeapon,
-        WeaponComponentData defenderWeapon,
-        ref float attackerStunMultiplier,
-        ref float defenderStunMultiplier)
-        {
-            previousModel.CalculateDefendedBlowStunMultipliers(
-                attackerAgent,
-                defenderAgent,
-                collisionResult,
-                attackerWeapon,
-                defenderWeapon,
-                ref attackerStunMultiplier,
-                ref defenderStunMultiplier
-            );
-        }
-
-        public override float CalculateHullFireDamage(float baseFireDamage, IShipOrigin shipOrigin)
-        {
-            if (CampaignHelpers.NavalDLC())
-                return previousModel.CalculateHullFireDamage(baseFireDamage, shipOrigin);
-            return baseFireDamage;
+            previousModel.CalculateDefendedBlowStunMultipliers(attackerAgent, defenderAgent, collisionResult, attackerWeapon, defenderWeapon, out attackerStunMultiplier, out defenderStunMultiplier);
         }
 
         public override float CalculatePassiveAttackDamage(BasicCharacterObject attackerCharacter, in AttackCollisionData collisionData, float baseDamage)
         {
-            return previousModel.CalculatePassiveAttackDamage(attackerCharacter, in collisionData, baseDamage);
-        }
-
-        public override float CalculateRemainingMomentum(float originalMomentum, in Blow b, in AttackCollisionData collisionData, Agent attacker, Agent victim, in MissionWeapon attackerWeapon, bool isCrushThrough)
-        {
-            return previousModel.CalculateRemainingMomentum(originalMomentum, in b, in collisionData, attacker, victim, in attackerWeapon, isCrushThrough);
-        }
-
-        public override float CalculateSailFireDamage(Agent attackerAgent, IShipOrigin shipOrigin, float baseDamage, bool damageFromShipMachine)
-        {
-            return previousModel.CalculateSailFireDamage(attackerAgent, shipOrigin, baseDamage, damageFromShipMachine);
+            return previousModel.CalculatePassiveAttackDamage(attackerCharacter, collisionData, baseDamage);
         }
 
         public override float CalculateShieldDamage(in AttackInformation attackInformation, float baseDamage)
         {
-            return previousModel.CalculateShieldDamage(in attackInformation, baseDamage);
+            return previousModel.CalculateShieldDamage(attackInformation, baseDamage);
         }
 
         public override float CalculateStaggerThresholdDamage(Agent defenderAgent, in Blow blow)
         {
-            return previousModel.CalculateStaggerThresholdDamage(defenderAgent, in blow);
+            return previousModel.CalculateStaggerThresholdDamage(defenderAgent, blow);
         }
-
-        public override bool CanWeaponDealSneakAttack(in AttackInformation attackInformation, WeaponComponentData weapon)
-            => previousModel.CanWeaponDealSneakAttack(in attackInformation, weapon);
 
         public override bool CanWeaponDismount(Agent attackerAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.CanWeaponDismount(attackerAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.CanWeaponDismount(attackerAgent, attackerWeapon, blow, collisionData);
         }
 
         public override bool CanWeaponIgnoreFriendlyFireChecks(WeaponComponentData weapon)
@@ -363,98 +253,52 @@ namespace BLTAdoptAHero
 
         public override bool CanWeaponKnockback(Agent attackerAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.CanWeaponKnockback(attackerAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.CanWeaponKnockback(attackerAgent, attackerWeapon, blow, collisionData);
         }
 
         public override bool CanWeaponKnockDown(Agent attackerAgent, Agent victimAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.CanWeaponKnockDown(attackerAgent, victimAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.CanWeaponKnockDown(attackerAgent, victimAgent, attackerWeapon, blow, collisionData);
         }
 
         public override bool DecideAgentDismountedByBlow(Agent attackerAgent, Agent victimAgent, in AttackCollisionData collisionData, WeaponComponentData attackerWeapon, in Blow blow)
         {
-            return previousModel.DecideAgentDismountedByBlow(attackerAgent, victimAgent, in collisionData, attackerWeapon, in blow);
+            return previousModel.DecideAgentDismountedByBlow(attackerAgent, victimAgent, collisionData, attackerWeapon, blow);
         }
 
         public override bool DecideAgentKnockedBackByBlow(Agent attackerAgent, Agent victimAgent, in AttackCollisionData collisionData, WeaponComponentData attackerWeapon, in Blow blow)
         {
-            return previousModel.DecideAgentKnockedBackByBlow(attackerAgent, victimAgent, in collisionData, attackerWeapon, in blow);
+            return previousModel.DecideAgentKnockedBackByBlow(attackerAgent, victimAgent, collisionData, attackerWeapon, blow);
         }
 
         public override bool DecideAgentKnockedDownByBlow(Agent attackerAgent, Agent victimAgent, in AttackCollisionData collisionData, WeaponComponentData attackerWeapon, in Blow blow)
         {
-            return previousModel.DecideAgentKnockedDownByBlow(attackerAgent, victimAgent, in collisionData, attackerWeapon, in blow);
+            return previousModel.DecideAgentKnockedDownByBlow(attackerAgent, victimAgent, collisionData, attackerWeapon, blow);
         }
 
-        public override bool DecideAgentShrugOffBlow(Agent victimAgent, in AttackCollisionData collisionData, in Blow blow)
+        public override bool DecideAgentShrugOffBlow(Agent victimAgent, AttackCollisionData collisionData, in Blow blow)
         {
-            return previousModel.DecideAgentShrugOffBlow(victimAgent, collisionData, in blow);
+            return previousModel.DecideAgentShrugOffBlow(victimAgent, collisionData, blow);
         }
 
-        public class DecideCrushedThroughParams
+        public override bool DecideCrushedThrough(Agent attackerAgent, Agent defenderAgent, float totalAttackEnergy, Agent.UsageDirection attackDirection, StrikeType strikeType, WeaponComponentData defendItem, bool isPassiveUsageHit)
         {
-            public float totalAttackEnergy;
-            public Agent.UsageDirection attackDirection;
-            public StrikeType strikeType;
-            public WeaponComponentData defendItem;
-            public bool isPassiveUsageHit;
-            public bool crushThrough; // set this to override the behaviour
-        }
-        public override bool DecideCrushedThrough(Agent attackerAgent, Agent defenderAgent, float totalAttackEnergy,
-            Agent.UsageDirection attackDirection, StrikeType strikeType, WeaponComponentData defendItem, bool isPassiveUsageHit)
-        {
-            bool originalResult = previousModel.DecideCrushedThrough(attackerAgent, defenderAgent, totalAttackEnergy, attackDirection, strikeType, defendItem, isPassiveUsageHit);
-            var args = new DecideCrushedThroughParams
-            {
-                totalAttackEnergy = totalAttackEnergy,
-                attackDirection = attackDirection,
-                strikeType = strikeType,
-                defendItem = defendItem,
-                isPassiveUsageHit = isPassiveUsageHit,
-                crushThrough = originalResult,
-            };
-
-            BLTHeroPowersMissionBehavior.PowerHandler?.CallHandlersForAgentPair(attackerAgent, defenderAgent,
-                handlers => handlers.DecideCrushedThrough(attackerAgent, defenderAgent, args));
-
-            return args.crushThrough;
+            return previousModel.DecideCrushedThrough(attackerAgent, defenderAgent, totalAttackEnergy, attackDirection, strikeType, defendItem, isPassiveUsageHit);
         }
 
-        public class DecideMissileWeaponFlagsParams
+        public override void DecideMissileWeaponFlags(Agent attackerAgent, MissionWeapon missileWeapon, ref WeaponFlags missileWeaponFlags)
         {
-            public MissionWeapon missileWeapon;
-            public WeaponFlags missileWeaponFlags;
-        }
-        public override void DecideMissileWeaponFlags(Agent attackerAgent, in MissionWeapon missileWeapon, ref WeaponFlags missileWeaponFlags)
-        {
-            previousModel.DecideMissileWeaponFlags(attackerAgent, in missileWeapon, ref missileWeaponFlags);
-            var args = new DecideMissileWeaponFlagsParams
-            {
-                missileWeapon = missileWeapon,
-                missileWeaponFlags = missileWeaponFlags,
-            };
-
-            if (BLTHeroPowersMissionBehavior.PowerHandler?.CallHandlersForAgent(attackerAgent,
-                handlers => handlers.DecideMissileWeaponFlags(attackerAgent, args)
-                ) == true)
-            {
-                missileWeaponFlags = args.missileWeaponFlags;
-            }
+            previousModel.DecideMissileWeaponFlags(attackerAgent, missileWeapon, ref missileWeaponFlags);
         }
 
         public override bool DecideMountRearedByBlow(Agent attackerAgent, Agent victimAgent, in AttackCollisionData collisionData, WeaponComponentData attackerWeapon, in Blow blow)
         {
-            return previousModel.DecideMountRearedByBlow(attackerAgent, victimAgent, in collisionData, attackerWeapon, in blow);
+            return previousModel.DecideMountRearedByBlow(attackerAgent, victimAgent, collisionData, attackerWeapon, blow);
         }
 
         public override MeleeCollisionReaction DecidePassiveAttackCollisionReaction(Agent attacker, Agent defender, bool isFatalHit)
         {
             return previousModel.DecidePassiveAttackCollisionReaction(attacker, defender, isFatalHit);
-        }
-
-        public override void DecideWeaponCollisionReaction(in Blow registeredBlow, in AttackCollisionData collisionData, Agent attacker, Agent defender, in MissionWeapon attackerWeapon, bool isFatalHit, bool isShruggedOff, float momentumRemaining, out MeleeCollisionReaction colReaction)
-        {
-            previousModel.DecideWeaponCollisionReaction(in registeredBlow, in collisionData, attacker, defender, in attackerWeapon, isFatalHit, isShruggedOff, momentumRemaining, out colReaction);
         }
 
         public override float GetDamageMultiplierForBodyPart(BoneBodyPartType bodyPart, DamageTypes type, bool isHuman, bool isMissile)
@@ -464,7 +308,7 @@ namespace BLTAdoptAHero
 
         public override float GetDismountPenetration(Agent attackerAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.GetDismountPenetration(attackerAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.GetDismountPenetration(attackerAgent, attackerWeapon, blow, collisionData);
         }
 
         public override float GetHorseChargePenetration()
@@ -474,29 +318,12 @@ namespace BLTAdoptAHero
 
         public override float GetKnockBackPenetration(Agent attackerAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.GetKnockBackPenetration(attackerAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.GetKnockBackPenetration(attackerAgent, attackerWeapon, blow, collisionData);
         }
 
         public override float GetKnockDownPenetration(Agent attackerAgent, WeaponComponentData attackerWeapon, in Blow blow, in AttackCollisionData collisionData)
         {
-            return previousModel.GetKnockDownPenetration(attackerAgent, attackerWeapon, in blow, in collisionData);
+            return previousModel.GetKnockDownPenetration(attackerAgent, attackerWeapon, blow, collisionData);
         }
-
-        public override bool IsDamageIgnored(in AttackInformation attackInformation, in AttackCollisionData collisionData)
-        {
-            return previousModel.IsDamageIgnored(in attackInformation, in collisionData);
-        }
-
-        public override bool ShouldMissilePassThroughAfterShieldBreak(Agent attackerAgent, WeaponComponentData attackerWeapon)
-        {
-            return previousModel.ShouldMissilePassThroughAfterShieldBreak(attackerAgent, attackerWeapon);
-        }
-
-        //public override float CalculateDefaultRemainingMomentum(float originalMomentum, in Blow b, in AttackCollisionData collisionData, Agent attacker, Agent victim, in MissionWeapon attackerWeapon, bool isCrushThrough)
-        //{
-        //    return previousModel.CalculateDefaultRemainingMomentum(originalMomentum, in b, in collisionData, attacker, victim, in attackerWeapon, isCrushThrough);
-        //}
-
-
-        }
+    }
 }

@@ -169,7 +169,7 @@ namespace BannerlordTwitch.Util
                 Sound.Notification1 => "event:/ui/notification/levelup",
                 _ => throw new ArgumentOutOfRangeException(nameof(sound), sound, null)
             };
-            MBInformationManager.AddQuickInformation(new TextObject(message), 1000, characterObject, null, soundStr);
+            MBInformationManager.AddQuickInformation(new TextObject(message), 1000, characterObject, soundStr);
         }
 
         public static long TimeFunction(Action action)

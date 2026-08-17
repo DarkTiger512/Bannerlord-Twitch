@@ -48,7 +48,7 @@
     <OutputPath>bin\Release 1.6.2\</OutputPath>
   </PropertyGroup>
   <Import Project="$(SolutionDir)BLTProperties.targets" />
-  <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
+  <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'false'">
     <PackageReference Include="Bannerlord.ReferenceAssemblies" />
   </ItemGroup>
   <ItemGroup>

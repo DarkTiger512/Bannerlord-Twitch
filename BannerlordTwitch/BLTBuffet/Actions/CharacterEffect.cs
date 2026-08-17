@@ -203,7 +203,7 @@ namespace BLTBuffet
 
         public static List<GameEntityComponent> CreateWeaponEffects(Agent agent, string pfxSystem)
         {
-            var index = agent.GetPrimaryWieldedItemIndex();
+            var index = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
             if (index == EquipmentIndex.None)
                 return default;
 

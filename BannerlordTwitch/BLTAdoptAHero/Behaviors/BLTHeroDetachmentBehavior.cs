@@ -118,7 +118,7 @@ namespace BLTAdoptAHero
             {
                 if (agent.IsDetachedFromFormation)
                 {
-                    agent.TryAttachToFormation();
+                    try { agent.Formation.AttachUnit(agent); } catch { }
                     if (agent.IsDetachedFromFormation) return "Could not clear prior detachment";
                 }
 
@@ -169,20 +169,20 @@ namespace BLTAdoptAHero
                 Agent closestEnemy = null;
                 float closestDist = float.MaxValue;
 
-                //foreach (var team in Mission.Current.Teams)
-                //{
-                //    if (team == null || !team.IsEnemyOf(agent.Team)) continue;
-                //    foreach (var enemy in team.ActiveAgents)
-                //    {
-                //        if (enemy == null || !enemy.IsActive() || enemy.IsMount) continue;
-                //        float dist = enemy.Position.DistanceSquared(agent.Position);
-                //        if (dist < closestDist)
-                //        {
-                //            closestDist = dist;
-                //            closestEnemy = enemy;
-                //        }
-                //    }
-                //}
+                foreach (var team in Mission.Current.Teams)
+                {
+                    if (team == null || !team.IsEnemyOf(agent.Team)) continue;
+                    foreach (var enemy in team.ActiveAgents)
+                    {
+                        if (enemy == null || !enemy.IsActive() || enemy.IsMount) continue;
+                        float dist = enemy.Position.DistanceSquared(agent.Position);
+                        if (dist < closestDist)
+                        {
+                            closestDist = dist;
+                            closestEnemy = enemy;
+                        }
+                    }
+                }
 
                 if (closestEnemy != null)
                 {
@@ -194,9 +194,9 @@ namespace BLTAdoptAHero
                 }
                 else
                 {
-                    var closestFormation = state.Detachment?.ParentFormation?.CachedClosestEnemyFormation;
+                    var closestFormation = state.Detachment?.ParentFormation?.TargetFormation;
                     if (closestFormation != null)
-                        agent.SetTargetFormationIndex(closestFormation.Formation.Index);
+                        agent.SetTargetFormationIndex(closestFormation.Index);
                     state.Order = DetachmentOrder.None;
                 }
             }
@@ -243,7 +243,7 @@ namespace BLTAdoptAHero
             if (agent == null || !agent.IsActive()) return "Invalid agent";
             if (!_detachments.TryGetValue(agent, out var state)) return "Not detached";
 
-            var enemy = agent.Formation?.CachedClosestEnemyFormation?.Formation;
+            var enemy = agent.Formation?.TargetFormation;
             if (enemy == null || enemy.CountOfUnits == 0) return "No visible enemy formation";
 
             var pos = ComputeClosestFlankPosition(agent, enemy);
@@ -381,7 +381,7 @@ namespace BLTAdoptAHero
         {
             var parent = state.Detachment?.ParentFormation;
             if (parent == null || parent.CountOfUnits == 0) return;
-            var median = parent.CachedMedianPosition;
+            var median = parent.GetAveragePositionOfUnits(true, true).ToVec3().ToWorldPosition();
             if (!median.IsValid) return;
 
             Vec2 behind = -parent.Direction * (parent.Depth * 0.5f + 4f);
@@ -513,7 +513,7 @@ namespace BLTAdoptAHero
             if (now - state.LastFlankRefreshTime > FlankRefresh)
             {
                 state.LastFlankRefreshTime = now;
-                var enemy = agent.Formation?.CachedClosestEnemyFormation?.Formation;
+                var enemy = agent.Formation?.TargetFormation;
                 if (enemy != null && enemy.CountOfUnits > 0)
                 {
                     var newTarget = ComputeClosestFlankPosition(agent, enemy);
@@ -589,8 +589,9 @@ namespace BLTAdoptAHero
             }
 
             agent.DisableScriptedMovement();
-            agent.SetScriptedTargetEntity(
+            agent.SetScriptedTargetEntityAndPosition(
                 gate.GameEntity,
+                gate.GameEntity.GlobalPosition.ToWorldPosition(),
                 Agent.AISpecialCombatModeFlags.AttackEntity,
                 true);
         }
@@ -905,7 +906,7 @@ namespace BLTAdoptAHero
 
         private static WorldPosition ComputeClosestFlankPosition(Agent agent, Formation enemy)
         {
-            Vec2 center = enemy.CachedAveragePosition;
+            Vec2 center = enemy.GetAveragePositionOfUnits(true, true);
             Vec2 facing = enemy.Direction.Normalized();
             Vec2 leftP = new Vec2(-facing.Y, facing.X);
             Vec2 rightP = new Vec2(facing.Y, -facing.X);
@@ -921,10 +922,9 @@ namespace BLTAdoptAHero
                             ? leftPos : rightPos;
 
             var scene = Mission.Current.Scene;
-            float z = enemy.CachedMedianPosition.GetNavMeshZ();
-            var wp = new WorldPosition(scene, UIntPtr.Zero, new Vec3(chosen.X, chosen.Y, z), false);
+            var wp = new WorldPosition(scene, UIntPtr.Zero, new Vec3(chosen.X, chosen.Y, 0), false);
 
-            if (wp.GetNavMeshMT() == UIntPtr.Zero)
+            if (wp.GetNavMesh() == UIntPtr.Zero)
             {
                 Vec2 fb = chosen + (agentPos - chosen).Normalized() * 10f;
                 wp = new WorldPosition(scene, UIntPtr.Zero, new Vec3(fb.X, fb.Y, agent.Position.Z), false);
@@ -1021,7 +1021,6 @@ namespace BLTAdoptAHero
             if (formation != null)
             {
                 formation.LeaveDetachment(detachment);
-                agent.TryRemoveAllDetachmentScores();
                 formation.AttachUnit(agent);
             }
 
@@ -1081,7 +1080,7 @@ namespace BLTAdoptAHero
             }
 
             agent.Detachment = this;
-            agent.SetDetachmentWeight(1f);
+            agent.DetachmentWeight = 1f;
         }
 
         public void RemoveAgent(Agent agent)
@@ -1090,6 +1089,35 @@ namespace BLTAdoptAHero
             _agents.Remove(agent);
             try { agent.DisableScriptedMovement(); } catch { }
             try { agent.DisableScriptedCombatMovement(); } catch { }
+        }
+
+        public void AddAgent(Agent agent, int slotIndex = -1)
+        {
+            if (agent == null || _agents.Contains(agent)) return;
+            _agents.Add(agent);
+
+            var formation = agent.Formation;
+            if (formation != null && !agent.IsDetachedFromFormation)
+            {
+                int fi = ((IFormationUnit)agent).FormationFileIndex;
+                int ri = ((IFormationUnit)agent).FormationRankIndex;
+
+                if (fi >= 0 && ri >= 0)
+                {
+                    try { formation.DetachUnit(agent, IsLoose); }
+                    catch (Exception e)
+                    {
+                        Log.Error($"HeroDetachment.DetachUnit ({agent.Name}): {e.Message}");
+#if DEBUG
+                        Log.Trace(e.StackTrace);
+#endif
+                    }
+                }
+                // fi == -1 means unpositioned — skip DetachUnit to avoid grid array crash
+            }
+
+            agent.Detachment = this;
+            agent.DetachmentWeight = 1f;
         }
 
         public void FormationStartUsing(Formation formation)

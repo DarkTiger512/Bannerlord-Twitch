@@ -16,7 +16,7 @@ using TaleWorlds.Localization;
 using Helpers;
 using TaleWorlds.Core;
 using BLTAdoptAHero.Models;
-using static TaleWorlds.MountAndBlade.Launcher.Library.NativeMessageBox;
+using TaleWorlds.Library;
 
 namespace BLTAdoptAHero
 {
@@ -59,7 +59,7 @@ namespace BLTAdoptAHero
             {
                 case "kingdomlist":
                     ActionManager.SendReply(context,
-                        string.Join(", ", CampaignHelpers.MainFactions.Where(c => !c.IsEliminated).OrderByDescending(c => c.CurrentTotalStrength).Select(c => c.Name.ToString())));
+                        string.Join(", ", CampaignHelpers.MainFactions.Where(c => !c.IsEliminated).OrderByDescending(c => c.TotalStrength).Select(c => c.Name.ToString())));
                     break;
 
                 case "culturelist":
@@ -100,15 +100,6 @@ namespace BLTAdoptAHero
                     ShowVassals(desiredName, context);
                     break;
 
-                case "map":
-                    ShowMap(desiredName, context);
-                    break;
-
-                case "time":
-                case "date":
-                    ShowTime(context);
-                    break;
-
                 case "player":
                     ShowPlayerSkills(context);
                     break;
@@ -147,10 +138,7 @@ namespace BLTAdoptAHero
                 return;
             }
 
-            TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
             bool war = false;
-            bool ally = desiredKingdom.AlliedKingdoms.Count > 0;
-            bool trade = false;
             bool tribute = false;
             TextObject warList = new TextObject("");
             TextObject tributeList = new TextObject("");
@@ -159,59 +147,43 @@ namespace BLTAdoptAHero
             {
                 if (desiredKingdom == k)
                     continue;
-                TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = desiredKingdom.GetStanceWith(k);
-                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k, out temptrade))
-                {
-                    var tradeDate = tradeBehavior.GetTradeAgreementEndDate(desiredKingdom, k);
-                    int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;
-                    trade = true;
-                    tradeList.Value += k.Name.Value + $"({tradeDays}), ";
-                }
                 if (desiredKingdom.IsAtWarWith(k))
                 {
                     war = true;
-                    warList.Value += k.Name.Value + ":" + ((int)k.CurrentTotalStrength).ToString() + ", ";
+                    warList.Value += k.Name.Value + ":" + ((int)k.TotalStrength).ToString() + ", ";
                 }
                 else
                 {
-                    int dailyTributeFromUs = stance.GetDailyTributeToPay(desiredKingdom);
-                    int dailyTributeFromThem = stance.GetDailyTributeToPay(k);
-                    int daysUs = k.GetStanceWith(desiredKingdom).GetRemainingTributePaymentCount();
-                    int daysThem = stance.GetRemainingTributePaymentCount();
+                    int dailyTributeFromUs = stance.GetDailyTributePaid(desiredKingdom);
+                    int dailyTributeFromThem = stance.GetDailyTributePaid(k);
 
 
                     if (dailyTributeFromUs > 0)
                     {
                         tribute = true;
                         tributeList.Value +=
-                            $"{k.Name}:-{dailyTributeFromUs}({daysUs}), ";
+                            $"{k.Name}:-{dailyTributeFromUs}, ";
                     }
                     else if (dailyTributeFromThem > 0)
                     {
                         tribute = true;
                         tributeList.Value +=
-                            $"{k.Name}:+{dailyTributeFromThem}({daysThem}), ";
+                            $"{k.Name}:+{dailyTributeFromThem}, ";
                     }
                 }
             }
             warList.Value = warList.Value.TrimEnd(',', ' ');
-            var allyList = string.Join(", ", desiredKingdom.AlliedKingdoms.Select(k => k.Name.ToString()));
-            tradeList.Value = tradeList.Value.TrimEnd(',', ' ');
             tributeList.Value = tributeList.Value.TrimEnd(',', ' ');
 
             var sb = new StringBuilder();
             sb.Append("{=SVlrGgol}Kingdom Name: {name} | ".Translate(("name", desiredKingdom.Name.ToString())));
             sb.Append("{=Ss588M9l}Ruling Clan: {rulingClan} | ".Translate(("rulingClan", desiredKingdom.RulingClan.Name.ToString())));
             sb.Append("{=T1FhhCH9}Clan Count: {count} | ".Translate(("count", desiredKingdom.Clans.Count)));
-            sb.Append("{=TUOmh7NY}Strength: {strength} | ".Translate(("strength", Math.Round(desiredKingdom.CurrentTotalStrength).ToString())));
+            sb.Append("{=TUOmh7NY}Strength: {strength} | ".Translate(("strength", Math.Round(desiredKingdom.TotalStrength).ToString())));
             if (war)
                 sb.Append("{=QadZnUKh}Wars: {wars} | ".Translate(("wars", warList.ToString())));
-            if (ally)
-                sb.Append("{=TESTING}Alliances: {allies} | ".Translate(("allies", allyList)));
-            if (trade)
-                sb.Append("{=TESTING}Trades: {trade} | ".Translate(("trade", tradeList.ToString())));
             if (tribute)
                 sb.Append("{=0GhTvF3K}Tribute: {tribute} | ".Translate(("tribute", tributeList.ToString())));
             if (desiredKingdom.RulingClan.HomeSettlement != null)
@@ -239,7 +211,7 @@ namespace BLTAdoptAHero
                         continue;
 
                     if (k1.IsAtWarWith(k2))
-                        sb.Append($"{k1.Name}({Math.Round(k1.CurrentTotalStrength)}) VS {k2.Name}({Math.Round(k2.CurrentTotalStrength)}) | ");
+                        sb.Append($"{k1.Name}({Math.Round(k1.TotalStrength)}) VS {k2.Name}({Math.Round(k2.TotalStrength)}) | ");
                 }
                 seen.Add(k1.StringId);
             }
@@ -292,7 +264,7 @@ namespace BLTAdoptAHero
                 if (desiredKingdom != k && desiredKingdom.IsAtWarWith(k))
                 {
                     var stance = desiredKingdom.GetStanceWith(k);
-                    sb.Append("{=N9b5k8FR}{k1} VS {k2} = Casualties: {c1}/{c2} - Prisoners: {p1}/{p2} - Raids: {r1}/{r2} - Sieges: {s1}/{s2} - Progress: {pr1}/{pr2} Started: {date}"
+                    sb.Append("{=N9b5k8FR}{k1} VS {k2} = Casualties: {c1}/{c2} - Prisoners: {p1}/{p2} - Raids: {r1}/{r2} - Sieges: {s1}/{s2} - Started: {date}"
                         .Translate(
                             ("k1", desiredKingdom.Name.ToString()),
                             ("k2", k.Name.ToString()),
@@ -304,8 +276,6 @@ namespace BLTAdoptAHero
                             ("r2", stance.GetSuccessfulRaids(k)),
                             ("s1", stance.GetSuccessfulSieges(desiredKingdom)),
                             ("s2", stance.GetSuccessfulSieges(k)),
-                            ("pr1", diplo.GetWarProgressScore(desiredKingdom, k).RoundedResultNumber),
-                            ("pr2", diplo.GetWarProgressScore(k, desiredKingdom).RoundedResultNumber),
                             ("date", stance.WarStartDate.ToString())
                         ));
                     sb.Append(" | ");
@@ -352,11 +322,11 @@ namespace BLTAdoptAHero
                 foreach (Army army in armiesraw)
                 {
                     armies.Append($"\nArmy: {army.Name.ToString()} | ");
-                    armies.Append($"{(int)army.CalculateCurrentStrength()} Strength | ");
+                    armies.Append($"{(int)army.TotalStrength} Strength | ");
                     armies.Append($"{army.TotalHealthyMembers} Troops | ");
                     armies.Append($"{army.LeaderPartyAndAttachedPartiesCount.ToString()} Parties | ");
-                    if (army?.LeaderParty?.GetBehaviorText() != null || army?.LeaderParty?.GetBehaviorText().ToString() != "")
-                        armies.Append($"This army is: {army?.LeaderParty?.GetBehaviorText()?.ToString() ?? ""} | ");
+                    if (army?.GetBehaviorText() != null || army?.GetBehaviorText().ToString() != "")
+                        armies.Append($"This army is: {army?.GetBehaviorText()?.ToString() ?? ""} | ");
                     if (army.LeaderParty.TargetParty != null || army.LeaderParty.ShortTermTargetParty != null)
                         armies.Append($"Target : {army.LeaderParty.ShortTermTargetParty ?? army.LeaderParty.TargetParty} | ");
 
@@ -392,9 +362,6 @@ namespace BLTAdoptAHero
             {
                 Village vill = Village.All.FirstOrDefault(v => v.Name.ToString() == desiredFief.Name.ToString());
                 sb.Append("{=TESTING}{Name} ".Translate(("Name", vill.Name)));
-                if (CampaignHelpers.NavalDLC())
-                    if (desiredFief.HasPort)
-                        sb.Append("⚓");
                 if (desiredFief.IsUnderRaid)
                     sb.Append("⚔️");
                 if (desiredFief.IsRaided)
@@ -421,9 +388,6 @@ namespace BLTAdoptAHero
                     (town.GarrisonParty?.TotalWage ?? 0)
                     );
                 sb.Append("{=TESTING}{Name} ".Translate(("Name", town.Name)));
-                if (CampaignHelpers.NavalDLC())
-                    if (desiredFief.HasPort)
-                        sb.Append("⚓");
                 if (desiredFief.IsUnderSiege)
                     sb.Append("⚔️");
                 sb.Append(" | ");
@@ -445,7 +409,7 @@ namespace BLTAdoptAHero
                 sb.Append("{=TESTING}💰Daily income:{profit} | ".Translate(("profit", profit)));
                 sb.Append("{=TESTING}Militia:{mil}({change}) | ".Translate(("mil", (int)town.Militia), ("change", (town.MilitiaChange + UpgradeBehavior.Current.GetMilitiaFlat(town.Settlement) > 0 ? "+" : "") + Math.Round(town.MilitiaChange + UpgradeBehavior.Current.GetMilitiaFlat(town.Settlement), 2))));
                 var garmodel = Campaign.Current.Models.PartySizeLimitModel;
-                sb.Append("{=TESTING}Garrison:{gar}/{garcap} | ".Translate(("gar", (int)town.GarrisonParty.MemberRoster.TotalHealthyCount), ("garcap", (int)garmodel.CalculateGarrisonPartySizeLimit(town.Settlement, false).ResultNumber + UpgradeBehavior.Current.GetTotalGarrisonCapacityBonus(town.Settlement))));
+                sb.Append("{=TESTING}Garrison:{gar}/{garcap} | ".Translate(("gar", (int)town.GarrisonParty.MemberRoster.TotalHealthyCount), ("garcap", (int)garmodel.GetPartyMemberSizeLimit(town.Settlement.Party, false).ResultNumber + UpgradeBehavior.Current.GetTotalGarrisonCapacityBonus(town.Settlement))));
                 var villList = town.Settlement.BoundVillages.Select(v => v).ToList();
                 string villNames = "";
                 sb.Append($"Villages + Hearth: ");
@@ -594,8 +558,8 @@ namespace BLTAdoptAHero
                     }
                 }
                 clanSb.Append("{=Sg11nEUe}Tier: {tier}({renown}) | ".Translate(("tier", desiredClan.Tier.ToString()), ("renown", Math.Round(desiredClan.Renown).ToString())));
-                clanSb.Append("{=ZFGikYn8}Strength: {strength} | ".Translate(("strength", Math.Round(desiredClan.CurrentTotalStrength).ToString())));
-                int income = Campaign.Current.Models.ClanFinanceModel.CalculateClanGoldChange(desiredClan).RoundedResultNumber;
+                clanSb.Append("{=ZFGikYn8}Strength: {strength} | ".Translate(("strength", Math.Round(desiredClan.TotalStrength).ToString())));
+                int income = (int)Campaign.Current.Models.ClanFinanceModel.CalculateClanGoldChange(desiredClan).ResultNumber;
                 clanSb.Append("{=SDVLj0nw}Wealth: {wealth}({income}) | ".Translate(("wealth", desiredClan.Leader.Gold.ToString()), ("income", income)));
                 clanSb.Append("{=eHJYAZha}Members: {members} | ".Translate(("members", desiredClan.Heroes.Count.ToString())));
                 int parties = 0;
@@ -609,10 +573,9 @@ namespace BLTAdoptAHero
                         if (party == null || party.LeaderHero == null) continue;
 
                         if (party.IsLordParty) parties += 1;
-                        ships += party.Ships.Count;
                     }
                 }
-                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.WarPartyLimit)));
+                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.CommanderLimit)));
                 clanSb.Append("{=TESTING}Ships: {ships} |".Translate(("ships", ships)));
                 if (desiredClan.Fiefs.Count >= 1)
                 {
@@ -668,7 +631,7 @@ namespace BLTAdoptAHero
                 
             if (desiredKingdom != null)
             {
-                List<Clan> clanList = desiredKingdom.Clans.OrderByDescending(c => c.CurrentTotalStrength).ToList();
+                List<Clan> clanList = desiredKingdom.Clans.OrderByDescending(c => c.TotalStrength).ToList();
                 var noble = new StringBuilder();
                 var merc = new StringBuilder();
                 int nobleCount = 0;
@@ -680,7 +643,7 @@ namespace BLTAdoptAHero
                     {
                         if (clan.Kingdom.RulingClan == clan)
                             noble.Append($"👑");
-                        noble.Append($"{clan.Name}(💪{(int)clan.CurrentTotalStrength}");
+                        noble.Append($"{clan.Name}(💪{(int)clan.TotalStrength}");
                         if (clan.Fiefs.Count > 0)
                             noble.Append($", 🏰{clan.Fiefs.Count}) - ");
                         else noble.Append(") - ");
@@ -688,7 +651,7 @@ namespace BLTAdoptAHero
                     }
                     else
                     {
-                        merc.Append($"{clan.Name}(💪{(int)clan.CurrentTotalStrength}) - ");
+                        merc.Append($"{clan.Name}(💪{(int)clan.TotalStrength}) - ");
                         mercCount++;
                     }
                 }
@@ -761,109 +724,6 @@ namespace BLTAdoptAHero
 
             // Remove trailing " | "
             string result = sb.ToString().TrimEnd(' ', '|');
-            ActionManager.SendReply(context, result);
-        }
-
-        private void ShowMap(string desiredName, ReplyContext context)
-        {
-            var adoptedHero = BLTAdoptAHeroCampaignBehavior.Current.GetAdoptedHero(context.UserName);
-            Kingdom desiredKingdom = adoptedHero?.Clan?.Kingdom;
-            if (string.IsNullOrWhiteSpace(desiredName) && desiredKingdom == null)
-            {
-                ActionManager.SendReply(context, "{=DSNx7CFT}Need kingdom name".Translate());
-                return;
-            }
-            else if (!string.IsNullOrWhiteSpace(desiredName))
-            {
-                desiredKingdom = Kingdom.All.FirstOrDefault(c =>
-                    c.Name.ToString().ToLower() == desiredName.ToLower()) ?? Kingdom.All.FirstOrDefault(c =>
-                    c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-
-
-            if (desiredKingdom != null)
-            {
-                if (desiredKingdom.Fiefs.Count == 0)
-                {
-                    ActionManager.SendReply(context, "No fiefs".Translate());
-                    return;
-                }
-
-                float ClockwiseAngleFromNorth(CampaignVec2 from, CampaignVec2 to)
-                {
-                    var dx = to.X - from.X;
-                    var dy = to.Y - from.Y;
-
-                    var angle = (float)(Math.Atan2(dx, dy) * (180.0 / Math.PI));
-                    if (angle < 0f)
-                        angle += 360f;
-
-                    return angle;
-                }
-
-                string DirectionFromAngle(float angle)
-                {
-                    if (angle < 22.5f || angle >= 337.5f) return "↑ North";
-                    if (angle < 67.5f) return "↗ North-East";
-                    if (angle < 112.5f) return "→ East";
-                    if (angle < 157.5f) return "↘ South-East";
-                    if (angle < 202.5f) return "↓ South";
-                    if (angle < 247.5f) return "↙ South-West";
-                    if (angle < 292.5f) return "← West";
-                    return "↖ North-West";
-                }
-
-                List<(IFaction faction, float angle, string direction)> bordering = new();
-
-                var distance = Campaign.Current.Models.MapDistanceModel;
-                var kingdomCenter = desiredKingdom.FactionMidSettlement.Position;
-
-                foreach (var fief in desiredKingdom.Fiefs)
-                {
-                    var neighbors = distance.GetNeighborsOfFortification(
-                        fief,
-                        MobileParty.NavigationType.All
-                    );
-
-                    foreach (var n in neighbors)
-                    {
-                        if (n.MapFaction == desiredKingdom.MapFaction)
-                            continue;
-
-                        var faction = n.MapFaction;
-                        if (bordering.Any(b => b.faction == faction))
-                            continue;
-
-                        var center = faction.FactionMidSettlement?.Position;
-                        if (center == null)
-                            continue;
-
-                        var angle = ClockwiseAngleFromNorth(kingdomCenter, center.Value);
-                        var dir = DirectionFromAngle(angle);
-
-                        bordering.Add((faction, angle, dir));
-                    }
-                }
-                string result = string.Join(", ",
-                    bordering
-                        .OrderBy(b => b.angle)
-                        .Select(b => $"{b.faction.Name} ({b.direction})"));
-
-                ActionManager.SendReply(context, result);
-            }
-        }
-
-        private void ShowTime(ReplyContext context)
-        {
-            CampaignTime date = CampaignTime.Now;
-
-            int days = (int)Campaign.Current.Models.CampaignTimeModel.CampaignStartTime.ElapsedDaysUntilNow;
-            int yearSize = CampaignTime.DaysInYear;
-            int years = (int)Campaign.Current.Models.CampaignTimeModel.CampaignStartTime.ElapsedYearsUntilNow;
-
-
-            string result = $"Date: {date} | {days} days since start | {years} years({yearSize} days/year)";
-
             ActionManager.SendReply(context, result);
         }
 

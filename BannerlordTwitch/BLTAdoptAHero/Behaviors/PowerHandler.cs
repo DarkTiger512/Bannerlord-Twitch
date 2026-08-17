@@ -54,12 +54,6 @@ namespace BLTAdoptAHero
             public delegate void AddMissileDelegate(Agent shooterAgent,
                 RefHandle<WeaponData> weaponData, WeaponStatsData[] weaponStatsData);
 
-            public delegate void DecideCrushedThroughDelegate(Agent attackerAgent,
-                Agent victimAgent, BLTAgentApplyDamageModel.DecideCrushedThroughParams meleeHitParams);
-
-            public delegate void DecideMissileWeaponFlagsDelegate(Agent attackerAgent,
-                BLTAgentApplyDamageModel.DecideMissileWeaponFlagsParams args);
-
             #endregion
 
             public event AgentBuildDelegate OnAgentBuild;
@@ -80,8 +74,6 @@ namespace BLTAdoptAHero
             public event MissileCollisionDelegate OnMissileCollision;
             public event AgentControllerChangedDelegate OnAgentControllerChanged;
             public event AddMissileDelegate OnAddMissile;
-            public event DecideCrushedThroughDelegate OnDecideCrushedThrough;
-            public event DecideMissileWeaponFlagsDelegate OnDecideMissileWeaponFlags;
 
             public void AgentBuild(Agent agent) => OnAgentBuild?.Invoke(agent);
             public void MissionOver() => OnMissionOver?.Invoke();
@@ -137,18 +129,6 @@ namespace BLTAdoptAHero
 
             public void DecideWeaponCollisionReaction(Agent attackerAgent, Agent victimAgent, BLTHeroPowersMissionBehavior.DecideWeaponCollisionReactionParams decideWeaponCollisionReactionParams)
                 => OnDecideWeaponCollisionReaction?.Invoke(attackerAgent, victimAgent, decideWeaponCollisionReactionParams);
-
-            public void DecideCrushedThrough(Agent attackerAgent, Agent victimAgent,
-                BLTAgentApplyDamageModel.DecideCrushedThroughParams args)
-            {
-                OnDecideCrushedThrough?.Invoke(attackerAgent, victimAgent,
-                    args);
-            }
-
-            public void DecideMissileWeaponFlags(Agent attackerAgent, BLTAgentApplyDamageModel.DecideMissileWeaponFlagsParams args)
-            {
-                OnDecideMissileWeaponFlags?.Invoke(attackerAgent, args);
-            }
         }
 
         private readonly Dictionary<Hero, Dictionary<HeroPowerDefBase, Handlers>> heroPowerHandlers = new();
