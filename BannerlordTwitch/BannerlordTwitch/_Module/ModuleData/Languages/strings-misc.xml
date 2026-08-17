@@ -361,6 +361,10 @@
         <string id="D1lt1bSQ" text="Name"/>
         <!-- The command itself, not including the ! -->
         <string id="u1Ua0LXJ" text="The command itself, not including the !"/>
+        <!-- Aliases -->
+        <string id="BLT_Command_Aliases_Name" text="Aliases"/>
+        <!-- Enter command aliases separated by commas -->
+        <string id="BLT_Command_Aliases_Desc" text="Enter command aliases separated by commas"/>
         <!-- HideHelp -->
         <string id="TpnV5Mpi" text="HideHelp"/>
         <!-- Hides the command from the !help action -->

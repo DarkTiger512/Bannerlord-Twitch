@@ -9,6 +9,7 @@ using BannerlordTwitch.Localization;
 using BannerlordTwitch.SaveSystem;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero.Achievements;
+using BLTAdoptAHero.Actions.Util;
 using BLTAdoptAHero.UI;
 using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
@@ -370,6 +371,10 @@ namespace BLTAdoptAHero
                         }
                     }
                     h.PostLoad();
+                    foreach (var item in h.CustomItems.Where(i => i.Item?.HasWeaponComponent == true))
+                    {
+                        Log.Info($"Loaded custom weapon: modifierId={item.ItemModifier?.StringId}, {CustomItems.DescribeWeaponMetadata(item.Item)}");
+                    }
                 }
 
                 foreach (var (hero, data) in heroData)
@@ -452,6 +457,10 @@ namespace BLTAdoptAHero
                     {
                         i.ItemSaveIndex = saveItemList.Count;
                         saveItemList.Add(i.Item);
+                        if (i.Item?.HasWeaponComponent == true)
+                        {
+                            Log.Info($"Saving custom weapon: modifierId={i.ItemModifierId}, {CustomItems.DescribeWeaponMetadata(i.Item)}");
+                        }
                     }
                 }
 
@@ -741,6 +750,12 @@ namespace BLTAdoptAHero
 
         public void IncreaseParticipationCount(Hero hero, bool playerSide, bool forced)
         {
+            
+            if (MissionHelpers.InHideOutMission())
+            {
+                return;
+            }
+            
             IncreaseStatistic(hero, playerSide
                 ? AchievementStatsData.Statistic.Summons
                 : AchievementStatsData.Statistic.Attacks, 1, forced);
@@ -938,13 +953,20 @@ namespace BLTAdoptAHero
             public EquipmentElement item;
             public Hero itemOwner;
             public int reservePrice;
+            public int RemainingSeconds;
+            private readonly int minimumBidIncrement;
+            private readonly int bidExtensionInSeconds;
             private readonly Dictionary<Hero, int> bids = new();
 
-            public Auction(EquipmentElement item, Hero itemOwner, int reservePrice)
+            public Auction(EquipmentElement item, Hero itemOwner, int reservePrice,
+                int durationInSeconds, int minimumBidIncrement, int bidExtensionInSeconds)
             {
                 this.item = item;
                 this.itemOwner = itemOwner;
                 this.reservePrice = reservePrice;
+                RemainingSeconds = Math.Max(0, durationInSeconds);
+                this.minimumBidIncrement = Math.Max(0, minimumBidIncrement);
+                this.bidExtensionInSeconds = Math.Max(0, bidExtensionInSeconds);
             }
 
             public (bool success, string description) Bid(Hero bidder, int bid)
@@ -964,6 +986,21 @@ namespace BLTAdoptAHero
                             ));
                 }
 
+                var highestBid = GetHighestValidBid();
+                if (highestBid != default)
+                {
+                    int minimumAllowedBid = highestBid.bid + minimumBidIncrement;
+                    if (bid < minimumAllowedBid)
+                    {
+                        return (false, "{=BLT_AuctionBidTooLow}Bid must be at least {MinimumBid}{GoldIcon}. Current high bid is {CurrentBid}{GoldIcon}."
+                            .Translate(
+                                ("MinimumBid", minimumAllowedBid),
+                                ("GoldIcon", Naming.Gold),
+                                ("CurrentBid", highestBid.bid)
+                            ));
+                    }
+                }
+
                 if (bids.Values.Any(v => v == bid))
                 {
                     return (false, "{=83uZcndH}Another bid at {Bid}{GoldIcon} already exists"
@@ -977,7 +1014,7 @@ namespace BLTAdoptAHero
                 {
                     return (false, "{=qeLF80xw}You already bid more ({Bid}{GoldIcon}), you can only raise your bid"
                         .Translate(
-                            ("Bid", bid),
+                            ("Bid", currBid),
                             ("GoldIcon", Naming.Gold)
                         ));
                 }
@@ -994,6 +1031,7 @@ namespace BLTAdoptAHero
                 }
 
                 bids[bidder] = bid;
+                RemainingSeconds += bidExtensionInSeconds;
 
                 return (true, "{=M2B9yQ4w}Bid of {Bid}{GoldIcon} placed!"
                     .Translate(
@@ -1014,21 +1052,31 @@ namespace BLTAdoptAHero
         public bool AuctionInProgress => currentAuction != null;
 
         public async void StartItemAuction(EquipmentElement item, Hero itemOwner,
-            int reservePrice, int durationInSeconds, int reminderInterval, Action<string> output)
+            int reservePrice, int durationInSeconds, int reminderInterval,
+            int minimumBidIncrement, int bidExtensionInSeconds, Action<string> output)
         {
             if (AuctionInProgress)
                 return;
 
-            currentAuction = new(item, itemOwner, reservePrice);
+            currentAuction = new(item, itemOwner, reservePrice, durationInSeconds,
+                minimumBidIncrement, bidExtensionInSeconds);
+            reminderInterval = Math.Max(1, reminderInterval);
 
             // Count down in chunks with reminder of the auction status
-            while (durationInSeconds > reminderInterval)
+            while (currentAuction != null && currentAuction.RemainingSeconds > 0)
             {
-                await Task.Delay(TimeSpan.FromSeconds(reminderInterval));
-                durationInSeconds -= reminderInterval;
-                int seconds = durationInSeconds;
+                int delaySeconds = Math.Min(reminderInterval, currentAuction.RemainingSeconds);
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 MainThreadSync.Run(() =>
                 {
+                    if (currentAuction == null)
+                        return;
+
+                    currentAuction.RemainingSeconds = Math.Max(0, currentAuction.RemainingSeconds - delaySeconds);
+                    int seconds = currentAuction.RemainingSeconds;
+                    if (seconds <= 0)
+                        return;
+
                     var highestBid = currentAuction.GetHighestValidBid();
                     if (highestBid != default)
                     {
@@ -1050,12 +1098,13 @@ namespace BLTAdoptAHero
                 });
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(durationInSeconds));
-
             MainThreadSync.Run(() =>
             {
                 try
                 {
+                    if (currentAuction == null)
+                        return;
+
                     var highestBid = currentAuction.GetHighestValidBid();
                     if (highestBid == default)
                     {
