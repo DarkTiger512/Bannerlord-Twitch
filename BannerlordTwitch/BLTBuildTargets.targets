@@ -105,4 +105,8 @@
         <Delete Files="$(PackageFullPath)" ContinueOnError="true"/>
         <Exec Command="C:\bin\7zr.exe a &quot;$(PackageFullPath)&quot; BannerlordTwitch BLTAdoptAHero BLTBuffet BLTConfigure" WorkingDirectory="$(OutputConfigRoot)"/>
     </Target>
+	<Target Name="ValidateTaleWorldsAPI" AfterTargets="Compile">
+		<Exec Command="&quot;$(SolutionDir)Validator\bin\$(Configuration)\net472\Validator.exe&quot;"
+			  ContinueOnError="false" />
+	</Target>
 </Project>

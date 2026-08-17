@@ -159,8 +159,6 @@ namespace BLTAdoptAHero
                     campaignStarter.AddBehavior(new KingdomTaxBehavior());
                     campaignStarter.AddBehavior(new BLTLogsBehavior());
                     campaignStarter.AddBehavior(new BLTHeirBehavior());
-                    //campaignStarter.AddBehavior(new BLTClanAllianceBehavior());
-                    campaignStarter.AddBehavior(new BLTClanArmyBehavior());
                     campaignStarter.AddBehavior(new PartyOrderBehavior());
                     campaignStarter.AddBehavior(new TrainingBehavior());
                     campaignStarter.AddBehavior(new CapitalBehavior());
@@ -169,7 +167,6 @@ namespace BLTAdoptAHero
                     campaignStarter.AddBehavior(new BLTDiplomacyHelper());       // 2. Rebellion tracking
                     campaignStarter.AddBehavior(new BLTAllianceBehavior());      // 3. Alliance auto-join
                     campaignStarter.AddBehavior(new BLTDiplomacyBehavior());     // 4. Cleanup
-                    campaignStarter.AddBehavior(new BLTClanDiplomacyBehavior()); // Additional behavior for independent clans - disable as needed
                     campaignStarter.AddBehavior(new BLTPlayerOffersBehavior());
 
                     gameStarterObject.AddModel(new BLTAgentApplyDamageModel(gameStarterObject.Models.OfType<AgentApplyDamageModel>().FirstOrDefault()));

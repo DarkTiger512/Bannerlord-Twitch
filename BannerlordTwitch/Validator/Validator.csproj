@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <!-- match Bannerlord's runtime; net472 is correct for 1.2.x -->
+  </PropertyGroup>
+</Project>

@@ -207,12 +207,12 @@ namespace BLTAdoptAHero
 
                             if (detail == ChangeKingdomAction.ChangeKingdomActionDetail.JoinAsMercenary)
                             {
-                                ChangeKingdomAction.ApplyByJoinFactionAsMercenary(vassal, newKingdom, default, vassal.MercenaryAwardMultiplier);
+                                ChangeKingdomAction.ApplyByJoinFactionAsMercenary(vassal, newKingdom, vassal.MercenaryAwardMultiplier, default);
                                 Log.LogFeedResponse($"{vassal.Name} has joined {newKingdom.Name} as a mercenary!");
                             }
                             else if (newKingdom != null)
                             {
-                                ChangeKingdomAction.ApplyByJoinToKingdom(vassal, newKingdom, default, false);
+                                ChangeKingdomAction.ApplyByJoinToKingdom(vassal, newKingdom, default);
                                 Log.LogFeedResponse($"{vassal.Name} has joined {newKingdom.Name} as a vassal!");
                             }
                             else if (newKingdom == null)
@@ -270,11 +270,11 @@ namespace BLTAdoptAHero
                                 // Match master's mercenary status
                                 if (masterClan.IsUnderMercenaryService)
                                 {
-                                    ChangeKingdomAction.ApplyByJoinFactionAsMercenary(clan, masterClan.Kingdom, default, clan.MercenaryAwardMultiplier);
+                                    ChangeKingdomAction.ApplyByJoinFactionAsMercenary(clan, masterClan.Kingdom, clan.MercenaryAwardMultiplier, default);
                                 }
                                 else
                                 {
-                                    ChangeKingdomAction.ApplyByJoinToKingdom(clan, masterClan.Kingdom, default, false);
+                                    ChangeKingdomAction.ApplyByJoinToKingdom(clan, masterClan.Kingdom, default);
                                 }
                             }
 

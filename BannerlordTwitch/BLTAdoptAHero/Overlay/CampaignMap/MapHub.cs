@@ -185,7 +185,7 @@ namespace BLTAdoptAHero.UI
                 var mapBounds = GetMapBounds();
 
                 var rawSettlements = Campaign.Current.Settlements
-                    .Where(s => (s.IsTown || s.IsCastle) && (s.Position.X != 0 || s.Position.Y != 0))
+                    .Where(s => (s.IsTown || s.IsCastle) && (s.Position2D.X != 0 || s.Position2D.Y != 0))
                     .ToList();
 
                 // Only rebuild settlements if they've changed
@@ -200,8 +200,8 @@ namespace BLTAdoptAHero.UI
                             Name = s.Name?.ToString() ?? "Unknown",
                             Type = s.IsTown ? "Town" : "Castle",
                             KingdomId = s.OwnerClan?.Kingdom?.StringId,
-                            X = NormalizeX(s.Position.X, mapBounds),
-                            Y = NormalizeY(s.Position.Y, mapBounds)
+                            X = NormalizeX(s.Position2D.X, mapBounds),
+                            Y = NormalizeY(s.Position2D.Y, mapBounds)
                         });
                     }
                     //SpreadSettlements(settlements);
@@ -250,10 +250,10 @@ namespace BLTAdoptAHero.UI
             if (!settlements.Any())
                 return (0, 1000, 0, 1000);
 
-            var minX = settlements.Min(s => s.Position.X);
-            var maxX = settlements.Max(s => s.Position.X);
-            var minY = settlements.Min(s => s.Position.Y);
-            var maxY = settlements.Max(s => s.Position.Y);
+            var minX = settlements.Min(s => s.Position2D.X);
+            var maxX = settlements.Max(s => s.Position2D.X);
+            var minY = settlements.Min(s => s.Position2D.Y);
+            var maxY = settlements.Max(s => s.Position2D.Y);
 
             float width = maxX - minX;
             float height = maxY - minY;
@@ -475,7 +475,7 @@ namespace BLTAdoptAHero.UI
                     try
                     {
                         var (isWaterCell, terrainType, valid) = SampleTerrain(map, worldX, worldY, cellW, cellH);
-                        isLandRestriction[rowBase + gx] = (terrainType == TerrainType.LandRestriction || terrainType == TerrainType.SeaRestriction);
+                        isLandRestriction[rowBase + gx] = (terrainType == TerrainType.Mountain || terrainType == TerrainType.Water);
                         waterValue[rowBase + gx] = isWaterCell ? 1f : 0f;
                         if (valid) validSamples++;
                     }
@@ -675,9 +675,7 @@ namespace BLTAdoptAHero.UI
             switch (terrain)
             {
                 case TerrainType.Water:
-                case TerrainType.SeaRestriction:
-                case TerrainType.OpenSea:
-                case TerrainType.CoastalSea:
+                case TerrainType.Lake:
                     return true;
                 default:
                     return false;
@@ -689,8 +687,8 @@ namespace BLTAdoptAHero.UI
         {
             foreach (bool isOnLand in new[] { true, false })
             {
-                var vec = new CampaignVec2(new Vec2(worldX, worldY), isOnLand);
-                var face = map.GetFaceIndex(in vec);
+                var vec = new Vec2(worldX, worldY);
+                var face = map.GetFaceIndex(vec);
                 if (face.IsValid())
                 {
                     var terrain = map.GetFaceTerrainType(face);
@@ -702,8 +700,8 @@ namespace BLTAdoptAHero.UI
                 float nx = worldX + ox * cellW, ny = worldY + oy * cellH;
                 foreach (bool isOnLand in new[] { true, false })
                 {
-                    var vec = new CampaignVec2(new Vec2(nx, ny), isOnLand);
-                    var face = map.GetFaceIndex(in vec);
+                    var vec = new Vec2(nx, ny);
+                    var face = map.GetFaceIndex(vec);
                     if (face.IsValid())
                     {
                         var terrain = map.GetFaceTerrainType(face);

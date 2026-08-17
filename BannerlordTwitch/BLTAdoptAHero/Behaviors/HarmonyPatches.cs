@@ -853,85 +853,18 @@ namespace BLTAdoptAHero
 
     #region SiegeRetreatFix
 
-    /// <summary>
-    /// Fixes the vanilla bug where retreating from a siege assault causes the ENTIRE
-    /// besieging army to be captured/killed, and lords made fugitive respawning with 1 troop.
-    /// This version safely tracks mutated MapEvent instances instead of using ThreadStatic.
-    /// </summary>
-
-    [HarmonyPatch(typeof(MapEvent), "CalculateAndCommitMapEventResults")]
-    internal static class BLT_SiegeRetreatFix
-    {
-        private static readonly PropertyInfo RetreatingSideProp =
-            typeof(MapEvent).GetProperty("RetreatingSide",
-                BindingFlags.Public | BindingFlags.Instance);
-
-        // Tracks MapEvent instances we mutate so we can safely restore them.
-        private static readonly HashSet<MapEvent> _mutated = new();
-
-        private static bool IsSiegeRelated(MapEvent e) =>
-            e.IsSiegeAssault || e.IsSallyOut || e.IsSiegeOutside;
-
-        static void Prefix(MapEvent __instance)
-        {
-            try
-            {
-                if (!IsSiegeRelated(__instance))
-                    return;
-
-                if (!__instance.HasWinner)
-                    return;
-
-                //if (__instance.RetreatingSide != BattleSideEnum.None)
-                //    return;
-
-                var defeatedSide = __instance.GetMapEventSide(__instance.DefeatedSide);
-                if (defeatedSide == null)
-                    return;
-
-                int survivors = defeatedSide.GetTotalHealthyTroopCountOfSide();
-                if (survivors <= 0)
-                    return; // Truly wiped out — allow vanilla full capture
-
-                RetreatingSideProp?.SetValue(__instance, __instance.DefeatedSide);
-                _mutated.Add(__instance);
-
-#if DEBUG
-            Log.Trace($"[BLT] SiegeRetreatFix: {survivors} survivors on " +
-                      $"{__instance.DefeatedSide} side — temporarily suppressing troop capture.");
-#endif
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_SiegeRetreatFix Prefix error: {ex}");
-            }
-        }
-
-        static void Postfix(MapEvent __instance)
-        {
-            try
-            {
-                if (!_mutated.Remove(__instance))
-                    return;
-
-                // Restore original state so later systems see correct battle result
-                RetreatingSideProp?.SetValue(__instance, BattleSideEnum.None);
-
-#if DEBUG
-            Log.Trace("[BLT] SiegeRetreatFix: RetreatingSide restored to None.");
-#endif
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_SiegeRetreatFix Postfix error: {ex}");
-            }
-        }
-    }
-
+    // NOTE: The pre-1.2.12 fix that suppressed full army capture on lost siege
+    // assaults (via MapEvent.CalculateAndCommitMapEventResults + RetreatingSide)
+    // has been removed. Neither the method nor the property exist in 1.2.12 —
+    // confirmed via reflection dump, no equivalent found under any related name
+    // (Retreat/Flee/Fugitive/Captur/Escap on MapEvent or MapEventSide).
+    // If TW's decompiled source turns up a real replacement mechanism later,
+    // this is where a rewritten patch would go.
 
     // -------------------------------------------------------------------------
-    // Part 2: Safety net — prevent lords from being made fugitive if they belong
-    //         to a party actively part of a siege besieger camp.
+    // Safety net — prevent lords from being made fugitive if they belong
+    // to a party actively part of a siege besieger camp. Independent of the
+    // removed patch above; not affected by the 1.2.12 API change.
     // -------------------------------------------------------------------------
 
     [HarmonyPatch(typeof(MakeHeroFugitiveAction), nameof(MakeHeroFugitiveAction.Apply))]
@@ -955,7 +888,6 @@ namespace BLTAdoptAHero
                 if (!isInSiegingParty)
                     return true;
 
-                // Only suppress if the party still has healthy troops
                 if (party.Party?.NumberOfHealthyMembers <= 0)
                     return true;
 
@@ -965,7 +897,7 @@ namespace BLTAdoptAHero
                       $"{party.BesiegedSettlement?.Name ?? party.Army?.LeaderParty?.BesiegedSettlement?.Name})");
 #endif
 
-                return false; // Prevent fugitive conversion
+                return false;
             }
             catch (Exception ex)
             {

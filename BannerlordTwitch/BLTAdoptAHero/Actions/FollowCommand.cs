@@ -63,11 +63,11 @@ namespace BLTAdoptAHero.Actions
                 onFailure("Follow can only be used during an active mission.");
                 return;
             }
-            if (!Mission.Current.IsDeploymentFinished)
-            {
-                onFailure("Can't follow during deployment - wait for the battle to actually begin.");
-                return;
-            }
+            //if (!Mission.Current.IsDeploymentFinished)
+            //{
+            //    onFailure("Can't follow during deployment - wait for the battle to actually begin.");
+            //    return;
+            //}
             if (behavior == null)
             {
                 onFailure("Follow system not active.");

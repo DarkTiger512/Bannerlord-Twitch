@@ -91,8 +91,8 @@ namespace BLTAdoptAHero.Actions.Upgrades
         }
 
         private bool _coastalOnly = false;
-        [LocDisplayName("{=BLT_coastalOnly}Coastal Settlements Only"),
-         LocDescription("{=BLT_coastalOnlyDesc}Whether this upgrade applies to non-coastal settlements (and their bound villages)"),
+        [LocDisplayName("{=}DEPRECATED in 1.2.12"),
+         LocDescription("{=}Only kept in the value so that it doesn't erase all the old upgrades, this does nothing"),
          PropertyOrder(7), UsedImplicitly, DefaultValue(false)]
         public bool CoastalOnly
         {

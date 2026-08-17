@@ -54,11 +54,11 @@ namespace BLTAdoptAHero.Actions
                 onFailure("Guard can only be used during an active mission.");
                 return;
             }
-            if (!Mission.Current.IsDeploymentFinished)
-            {
-                onFailure("Can't activate guard during deployment - wait for the battle to actually begin.");
-                return;
-            }
+            //if (!Mission.Current.IsDeploymentFinished)
+            //{
+            //    onFailure("Can't activate guard during deployment - wait for the battle to actually begin.");
+            //    return;
+            //}
             if (behavior == null)
             {
                 onFailure("Guard system not active.");

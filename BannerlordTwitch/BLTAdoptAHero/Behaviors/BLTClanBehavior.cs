@@ -293,14 +293,14 @@ namespace BLTAdoptAHero
                 // 1) Try noble templates first
                 roster = rosters.FirstOrDefault(r =>
                     r.EquipmentCulture == hero.Culture &&
-                    r.EquipmentCategories.HasFlag(EquipmentCategories.IsLordTemplate));
+                    r.EquipmentFlags.HasFlag(EquipmentFlags.IsNobleTemplate));
 
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
                         r.EquipmentCulture == hero.Culture &&
-                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsChildEquipmentTemplate) &&
-                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsTeenagerEquipmentTemplate));
+                        !r.EquipmentFlags.HasFlag(EquipmentFlags.IsChildEquipmentTemplate) &&
+                        !r.EquipmentFlags.HasFlag(EquipmentFlags.IsTeenagerEquipmentTemplate));
                 }
 
                 //roster = roster.AllEquipments.RemoveAll(e => e as ItemObject && )
@@ -359,7 +359,6 @@ namespace BLTAdoptAHero
                         {
                             WeaponClass.Bow => ItemObject.ItemTypeEnum.Arrows,
                             WeaponClass.Crossbow => ItemObject.ItemTypeEnum.Bolts,
-                            WeaponClass.Sling => ItemObject.ItemTypeEnum.SlingStones,
                             _ => ItemObject.ItemTypeEnum.Arrows
                         };
 

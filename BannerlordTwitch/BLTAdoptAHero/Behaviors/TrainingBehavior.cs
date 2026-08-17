@@ -288,7 +288,7 @@ namespace BLTAdoptAHero.Actions
                 if (target == null) continue;
 
                 float multiplier = GlobalCommonConfig.Get().TrainGoldCostMultiplier;
-                int baseCost = Math.Max(1, (int)model.GetGoldCostForUpgrade(party.Party, troop, target).ResultNumber);
+                int baseCost = Math.Max(1, (int)model.GetGoldCostForUpgrade(party.Party, troop, target));
                 int goldPer = Math.Max(1, (int)Math.Ceiling(baseCost * multiplier));
 
                 int healthy = slot.Number - slot.WoundedNumber;

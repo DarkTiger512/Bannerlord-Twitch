@@ -315,7 +315,7 @@ namespace BLTAdoptAHero
 
         [UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "RegisterBlow")]
         private static void RegisterBlowPrefix(Agent attacker, Agent victim, GameEntity realHitEntity, ref Blow b,
-    ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon, ref CombatLogData combatLogData)
+            ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon, ref CombatLogData combatLogData)
         {
             Current?.RegisterBlow(attacker, victim, ref b, ref collisionData,
                 in attackerWeapon, ref combatLogData);
@@ -335,27 +335,27 @@ namespace BLTAdoptAHero
             }
         }
 
-        [UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "HandleMissileCollisionReaction")]
-        private static void HandleMissileCollisionReactionPrefix(Mission __instance, int missileIndex,
-            Mission.MissileCollisionReaction collisionReaction, MatrixFrame attachLocalFrame, Agent attackerAgent,
-            Agent attachedAgent, bool attachedToShield, sbyte attachedBoneIndex, MissionObject attachedMissionObject,
-            Vec3 bounceBackVelocity, Vec3 bounceBackAngularVelocity, int forcedSpawnIndex)
-        {
-            var _missiles = (Dictionary<int, Mission.Missile>)AccessTools.Field(typeof(Mission), "_missilesDictionary")
-                .GetValue(__instance);
-            Current?.MissileCollision(collisionReaction, attackerAgent, attachedAgent, attachedBoneIndex,
-                attachedToShield, attachLocalFrame, _missiles[missileIndex]);
-        }
-
-        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionCombatMechanicsHelper), "DecideWeaponCollisionReaction")]
-        private static void DecideWeaponCollisionReactionPostfix(in Blow registeredBlow,
-            in AttackCollisionData collisionData, Agent attacker, Agent defender, in MissionWeapon attackerWeapon, bool isFatalHit, bool isShruggedOff, float momentumRemaining,
-            out MeleeCollisionReaction colReaction)
-        {
-            colReaction = MeleeCollisionReaction.Bounced;
-            Current?.DecideWeaponCollisionReactionCallback(in registeredBlow, in collisionData, attacker,
-                defender, in attackerWeapon, isFatalHit, isShruggedOff, momentumRemaining, out colReaction);
-        }
+        //[UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "HandleMissileCollisionReaction")]
+        //private static void HandleMissileCollisionReactionPrefix(Mission __instance, int missileIndex,
+        //    Mission.MissileCollisionReaction collisionReaction, MatrixFrame attachLocalFrame, Agent attackerAgent,
+        //    Agent attachedAgent, bool attachedToShield, sbyte attachedBoneIndex, MissionObject attachedMissionObject,
+        //    Vec3 bounceBackVelocity, Vec3 bounceBackAngularVelocity, int forcedSpawnIndex)
+        //{
+        //    var _missiles = (Dictionary<int, Mission.Missile>)AccessTools.Field(typeof(Mission), "_missilesDictionary")
+        //        .GetValue(__instance);
+        //    Current?.MissileCollision(collisionReaction, attackerAgent, attachedAgent, attachedBoneIndex,
+        //        attachedToShield, attachLocalFrame, _missiles[missileIndex]);
+        //}
+        //
+        //[UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionCombatMechanicsHelper), "DecideWeaponCollisionReaction")]
+        //private static void DecideWeaponCollisionReactionPostfix(in Blow registeredBlow,
+        //    in AttackCollisionData collisionData, Agent attacker, Agent defender, in MissionWeapon attackerWeapon, bool isFatalHit, bool isShruggedOff, float momentumRemaining,
+        //    out MeleeCollisionReaction colReaction)
+        //{
+        //    colReaction = MeleeCollisionReaction.Bounced;
+        //    Current?.DecideWeaponCollisionReactionCallback(in registeredBlow, in collisionData, attacker,
+        //        defender, in attackerWeapon, isFatalHit, isShruggedOff, momentumRemaining, out colReaction);
+        //}
 
 
         [UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "MeleeHitCallback")]

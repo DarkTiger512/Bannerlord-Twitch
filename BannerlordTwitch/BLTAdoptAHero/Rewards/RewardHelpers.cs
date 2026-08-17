@@ -990,12 +990,10 @@ namespace BLTAdoptAHero
                 ItemObject.ItemTypeEnum.Polearm;
             bool isWeaponRanged = itemObject.Type is
                 ItemObject.ItemTypeEnum.Crossbow or
-                ItemObject.ItemTypeEnum.Bow or
-                ItemObject.ItemTypeEnum.Sling;
+                ItemObject.ItemTypeEnum.Bow;
             bool isAmmo = itemObject.Type is
                 ItemObject.ItemTypeEnum.Bolts or
                 ItemObject.ItemTypeEnum.Arrows or
-                ItemObject.ItemTypeEnum.SlingStones or
                 ItemObject.ItemTypeEnum.Thrown;
             bool isThrown = itemObject.Type is ItemObject.ItemTypeEnum.Thrown;
             bool isShield = itemObject.Type is

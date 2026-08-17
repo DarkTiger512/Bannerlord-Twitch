@@ -663,7 +663,7 @@ namespace BLTAdoptAHero.Actions
                     var oldParty = h1.PartyBelongedTo;
                     bool wasLeader = oldParty.LeaderHero == h1;
                     oldParty.MemberRoster.RemoveTroop(h1.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                    MakeHeroFugitiveAction.Apply(h1, false);
+                    MakeHeroFugitiveAction.Apply(h1);
                     if (wasLeader && oldParty.IsLordParty)
                         DisbandPartyAction.StartDisband(oldParty);
                 }

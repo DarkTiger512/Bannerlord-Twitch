@@ -190,9 +190,9 @@ namespace BLTAdoptAHero.Actions
                         }
                         onSuccess("{=kANu9D6d}Your hero has changed their gender to female".Translate());
                         BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.GenderCost);
-                        adoptedHero.IsFemale= true;
+                        adoptedHero.UpdatePlayerGender(true);
                         if (adoptedHero.Spouse != null && adoptedHero.Spouse.IsFemale) 
-                            adoptedHero.Spouse.IsFemale = false;
+                            adoptedHero.Spouse.UpdatePlayerGender(false);
                         Log.ShowInformation(
                             "{=byvm3h6C}{Name} has changed their gender to female!".Translate(("Name", adoptedHero.Name)),
                             adoptedHero.CharacterObject);
@@ -212,9 +212,9 @@ namespace BLTAdoptAHero.Actions
                         }
                         onSuccess("{=FlGjts5K}Your hero has changed their gender to male".Translate());
                         BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.GenderCost);
-                        adoptedHero.IsFemale = false;
+                        adoptedHero.UpdatePlayerGender(false);
                         if (adoptedHero.Spouse != null && !adoptedHero.Spouse.IsFemale) 
-                            adoptedHero.Spouse.IsFemale = true;
+                            adoptedHero.Spouse.UpdatePlayerGender(true);
                         Log.ShowInformation(
                             "{=MgcrSo56}{Name} has changed their gender to male!".Translate(("Name", adoptedHero.Name)),
                             adoptedHero.CharacterObject);
@@ -629,8 +629,8 @@ namespace BLTAdoptAHero.Actions
 
             var towns = Settlement.All.Where(s => s.IsTown).ToList();
             var targetSettlement = adoptedHero.LastKnownClosestSettlement != null
-                ? towns.OrderBy(t => t.Position.DistanceSquared(
-                    adoptedHero.LastKnownClosestSettlement.Position)).FirstOrDefault()
+                ? towns.OrderBy(t => t.Position2D.DistanceSquared(
+                    adoptedHero.LastKnownClosestSettlement.Position2D)).FirstOrDefault()
                 : towns.SelectRandom();
 
             if (targetSettlement != null)
@@ -647,7 +647,7 @@ namespace BLTAdoptAHero.Actions
                         adoptedHero.Age + rand.Next(-3, 3))));
 
             if (adoptedHero.IsFemale == newHero.IsFemale)
-                newHero.IsFemale = !newHero.IsFemale;
+                newHero.UpdatePlayerGender(!newHero.IsFemale);
 
             TextObject name = newHero.IsFemale
                 ? cultureToSpawn.FemaleNameList.SelectRandom()

@@ -205,19 +205,6 @@ namespace BLTAdoptAHero
                 }
             });
 
-            CampaignEvents.HeroPrisonerReleased.AddNonSerializedListener(this, (hero, party, faction, endDetail, capturedDuringBattle) =>
-            {
-                if (hero.IsAdopted())
-                {
-                    if (party != null)
-                        Log.LogFeedEvent("{=tQANBoTK}@{HeroName} is no longer a prisoner of {PartyName}!"
-                            .Translate(("HeroName", hero.Name), ("PartyName", party.Name)));
-                    else
-                        Log.LogFeedEvent("{=MQslOwr0}@{HeroName} is no longer a prisoner!"
-                            .Translate(("HeroName", hero.Name)));
-                }
-            });
-
 
             CampaignEvents.OnHeroChangedClanEvent.AddNonSerializedListener(this, (hero, clan) =>
             {
@@ -2245,8 +2232,6 @@ namespace BLTAdoptAHero
                     if (party.IsMilitia) { skippedCount++; continue; }
                     // Skip garrison parties (shouldn't be mobile but just in case)
                     if (party.IsGarrison) { skippedCount++; continue; }
-                    // Skip patrol parties - counted as Lord Parties for some reason
-                    if (party.IsPatrolParty) { skippedCount++; continue; }
 
                     // Delete lord parties that have no leader or a retired leader
                     if (party.IsLordParty && party.LeaderHero == null)
@@ -2374,13 +2359,6 @@ namespace BLTAdoptAHero
 
                     // Skip garrison parties (shouldn't be mobile but just in case)
                     if (party.IsGarrison)
-                    {
-                        skippedCount++;
-                        continue;
-                    }
-
-                    // Skip patrol parties - counted as Lord Parties for some reason
-                    if (party.IsPatrolParty)
                     {
                         skippedCount++;
                         continue;
@@ -2561,14 +2539,14 @@ namespace BLTAdoptAHero
                         {
                             if (masterClan.IsUnderMercenaryService)
                             {
-                                ChangeKingdomAction.ApplyByJoinFactionAsMercenary(clan, masterClan.Kingdom, default, clan.MercenaryAwardMultiplier);
+                                ChangeKingdomAction.ApplyByJoinFactionAsMercenary(clan, masterClan.Kingdom, clan.MercenaryAwardMultiplier, default);
                                 InformationManager.DisplayMessage(
                                     new InformationMessage($"[BLT] {clan.Name} joined {masterClan.Kingdom.Name} as mercenary")
                                 );
                             }
                             else
                             {
-                                ChangeKingdomAction.ApplyByJoinToKingdom(clan, masterClan.Kingdom, default, false);
+                                ChangeKingdomAction.ApplyByJoinToKingdom(clan, masterClan.Kingdom, default);
                                 InformationManager.DisplayMessage(
                                     new InformationMessage($"[BLT] {clan.Name} joined {masterClan.Kingdom.Name} as vassal")
                                 );
