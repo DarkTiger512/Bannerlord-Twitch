@@ -23,8 +23,6 @@ using Helpers;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using NavalDLC.CharacterDevelopment;
-using NavalDLC.CampaignBehaviors;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -306,6 +304,36 @@ namespace BLTAdoptAHero.Actions
             return (arg, null);
         }
 
+        /// <summary>
+        /// Vanilla-only replacement for NavalDLC's
+        /// Campaign.Current.Models.ArmyManagementCalculationModel.GetMobilePartiesToCallToArmy.
+        /// Returns free lord parties of the same kingdom as <paramref name="leaderParty"/>,
+        /// ordered by distance, as extra candidates to pull into a newly-gathering army.
+        /// </summary>
+        private static IEnumerable<MobileParty> GetPartiesToCallToArmy(MobileParty leaderParty)
+        {
+            if (leaderParty?.MapFaction is not Kingdom kingdom) yield break;
+
+            var ldrPos = leaderParty.GetPosition2D;
+            // Tune this — vanilla's internal logic effectively favors nearby parties;
+            // this radius controls how far out we'll look for "extra" parties to add.
+            const float maxCallRadius = 100f;
+
+            var candidates = kingdom.AllParties
+                .Where(p => p != null && p != leaderParty
+                    && p.IsLordParty
+                    && p.LeaderHero != null
+                    && !p.LeaderHero.IsPrisoner
+                    && p.Army == null && p.AttachedTo == null
+                    && p.MapEvent == null && !p.IsDisbanding
+                    && p.MemberRoster.TotalHealthyCount > 0
+                    && p.GetPosition2D.Distance(ldrPos) <= maxCallRadius)
+                .OrderBy(p => p.GetPosition2D.Distance(ldrPos));
+
+            foreach (var p in candidates)
+                yield return p;
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         //  EXECUTE
         // ─────────────────────────────────────────────────────────────────────
@@ -501,13 +529,8 @@ namespace BLTAdoptAHero.Actions
             if (h.HeroState == Hero.CharacterStates.Fugitive) { onFailure("Your hero is fugitive"); return; }
             if (party != null) { onFailure("You already have a party"); return; }
             if (h.IsPrisoner) { onFailure("You are prisoner"); return; }
-            var partyLimit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(h.Clan, h.Clan.Tier);
-
-            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= partyLimit)
-            {
-                onFailure($"Clan party limit: {partyLimit}");
-                return;
-            }
+            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.WarPartyLimit)
+            { onFailure($"Clan party limit: {h.Clan.WarPartyLimit}"); return; }
 
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOfIfExists(h.GovernorOf);
 
@@ -1472,6 +1495,8 @@ namespace BLTAdoptAHero.Actions
             else
                 leaderParty = candidates.GetRandomElement();
 
+            var vassalClans = VassalBehavior.Current?.GetVassalClans(h.Clan) ?? new List<Clan>();
+            var modelParties = GetPartiesToCallToArmy(leaderParty);
             var members = candidates
                 .Where(p => p != leaderParty
                             && p != null
@@ -2178,6 +2203,7 @@ namespace BLTAdoptAHero.Actions
                             && p.LeaderHero != null && p.MapEvent == null && !p.IsDisbanding
                             && p.IsLordParty && p.MemberRoster.TotalHealthyCount > 0)
                         .ToList();
+                    var modelParties = GetPartiesToCallToArmy(party).Where(p => p != null);
                     var ldrPos = party.GetPosition2D;
 
                     var sorted = kingdomParties

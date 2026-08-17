@@ -736,9 +736,10 @@ namespace BLTAdoptAHero.Actions
             {
                 if (adoptedHero.Clan.Kingdom == k)
                     continue;
+                TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = adoptedHero.Clan.Kingdom.GetStanceWith(k);
-                if (tradeBehavior.HasTradeAgreement(adoptedHero.Clan.Kingdom, k, out _))
+                if (tradeBehavior.HasTradeAgreement(adoptedHero.Clan.Kingdom, k, out temptrade))
                 {
                     var tradeDate = tradeBehavior.GetTradeAgreementEndDate(adoptedHero.Clan.Kingdom, k);
                     int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;

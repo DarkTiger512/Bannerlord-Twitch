@@ -698,5 +698,6 @@ namespace BLTAdoptAHero
         }
 
         public static bool RetinueAllowed() => MissionHelpers.InSiegeMission() || MissionHelpers.InFieldBattleMission();
+
     }
 }

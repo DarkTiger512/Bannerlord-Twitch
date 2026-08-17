@@ -159,9 +159,10 @@ namespace BLTAdoptAHero
             {
                 if (desiredKingdom == k)
                     continue;
+                TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = desiredKingdom.GetStanceWith(k);
-                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k, out _))
+                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k, out temptrade))
                 {
                     var tradeDate = tradeBehavior.GetTradeAgreementEndDate(desiredKingdom, k);
                     int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;
@@ -391,8 +392,9 @@ namespace BLTAdoptAHero
             {
                 Village vill = Village.All.FirstOrDefault(v => v.Name.ToString() == desiredFief.Name.ToString());
                 sb.Append("{=TESTING}{Name} ".Translate(("Name", vill.Name)));
-                if (desiredFief.HasPort)
-                    sb.Append("⚓");
+                if (CampaignHelpers.NavalDLC())
+                    if (desiredFief.HasPort)
+                        sb.Append("⚓");
                 if (desiredFief.IsUnderRaid)
                     sb.Append("⚔️");
                 if (desiredFief.IsRaided)
@@ -419,8 +421,9 @@ namespace BLTAdoptAHero
                     (town.GarrisonParty?.TotalWage ?? 0)
                     );
                 sb.Append("{=TESTING}{Name} ".Translate(("Name", town.Name)));
-                if (desiredFief.HasPort)
-                    sb.Append("⚓");
+                if (CampaignHelpers.NavalDLC())
+                    if (desiredFief.HasPort)
+                        sb.Append("⚓");
                 if (desiredFief.IsUnderSiege)
                     sb.Append("⚔️");
                 sb.Append(" | ");
@@ -460,19 +463,62 @@ namespace BLTAdoptAHero
         {
             var adoptedHero = BLTAdoptAHeroCampaignBehavior.Current.GetAdoptedHero(context.UserName);
             Kingdom desiredKingdom = adoptedHero?.Clan?.Kingdom;
+            Clan desiredClan = null;
+
             if (string.IsNullOrWhiteSpace(desiredName) && desiredKingdom == null)
             {
-                ActionManager.SendReply(context, "{=DSNx7CFT}Need kingdom name".Translate());
+                ActionManager.SendReply(context, "{=DSNx7CFT}Need kingdom or clan name".Translate());
                 return;
             }
             else if (!string.IsNullOrWhiteSpace(desiredName))
             {
-                desiredKingdom = Kingdom.All.Where(k => !k.IsEliminated).FirstOrDefault(c =>
-                c.Name.ToString().ToLower() == desiredName.ToLower()) ?? Kingdom.All.FirstOrDefault(c =>
-                c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-           
+                // Streamer case check
+                if (desiredName.ToLower() == "player")
+                {
+                    desiredKingdom = adoptedHero?.Clan?.Kingdom;
+                    desiredClan = adoptedHero?.Clan;
+                }
+                else
+                {
+                    // Try kingdom first
+                    desiredKingdom = Kingdom.All.Where(k => !k.IsEliminated).FirstOrDefault(c =>
+                            c.Name.ToString().ToLower() == desiredName.ToLower())
+                        ?? Kingdom.All.FirstOrDefault(c =>
+                            c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
 
+                    // Fall back to clan (independent or in a kingdom) if no kingdom matched
+                    if (desiredKingdom == null)
+                    {
+                        desiredClan = Clan.All.FirstOrDefault(c =>
+                                c.Name.ToString().ToLower() == desiredName.ToLower())
+                            ?? Clan.All.FirstOrDefault(c =>
+                                c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
+                    }
+                }
+            }
+
+            // Clan-specific case
+            if (desiredClan != null)
+            {
+                var towns = desiredClan.Fiefs.Where(f => f.IsTown).ToList();
+                var castles = desiredClan.Fiefs.Where(f => f.IsCastle).ToList();
+
+                if (towns.Count == 0 && castles.Count == 0)
+                {
+                    ActionManager.SendReply(context, $"{desiredClan.Name} has no fiefs");
+                    return;
+                }
+
+                string clanResult = $"{desiredClan.Name} Towns: " +
+                                     (towns.Count > 0 ? string.Join(", ", towns.Select(t => t.Name)) : "None") +
+                                     " | Castles: " +
+                                     (castles.Count > 0 ? string.Join(", ", castles.Select(t => t.Name)) : "None");
+
+                ActionManager.SendReply(context, clanResult);
+                return;
+            }
+
+            // Existing kingdom case
             if (desiredKingdom != null)
             {
                 Dictionary<Clan, List<Town>> fiefDict = desiredKingdom.Fiefs.Where(f => f.OwnerClan != null).GroupBy(f => f.OwnerClan).ToDictionary(g => g.Key, g => g.ToList());
@@ -504,12 +550,11 @@ namespace BLTAdoptAHero
                                         .Where(s => s != null)
                                 );
 
-
                 ActionManager.SendReply(context, result);
             }
             else
             {
-                ActionManager.SendReply(context, $"Could not find a kingdom with the name {desiredName}");
+                ActionManager.SendReply(context, $"Could not find a kingdom or clan with the name {desiredName}");
             }
         }
 
@@ -567,12 +612,7 @@ namespace BLTAdoptAHero
                         ships += party.Ships.Count;
                     }
                 }
-                var partyLimit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(desiredClan, desiredClan.Tier);
-
-                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(
-                    ("cparties", parties),
-                    ("mparties", partyLimit)
-                ));
+                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.WarPartyLimit)));
                 clanSb.Append("{=TESTING}Ships: {ships} |".Translate(("ships", ships)));
                 if (desiredClan.Fiefs.Count >= 1)
                 {

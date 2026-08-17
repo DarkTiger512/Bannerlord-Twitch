@@ -183,6 +183,7 @@ namespace BLTAdoptAHero
             IAllianceCampaignBehavior iallianceBehavior = Campaign.Current.GetCampaignBehavior<IAllianceCampaignBehavior>();
             TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
             var diplomacyHelper = Campaign.Current.GetCampaignBehavior<BLTDiplomacyHelper>();
+            TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
             var desiredKingdom = Kingdom.All.FirstOrDefault(c => c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
 
@@ -255,7 +256,7 @@ namespace BLTAdoptAHero
                             {
                                 allianceBehavior.EndAlliance(kingdom, desiredKingdom);
                             }
-                            if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out _))
+                            if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
                             {
                                 tradeBehavior.EndTradeAgreement(kingdom, desiredKingdom);
                             }
@@ -524,7 +525,7 @@ namespace BLTAdoptAHero
                             onFailure($"At war with {desiredKingdom}");
                             return;
                         }
-                        if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out _))
+                        if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
                         {
                             onFailure($"Already trading with {desiredKingdom}");
                             return;

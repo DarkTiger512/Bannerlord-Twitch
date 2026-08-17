@@ -18,12 +18,11 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Party.PartyComponents;
 using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using NavalDLC.GameComponents;
-using NavalDLC.CampaignBehaviors;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace BLTAdoptAHero.Actions
@@ -366,36 +365,34 @@ namespace BLTAdoptAHero.Actions
                 case var _ when command.ToLower() == leaveCommand:
                     HandleLeaveCommand(settings, adoptedHero, onSuccess, onFailure);
                     break;
-                //case var _ when command.ToLower() == disbandCommand:
-                //    HandleDisbandCommand(settings, adoptedHero, onSuccess, onFailure);
-                //    break;
                 case var _ when command.ToLower() == buytitleCommand:
                     HandleBuyTitleCommand(settings, adoptedHero, onSuccess, onFailure);
                     break;
                 case var _ when command.ToLower() == bannerCommand:
-                    {
-                        string bannerCode = bannerCodeOrUrl;
-                        //if (bannerCodeOrUrl.StartsWith("https://pastes.io/", StringComparison.OrdinalIgnoreCase) || bannerCodeOrUrl.StartsWith("https://pastesio/", StringComparison.OrdinalIgnoreCase))
-                        //{
-                        //    bannerCodeOrUrl = ConvertPastebinUrlToRaw(bannerCodeOrUrl);
-                        //    try
-                        //    {
-                        //        using var client = new HttpClient();
-                        //        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-                        //        bannerCode = client.GetStringAsync(bannerCodeOrUrl).GetAwaiter().GetResult().Trim();
-                        //    }
-                        //    catch (Exception ex)
-                        //    {
-                        //        onFailure($"Failed to fetch banner code from URL: {ex.Message}");
-                        //        return;
-                        //    }
-                        //}
+                    string bannerCode = bannerCodeOrUrl;
+                    //if (bannerCodeOrUrl.StartsWith("https://pastes.io/", StringComparison.OrdinalIgnoreCase) || bannerCodeOrUrl.StartsWith("https://pastesio/", StringComparison.OrdinalIgnoreCase))
+                    //{
+                    //    bannerCodeOrUrl = ConvertPastebinUrlToRaw(bannerCodeOrUrl);
+                    //    try
+                    //    {
+                    //        using var client = new HttpClient();
+                    //        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                    //        bannerCode = client.GetStringAsync(bannerCodeOrUrl).GetAwaiter().GetResult().Trim();
+                    //    }
+                    //    catch (Exception ex)
+                    //    {
+                    //        onFailure($"Failed to fetch banner code from URL: {ex.Message}");
+                    //        return;
+                    //    }
+                    //}
 
-                        HandleBannerCommand(settings, adoptedHero, bannerCode, onSuccess, onFailure);
-                        break;
-                    }
+                    HandleBannerCommand(settings, adoptedHero, bannerCode, onSuccess, onFailure);
+                    break;
                 case var _ when command.ToLower() == shipCommand:
-                    HandleShipCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
+                    if (CampaignHelpers.NavalDLC())
+                        HandleShipCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
+                    else
+                        onFailure("NavalDLC not enabled.".Translate());
                     break;
                 case var _ when command.ToLower() == homeCommand:
                     HandleHomeCommand(settings, adoptedHero, desiredName, onSuccess, onFailure);
@@ -716,19 +713,13 @@ namespace BLTAdoptAHero.Actions
                     if (party == null || party.LeaderHero == null) continue;
 
                     if (party.IsLordParty) parties += 1;
-                    ships += party.Ships.Count;
+                    if (CampaignHelpers.NavalDLC())
+                        ships += party.Ships.Count;
                 }
             }
-            var partyLimit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(
-                adoptedHero.Clan,
-                adoptedHero.Clan.Tier
-            );
-
-            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(
-                ("cparties", parties),
-                ("mparties", partyLimit)
-            ));
-            clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
+            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.WarPartyLimit)));
+            if (CampaignHelpers.NavalDLC())
+                clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
             if (adoptedHero.Clan.Fiefs.Count >= 1)
             {
                 int townCount = 0;
@@ -931,11 +922,12 @@ namespace BLTAdoptAHero.Actions
             var clan = adoptedHero.Clan;
             var party = adoptedHero.PartyBelongedTo;
             int limit = Campaign.Current.Models.ClanTierModel.GetPartyLimitForTier(clan, clan.Tier) * 3;
-            if (clan.WarPartyComponents.Sum(w => w.Party.Ships.Count()) >= limit)
-            {
-                onFailure($"Max ships ({limit})");
-                return;
-            }
+            if (CampaignHelpers.NavalDLC())
+                if (clan.WarPartyComponents.Sum(w => w.Party.Ships.Count()) >= limit)
+                {
+                    onFailure($"Max ships ({limit})");
+                    return;
+                }
             if (party == null || party.MapEvent != null)
             {
                 party = clan.WarPartyComponents.Select(p => p.MobileParty).Where(p => p.MapEvent == null).SelectRandom();
