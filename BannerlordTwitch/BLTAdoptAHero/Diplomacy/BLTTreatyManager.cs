@@ -707,7 +707,7 @@ namespace BLTAdoptAHero
                 var stance = payer.GetStanceWith(receiver);
                 if (stance != null && daysRemaining > 0)
                 {
-                    stance.SetDailyTributePaid(payer, amount);
+                    stance.SetDailyTributePaid(payer, amount, daysRemaining);
                 }
             }
         }

@@ -50,6 +50,11 @@ public class BLTAllianceBehavior : CampaignBehaviorBase
             var k2 = faction2 as Kingdom;
             if (k1 != null && k2 != null)
                 HandleKingdomDefensiveAlliance(k1, k2);
+
+            // ── Clan-level defensive alliances (BLTClanDiplomacyBehavior) ─────
+            // The defender (faction2) may be a bare Clan with no Kingdom.
+            // The attacker (faction1) may also be a bare Clan.
+            HandleClanDefensiveAlliance(faction1, faction2);
         }
         catch (Exception ex)
         {
@@ -110,6 +115,72 @@ public class BLTAllianceBehavior : CampaignBehaviorBase
                         .Replace(BLTAdoptAHeroModule.DevTag, "").Trim();
                     Log.LogFeedResponse(
                         $"@{n} Defensive alliance activated — {defender.Name} was attacked by {attacker.Name}!");
+                }
+            }
+        }
+        finally
+        {
+            AdoptedHeroFlags._allowDiplomacyAction = false;
+        }
+    }
+
+    // ── Clan-level (new) ──────────────────────────────────────────────────────
+
+    private void HandleClanDefensiveAlliance(IFaction aggressor, IFaction defender)
+    {
+        if (BLTClanDiplomacyBehavior.Current == null) return;
+
+        // Extract the Clan object for the defender side.
+        // It may be a bare Clan or the RulingClan of a Kingdom.
+        // We only care if the defender is an INDEPENDENT clan (no kingdom),
+        // because kingdom-level alliances are handled by HandleKingdomDefensiveAlliance.
+        Clan defenderClan = defender as Clan;
+        if (defenderClan == null) return;          // kingdom — already handled above
+        if (defenderClan.Kingdom != null) return;  // vassal — skip
+
+        var alliedClans = BLTClanDiplomacyBehavior.Current.GetAlliedClans(defenderClan);
+        if (alliedClans.Count == 0) return;
+
+#if DEBUG
+        Log.Trace($"[BLT Alliance] {defenderClan.Name} (clan) attacked by {aggressor.Name} — " +
+                  $"checking {alliedClans.Count} clan allies");
+#endif
+
+        AdoptedHeroFlags._allowDiplomacyAction = true;
+        try
+        {
+            foreach (var ally in alliedClans)
+            {
+                if (ally == null || ally.IsEliminated) continue;
+                if (ally.Kingdom != null) continue; // kingdom clan — different system
+                if ((IFaction)ally == aggressor) continue;
+                if (ally.IsAtWarWith(aggressor)) continue;
+
+                // Cannot auto-join if also allied with the aggressor
+                Clan aggressorClan = aggressor as Clan;
+                if (aggressorClan != null &&
+                    BLTClanDiplomacyBehavior.Current.HasAlliance(ally, aggressorClan))
+                {
+                    Log.ShowInformation(
+                        $"{ally.Name} cannot defend {defenderClan.Name} — allied with both sides!",
+                        ally.Leader?.CharacterObject);
+                    continue;
+                }
+
+                DeclareWarAction.ApplyByDefault(ally, aggressor);
+                FactionManager.DeclareWar(ally, aggressor);
+
+                Log.ShowInformation(
+                    $"{ally.Name} joined {defenderClan.Name}'s defense against {aggressor.Name}!",
+                    ally.Leader?.CharacterObject, Log.Sound.Horns2);
+
+                if (ally.Leader?.IsAdopted() == true)
+                {
+                    string n = ally.Leader.FirstName.ToString()
+                        .Replace(BLTAdoptAHeroModule.Tag, "")
+                        .Replace(BLTAdoptAHeroModule.DevTag, "").Trim();
+                    Log.LogFeedResponse(
+                        $"@{n} Defensive alliance activated — {defenderClan.Name} was attacked by {aggressor.Name}!");
                 }
             }
         }

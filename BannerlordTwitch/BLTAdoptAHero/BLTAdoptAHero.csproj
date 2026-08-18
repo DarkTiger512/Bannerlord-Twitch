@@ -144,6 +144,7 @@
     <Compile Include="Actions\RetireMyHero.cs" />
     <Compile Include="Actions\AuctionItem.cs" />
     <Compile Include="Actions\SetHeroClass.cs" />
+    <Compile Include="Actions\SimpleDiplomacy.cs" />
     <Compile Include="Actions\SkillXP.cs" />
     <Compile Include="Actions\SmithItem.cs" />
     <Compile Include="Actions\SummonHero.cs" />

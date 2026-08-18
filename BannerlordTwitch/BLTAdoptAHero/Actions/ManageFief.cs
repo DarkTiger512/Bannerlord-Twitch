@@ -77,9 +77,9 @@ namespace BLTAdoptAHero.Actions
                 case "info":
                     FiefInfo(fief, onSuccess);
                     break;
-                //case "projects":
-                //    Project(fief, args, onSuccess, onFailure);
-                //    break;
+                case "projects":
+                    Project(fief, args, onSuccess, onFailure);
+                    break;
                 case "gold":
                     ChangeGold(adoptedHero, fief, args, onSuccess, onFailure);
                     break;
@@ -110,17 +110,35 @@ namespace BLTAdoptAHero.Actions
             foreach (var build in buildings)
             {
                 bool isActive = active.Contains(build);
-                
-                int percent = (int)(build.BuildingProgress / build.GetConstructionCost()*100);
-                if (isActive)
+                bool isdaily = build.BuildingType.IsDailyProject;
+
+                if (isdaily)
                 {
-                    int prio = active.IndexOf(build) + 1;
-                    buildingList.Append($"(🔨{prio})");
+
+                    if (build.IsCurrentlyDefault)
+                    {
+                        int prio = active.Count + 1;
+                        dailyList.Append($"(🔨{prio}){build.Name} - ");
+                    }
+                    else
+                    {
+                        dailyList.Append($"{build.Name} - ");
+                    }
                 }
-                buildingList.Append($"{build.Name}:LV{build.CurrentLevel},");
-                if (build.CurrentLevel == BuildingType.MaxLevel)
-                    buildingList.Append("%100  • ");
-                else buildingList.Append($"%{percent} • ");
+                else
+                {
+                    int percent = (int)(build.BuildingProgress / build.GetConstructionCost()*100);
+                    if (isActive)
+                    {
+                        int prio = active.IndexOf(build) + 1;
+                        buildingList.Append($"(🔨{prio})");
+                    }
+                    buildingList.Append($"{build.Name}:LV{build.CurrentLevel},");
+                    if (build.CurrentLevel == BuildingType.MaxLevel)
+                        buildingList.Append("%100  • ");
+                    else buildingList.Append($"%{percent} • ");
+
+                }
             }
 
             string info = $@"{name} Info: Wall Level: {wall} - Governor: {(governor != null ? governor.Name.ToString() : "None")} - Bricks: {bricks}
@@ -131,6 +149,77 @@ namespace BLTAdoptAHero.Actions
             return;
         }
 
+        private void Project(Town town, string[] args, Action<string> onSuccess, Action<string> onFailure)
+        {
+            if (args.Length == 0)
+            {
+                onFailure("Specify buildings");
+                return;
+            }
+            var builds = town.Buildings;
+            var queue = town.BuildingsInProgress;
+            var oldDaily = queue.FirstOrDefault(b => b.BuildingType.IsDailyProject);
+
+            List<Building> projects = new();
+            Building newDaily = null;
+            bool hasDaily = false;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                Building match = null;
+
+                // try 2-arg match first
+                if (i + 1 < args.Length)
+                {
+                    string twoArg = args[i] + " " + args[i + 1];
+
+                    match = GetBestMatch(twoArg, town);
+                    if (match != null)
+                    {
+                        if (match.BuildingType.IsDailyProject && !hasDaily)
+                        {
+                            hasDaily = true;
+                            newDaily = match;
+                        }
+                        else
+                        {
+                            projects.Add(match);
+                            i++;
+                            continue;
+                        }
+                    }
+                }
+                // single arg
+                match = GetBestMatch(args[i], town);
+                if (match != null)
+                {
+                    if (match.BuildingType.IsDailyProject && !hasDaily)
+                    {
+                        hasDaily = true;
+                        newDaily = match;
+                    }
+                    else
+                    {
+                        projects.Add(match);
+                    }
+                }
+            }
+
+            if (projects.Count == 0 && newDaily == null)
+            {
+                onFailure("");
+                return;
+            }
+            else
+            {
+                BuildingHelper.ChangeCurrentBuildingQueue(projects, town);
+                if (newDaily != null)
+                    BuildingHelper.ChangeDefaultBuilding(newDaily, town);
+
+                onSuccess("Changed building projects");
+                return;
+            }          
+        }
         Building GetBestMatch(string input, Town town)
         {
             input = input.ToLower();

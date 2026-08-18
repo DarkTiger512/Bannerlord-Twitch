@@ -61,6 +61,7 @@ namespace BLTAdoptAHero
             ScanPeace(player);
             ScanAlliance(player);
             ScanNAP(player);
+            if (player is Kingdom playerKingdom) ScanTrade(playerKingdom);
         }
 
         /// <summary>
@@ -123,6 +124,15 @@ namespace BLTAdoptAHero
             if (proposal == null) return;
             _shownNAPKeys.Add(ProposalKey(proposer, playerFaction));
             ShowNAPInquiry(proposal);
+        }
+
+        public void OfferTradeToPlayer(Kingdom proposer, Kingdom playerKingdom, int daysToAccept)
+        {
+            if (PlayerFaction() == null) return;
+            var proposal = BLTTreatyManager.Current?.GetTradeProposal(proposer, playerKingdom);
+            if (proposal == null) return;
+            _shownTradeKeys.Add(ProposalKey(proposer, playerKingdom));
+            ShowTradeInquiry(proposal);
         }
 
         public void OfferCTWToPlayer(IFaction proposer, IFaction playerFaction, IFaction target, int daysToAccept)
@@ -193,7 +203,7 @@ namespace BLTAdoptAHero
             AdoptedHeroFlags._allowDiplomacyAction = true;
             try
             {
-                MakePeaceAction.ApplyByKingdomDecision(player, proposer, current.DailyTribute);
+                MakePeaceAction.ApplyByKingdomDecision(player, proposer, current.DailyTribute, current.Duration);
                 FactionManager.SetNeutral(player, proposer);
 
                 if (current.DailyTribute > 0 && payer is Kingdom pk && receiver is Kingdom rk)
@@ -374,6 +384,66 @@ namespace BLTAdoptAHero
         {
             BLTTreatyManager.Current?.RemoveNAPProposal(proposer, player);
             InformationManager.DisplayMessage(new InformationMessage($"Declined NAP with {proposer.Name}", Colors.Black));
+        }
+
+        // ── Trade (new — Kingdom-only, vanilla trade model has no clan path) ─
+
+        private void ScanTrade(Kingdom playerKingdom)
+        {
+            foreach (var p in BLTTreatyManager.Current.GetTradeProposalsFor(playerKingdom))
+            {
+                string key = $"{p.ProposerKingdomId}_{p.TargetKingdomId}";
+                if (!_shownTradeKeys.Add(key)) continue;
+                ShowTradeInquiry(p);
+            }
+        }
+
+        private void ShowTradeInquiry(BLTTradeProposal proposal)
+        {
+            if (proposal.GetProposer() is not Kingdom proposer) return;
+            if (proposal.GetTarget() is not Kingdom playerKingdom) return;
+
+            InformationManager.ShowInquiry(
+                new InquiryData(
+                    titleText: "Trade Agreement Proposal",
+                    text: $"{proposer.Name} proposes a trade agreement.\n\n" +
+                          $"You have {proposal.DaysRemaining()} days to decide.",
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: "Accept Trade",
+                    negativeText: "Decline",
+                    affirmativeAction: () => AcceptPlayerTrade(proposer, playerKingdom),
+                    negativeAction: () => DeclinePlayerTrade(proposer, playerKingdom)
+                ),
+                pauseGameActiveState: true
+            );
+        }
+
+        private void AcceptPlayerTrade(Kingdom proposer, Kingdom playerKingdom)
+        {
+            if (BLTTreatyManager.Current == null) return;
+
+            var proposal = BLTTreatyManager.Current.GetTradeProposal(proposer, playerKingdom);
+            if (proposal == null || playerKingdom.IsAtWarWith(proposer))
+            {
+                InformationManager.DisplayMessage(new InformationMessage("Trade proposal is no longer valid", Colors.Red));
+                return;
+            }
+
+            var tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
+            var duration = Campaign.Current.Models.TradeAgreementModel.GetTradeAgreementDurationInYears(playerKingdom, proposer);
+            tradeBehavior.MakeTradeAgreement(playerKingdom, proposer, duration);
+
+            BLTTreatyManager.Current.RemoveTradeProposal(proposer, playerKingdom);
+
+            InformationManager.DisplayMessage(new InformationMessage($"Trade agreement established with {proposer.Name}!", Colors.Green));
+            Log.ShowInformation($"{playerKingdom.Name} and {proposer.Name} have formed a trade agreement!", Hero.MainHero.CharacterObject);
+        }
+
+        private void DeclinePlayerTrade(Kingdom proposer, Kingdom playerKingdom)
+        {
+            BLTTreatyManager.Current?.RemoveTradeProposal(proposer, playerKingdom);
+            InformationManager.DisplayMessage(new InformationMessage($"Declined trade agreement with {proposer.Name}", Colors.Black));
         }
     }
 

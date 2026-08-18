@@ -127,11 +127,13 @@ namespace BLTAdoptAHero
                 case ItemObject.ItemTypeEnum.Bow:
                 case ItemObject.ItemTypeEnum.Crossbow:
                 case ItemObject.ItemTypeEnum.Thrown:
+                case ItemObject.ItemTypeEnum.Sling:
                     return "🏹";
                 case ItemObject.ItemTypeEnum.Shield:
                     return "🛡";
                 case ItemObject.ItemTypeEnum.Arrows:
                 case ItemObject.ItemTypeEnum.Bolts:
+                case ItemObject.ItemTypeEnum.SlingStones:
                     return "➶";
                 case ItemObject.ItemTypeEnum.Horse:
                     return "🐴";

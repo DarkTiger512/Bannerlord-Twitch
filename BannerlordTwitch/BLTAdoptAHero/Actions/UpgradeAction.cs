@@ -777,6 +777,7 @@ namespace BLTAdoptAHero.Actions
             // Resolve the upgrade object for the final target first (validate it exists)
             var targetUpgrade = gc.FiefUpgrades?.FirstOrDefault(u => u.ID == upgradeId);
             if (targetUpgrade == null) { fail($"Upgrade '{upgradeId}' not found"); return; }
+            if (targetUpgrade.CoastalOnly && !settlement.HasPort) { fail("This is a Coastal Only upgrade, try again on a coastal settlement"); return; }
 
             // Build purchase chain (includes prerequisites when autoBuy is true)
             var owned = new HashSet<string>(UpgradeBehavior.Current?.GetFiefUpgrades(settlement) ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
@@ -896,6 +897,7 @@ namespace BLTAdoptAHero.Actions
                 foreach (var up in gc.FiefUpgrades.OrderBy(u => u.TierLevel))
                 {
                     if (owned.Contains(up.ID)) continue;
+                    if (up.CoastalOnly && !settlement.HasPort) continue;
                     if (up.CapitalOnly && !isCapital) continue;
 
                     var chain = BuildFiefPurchaseChain(up.ID, owned, gc);
@@ -906,6 +908,7 @@ namespace BLTAdoptAHero.Actions
                     {
                         var chainUpgrade = gc.FiefUpgrades.FirstOrDefault(u => string.Equals(u.ID, id, OIC));
                         if (chainUpgrade == null) continue;
+                        if (chainUpgrade.CoastalOnly && !settlement.HasPort) { chainApplies = false; break; }
                         if (chainUpgrade.CapitalOnly && !isCapital) { chainApplies = false; break; }
                     }
                     if (!chainApplies) continue;
@@ -1114,6 +1117,9 @@ namespace BLTAdoptAHero.Actions
 
             foreach (var settlement in targetList)
             {
+                // Skip non-coastal settlements for coastal-only upgrades silently
+                if (targetUpgrade.CoastalOnly && !settlement.HasPort) { settlementsSkipped++; continue; }
+
                 var owned = new HashSet<string>(UpgradeBehavior.Current?.GetFiefUpgrades(settlement) ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
 
                 if (targetUpgrade.CapitalOnly) { fail($"'{upgradeId}' is a capital-only upgrade; purchase it for your capital settlement directly"); return; }

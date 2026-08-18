@@ -64,7 +64,7 @@ namespace BLTAdoptAHero
             CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener(
                 this, OnSiegeEventCreated);
 
-            CampaignEvents.SiegeCompletedEvent.AddNonSerializedListener(
+            CampaignEvents.AfterSiegeCompletedEvent.AddNonSerializedListener(
                 this, OnAfterSiegeCompleted);
 
             CampaignEvents.DailyTickPartyEvent.AddNonSerializedListener(
@@ -126,7 +126,7 @@ namespace BLTAdoptAHero
                 // TextObject name - friendly readable name (localize if you want)
                 var name = new TextObject("{=blt_reinforce_name}BLT Reinforcements");
                 // Convert to a custom party (keeps the party instance but changes its PartyComponent)
-                //CustomPartyComponent.ConvertPartyToCustomParty(party, settlement, name, owner: null);
+                CustomPartyComponent.ConvertPartyToCustomParty(party, settlement, name, owner: null);
             }
             catch
             {

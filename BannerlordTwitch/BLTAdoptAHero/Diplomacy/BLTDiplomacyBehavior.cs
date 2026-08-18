@@ -87,6 +87,11 @@ namespace BLTAdoptAHero
                 }
                 _recentAIPeaceAttempts[key] = CampaignTime.Now;
 
+                // Use the base-game tribute model to price the proposal
+                int dailyTribute = Campaign.Current.Models.DiplomacyModel.GetDailyTributeToPay(
+                    aiKingdom.RulingClan, bltKingdom.RulingClan, out int duration);
+                bool isOffer = dailyTribute > 0;
+
 #if DEBUG
                 Log.Trace($"[BLT] AI peace proposal: {aiKingdom.Name} -> {bltKingdom.Name} " +
                           $"(tribute: {dailyTribute}/day for {duration} days)");
@@ -94,7 +99,7 @@ namespace BLTAdoptAHero
 
                 BLTTreatyManager.Current.CreatePeaceProposal(
                     aiKingdom, bltKingdom,
-                    false, 0, 0,
+                    isOffer, Math.Abs(dailyTribute), duration,
                     goldCost: 0, influenceCost: 0, daysToAccept: 15);
 
                 if (bltKingdom.Leader != null)
@@ -104,8 +109,12 @@ namespace BLTAdoptAHero
                         .Replace(BLTAdoptAHeroModule.DevTag, "")
                         .Trim();
 
+                    string tributeMsg = dailyTribute != 0
+                        ? $" {(isOffer ? "offering" : "demanding")} {Math.Abs(dailyTribute)}{Naming.Gold}/day for {duration} days"
+                        : "";
+
                     Log.LogFeedResponse(
-                        $"@{leaderName} {aiKingdom.Name} has proposed peace! " +
+                        $"@{leaderName} {aiKingdom.Name} has proposed peace{tributeMsg}! " +
                         $"Use !diplomacy accept peace {aiKingdom.Name}");
                 }
 
