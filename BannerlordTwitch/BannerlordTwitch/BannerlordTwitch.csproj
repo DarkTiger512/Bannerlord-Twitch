@@ -27,7 +27,7 @@
     <OldToolsVersion>4.0</OldToolsVersion>
   </PropertyGroup>
   <Import Project="$(SolutionDir)BLTProperties.targets" />
-	<ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'false'">
+	<ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
 		<PackageReference Include="Bannerlord.ReferenceAssemblies" />
 	</ItemGroup>
   <PropertyGroup>

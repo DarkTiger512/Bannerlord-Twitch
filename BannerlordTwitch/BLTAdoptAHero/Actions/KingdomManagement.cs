@@ -626,11 +626,15 @@ namespace BLTAdoptAHero.Actions
                 adoptedHero.Clan.Kingdom = desiredKingdom;
             if (adoptedHero.Clan.Fiefs.Count == 0)
             {
+                adoptedHero.Clan.ConsiderAndUpdateHomeSettlement();
                 foreach (Hero hero in adoptedHero.Clan.Heroes)
                 {
                     hero.UpdateHomeSettlement();
                 }
             }
+                
+            adoptedHero.Clan.CalculateMidSettlement();
+            
 
             onSuccess("{=LSea9bms}Your clan {clanName} has joined the kingdom {kingdomName}".Translate(("clanName", adoptedHero.Clan.Name.ToString()), ("kingdomName", adoptedHero.Clan.Kingdom.Name.ToString())));
             Log.ShowInformation("{=Lid1aV3k}{clanName} has joined kingdom {kingdomName}!".Translate(("clanName", adoptedHero.Clan.Name.ToString()), ("kingdomName", adoptedHero.Clan.Kingdom.Name.ToString())), adoptedHero.CharacterObject, Log.Sound.Horns2);
@@ -720,51 +724,71 @@ namespace BLTAdoptAHero.Actions
                 onFailure("{=RvkJO6J9}Your clan is not in a kingdom".Translate());
                 return;
             }
+            TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
             bool war = false;
+            bool ally = adoptedHero.Clan.Kingdom.AlliedKingdoms.Count > 0;
+            bool trade = false;
             bool tribute = false;
             TextObject warList = new TextObject("");
             TextObject tributeList = new TextObject("");
+            TextObject tradeList = new TextObject("");
             foreach (Kingdom k in Kingdom.All)
             {
                 if (adoptedHero.Clan.Kingdom == k)
                     continue;
+                TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = adoptedHero.Clan.Kingdom.GetStanceWith(k);
+                if (tradeBehavior.HasTradeAgreement(adoptedHero.Clan.Kingdom, k, out temptrade))
+                {
+                    var tradeDate = tradeBehavior.GetTradeAgreementEndDate(adoptedHero.Clan.Kingdom, k);
+                    int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;
+                    trade = true;
+                    tradeList.Value += k.Name.Value + $"({tradeDays}), ";
+                }
                 if (adoptedHero.Clan.Kingdom.IsAtWarWith(k))
                 {
                     war = true;
-                    warList.Value += k.Name.Value + ":" + ((int)k.TotalStrength).ToString() + ", ";
+                    warList.Value += k.Name.Value + ":" + ((int)k.CurrentTotalStrength).ToString() + ", ";
                 }
                 else
                 {
-                    int dailyTributeFromUs = stance.GetDailyTributePaid(adoptedHero.Clan.Kingdom);
-                    int dailyTributeFromThem = stance.GetDailyTributePaid(k);
+                    int dailyTributeFromUs = stance.GetDailyTributeToPay(adoptedHero.Clan.Kingdom);
+                    int dailyTributeFromThem = stance.GetDailyTributeToPay(k);
+                    int daysUs = k.GetStanceWith(adoptedHero.Clan.Kingdom).GetRemainingTributePaymentCount();
+                    int daysThem = stance.GetRemainingTributePaymentCount();
 
 
                     if (dailyTributeFromUs > 0)
                     {
                         tribute = true;
                         tributeList.Value +=
-                            $"{k.Name}:-{dailyTributeFromUs}, ";
+                            $"{k.Name}:-{dailyTributeFromUs}({daysUs}), ";
                     }
                     else if (dailyTributeFromThem > 0)
                     {
                         tribute = true;
                         tributeList.Value +=
-                            $"{k.Name}:+{dailyTributeFromThem}, ";
+                            $"{k.Name}:+{dailyTributeFromThem}({daysThem}), ";
                     }
                 }
             }
             warList.Value = warList.Value.TrimEnd(',', ' ');
+            var allyList = string.Join(", ", adoptedHero.Clan.Kingdom.AlliedKingdoms.Select(k => k.Name.ToString()));
+            tradeList.Value = tradeList.Value.TrimEnd(',', ' ');
             tributeList.Value = tributeList.Value.TrimEnd(',', ' ');
 
             var clanStats = new StringBuilder();
             clanStats.Append("{=SVlrGgol}Kingdom Name: {name} | ".Translate(("name", adoptedHero.Clan.Kingdom.Name.ToString())));
             clanStats.Append("{=Ss588M9l}Ruling Clan: {rulingClan} | ".Translate(("rulingClan", adoptedHero.Clan.Kingdom.RulingClan.Name.ToString())));
             clanStats.Append("{=T1FhhCH9}Clan Count: {clanCount} | ".Translate(("clanCount", adoptedHero.Clan.Kingdom.Clans.Count.ToString())));
-            clanStats.Append("{=TUOmh7NY}Strength: {strength} | ".Translate(("strength", Math.Round(adoptedHero.Clan.Kingdom.TotalStrength).ToString())));
+            clanStats.Append("{=TUOmh7NY}Strength: {strength} | ".Translate(("strength", Math.Round(adoptedHero.Clan.Kingdom.CurrentTotalStrength).ToString())));
             if (war)
                 clanStats.Append("{=QadZnUKh}Wars: {wars} | ".Translate(("wars", warList.ToString())));
+            if (ally)
+                clanStats.Append("{=TESTING}Alliances: {allies} | ".Translate(("allies", allyList)));
+            if (trade)
+                clanStats.Append("{=TESTING}Trades: {trade} | ".Translate(("trade", tradeList.ToString())));
             if (tribute)
                 clanStats.Append("{=0GhTvF3K}Tribute: {tribute} | ".Translate(("tribute", tributeList.ToString())));
             if (adoptedHero.Clan.Kingdom.RulingClan.HomeSettlement.Name != null)
@@ -867,11 +891,11 @@ namespace BLTAdoptAHero.Actions
                 foreach (Army army in adoptedHero.Clan.Kingdom.Armies.ToList())
                 {
                     armies.Append($"\nArmy: {army.Name.ToString()} | ");
-                    armies.Append($"{(int)army.TotalStrength} Strength | ");
+                    armies.Append($"{(int)army.CalculateCurrentStrength()} Strength | ");
                     armies.Append($"{army.TotalHealthyMembers} Troops | ");
                     armies.Append($"{army.LeaderPartyAndAttachedPartiesCount} Parties | ");
-                    if (!string.IsNullOrEmpty(army?.GetBehaviorText()?.ToString()))
-                        armies.Append($"Behaviour: {army.GetBehaviorText()} | ");
+                    if (!string.IsNullOrEmpty(army?.LeaderParty?.GetBehaviorText()?.ToString()))
+                        armies.Append($"Behaviour: {army.LeaderParty.GetBehaviorText()} | ");
                     if (army.LeaderParty.TargetParty != null || army.LeaderParty.ShortTermTargetParty != null)
                         armies.Append($"Target: {army.LeaderParty.ShortTermTargetParty ?? army.LeaderParty.TargetParty} | ");
                 }
@@ -1009,10 +1033,12 @@ namespace BLTAdoptAHero.Actions
             }
             ChangeKingdomAction.ApplyByJoinFactionAsMercenary(adoptedHero.Clan, desiredKingdom);
 
+            adoptedHero.Clan.ConsiderAndUpdateHomeSettlement();
             foreach (Hero hero in adoptedHero.Clan.Heroes)
             {
                 hero.UpdateHomeSettlement();
             }
+            adoptedHero.Clan.CalculateMidSettlement();
             Log.ShowInformation("{=tpwW6Ix8}{clanName} is now under contract with {kingdomName}!".Translate(("clanName", adoptedHero.Clan.Name.ToString()), ("kingdomName", adoptedHero.Clan.Kingdom.Name.ToString())), adoptedHero.CharacterObject, Log.Sound.Horns2);
         }
 
@@ -1066,11 +1092,10 @@ namespace BLTAdoptAHero.Actions
             var culture = adoptedHero.Culture;
             creator.CreateKingdom(new TextObject(desiredName), new TextObject(desiredName), culture, adoptedHero.Clan, null, null, null, null);
             var newKingdom = adoptedHero.Clan.Kingdom;
-            newKingdom.KingdomBudgetWallet = 2000000; 
+            newKingdom.KingdomBudgetWallet = 2000000;
             adoptedHero.Clan.Influence = 2000;
-            newKingdom.InitializeKingdom(new TextObject(desiredName), new TextObject(desiredName), culture, adoptedHero.Clan.Banner, 
-                adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetSecondaryColor(), adoptedHero.HomeSettlement, 
-                newKingdom.EncyclopediaText, newKingdom.EncyclopediaTitle, newKingdom.EncyclopediaRulerTitle);
+            adoptedHero.Clan.Kingdom.Banner = adoptedHero.Clan.Banner;
+            adoptedHero.Clan.Kingdom.Banner.ChangeBackgroundColor(adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetSecondaryColor());
 
             onSuccess("{=TESTING}Created kingdom {name}".Translate(("name", desiredName)));
             Log.ShowInformation("{=TESTING}{heroName} has founded kingdom {kingdom}!".Translate(("heroName", adoptedHero.Name.ToString()), ("kingdom", adoptedHero.Clan.Kingdom.Name.ToString())), adoptedHero.CharacterObject, Log.Sound.Horns2);

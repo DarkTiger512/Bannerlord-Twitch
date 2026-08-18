@@ -76,7 +76,7 @@ namespace BannerlordTwitch.Helpers
             { DrivenProperty.AIRealizeBlockingFromIncorrectSideAbility, "AIRealizeBlockingFromIncorrectSideAbility" },
             { DrivenProperty.AiAttackingShieldDefenseChance, "AiAttackingShieldDefenseChance" },
             { DrivenProperty.AiAttackingShieldDefenseTimer, "AiAttackingShieldDefenseTimer" },
-            { DrivenProperty.AiCheckMovementIntervalFactor, "AiCheckApplyMovementIntervalFactor" }, 
+            { DrivenProperty.AiCheckApplyMovementInterval, "AiCheckApplyMovementInterval" }, 
             // { DrivenProperty.AiMovemetDelayFactor, "AiMovemetDelayFactor" }, 
             { DrivenProperty.AiParryDecisionChangeValue, "AiParryDecisionChangeValue" },
             { DrivenProperty.AiDefendWithShieldDecisionChanceValue, "AiDefendWithShieldDecisionChanceValue" },

@@ -915,7 +915,7 @@ namespace BLTAdoptAHero
             });
             new UpgradeSystemDocumentation().GenerateDocumentation(generator);
 
-
+            
             var kingdoms = MapHub.CurrentMapData?.Kingdoms;
             if (kingdoms == null || kingdoms.Count == 0)
             {
@@ -946,83 +946,92 @@ namespace BLTAdoptAHero
                         generator.TH("{=GlobalCommonConfig_Doc_Name}Name".Translate());
                     });
 
-                    // Map
-                    var settlements = MapHub.CurrentMapData?.Settlements;
-                    if (settlements == null || settlements.Count == 0)
+            // Map
+            var settlements = MapHub.CurrentMapData?.Settlements;
+            if (settlements == null || settlements.Count == 0)
+            {
+                MapHub.UpdateMapData(true);
+                settlements = MapHub.CurrentMapData?.Settlements;
+            }
+
+            if (settlements == null || settlements.Count == 0)
+                return;
+
+            var segments = MapHub.CurrentMapData.Coastline;
+
+
+            generator.H2("Map");
+
+                // Map
+                var settlements = MapHub.CurrentMapData?.Settlements;
+                if (settlements == null || settlements.Count == 0)
+                    return;
+
+                var segments = MapHub.CurrentMapData.Coastline;
+                generator.H2("Map");
+
+                generator.Div(() =>
+                {
+                    // Outer container div with inline style
+                    generator.P("<div style=\"position:relative; width:1500px; height:1000px;" +
+                                "background-color:#1f1f1f; border:3px solid #111; overflow:hidden; left:-25%; \">");
+
+                    float margin = 35f;
+                    float mapWidth = 1500f - 2 * margin;
+                    float mapHeight = 1000f - 2 * margin;
+
+                    float minX = settlements.Min(s => s.X);
+                    float maxX = settlements.Max(s => s.X);
+                    float minY = settlements.Min(s => s.Y);
+                    float maxY = settlements.Max(s => s.Y);
+
+                    var kingdomDict = MapHub.CurrentMapData.Kingdoms.ToDictionary(k => k.Id, k => k.Color1);
+                    var kingdomBorderDict = MapHub.CurrentMapData.Kingdoms.ToDictionary(k => k.Id, k => k.Color2);
+
+                    if (segments?.Count > 0)
                     {
-                        MapHub.UpdateMapData(true);
-                        settlements = MapHub.CurrentMapData?.Settlements;
-                    }
+                        float worldWidth = maxX - minX;
+                        float worldHeight = maxY - minY;
 
-                    if (settlements == null || settlements.Count == 0)
-                        return;
+                        if (worldWidth == 0) worldWidth = 1;
+                        if (worldHeight == 0) worldHeight = 1;
 
-                    var segments = MapHub.CurrentMapData.Coastline;
-                    generator.H2("Map");
-
-                    generator.Div(() =>
-                    {
-                        // Outer container div with inline style
-                        generator.P("<div style=\"position:relative; width:1500px; height:1000px;" +
-                                    "background-color:#1f1f1f; border:3px solid #111; overflow:hidden; left:-25%; \">");
-
-                        float margin = 35f;
-                        float mapWidth = 1500f - 2 * margin;
-                        float mapHeight = 1000f - 2 * margin;
-
-                        float minX = settlements.Min(s => s.X);
-                        float maxX = settlements.Max(s => s.X);
-                        float minY = settlements.Min(s => s.Y);
-                        float maxY = settlements.Max(s => s.Y);
-
-                        var kingdomDict = MapHub.CurrentMapData.Kingdoms.ToDictionary(k => k.Id, k => k.Color1);
-                        var kingdomBorderDict = MapHub.CurrentMapData.Kingdoms.ToDictionary(k => k.Id, k => k.Color2);
-
-                        if (segments?.Count > 0)
+                        foreach (var seg in segments)
                         {
-                            float worldWidth = maxX - minX;
-                            float worldHeight = maxY - minY;
+                            float scaledX1 = (seg.X1 - minX) / worldWidth * mapWidth + margin;
+                            float scaledY1 = (seg.Y1 - minY) / worldHeight * mapHeight + margin;
 
-                            if (worldWidth == 0) worldWidth = 1;
-                            if (worldHeight == 0) worldHeight = 1;
+                            float scaledX2 = (seg.X2 - minX) / worldWidth * mapWidth + margin;
+                            float scaledY2 = (seg.Y2 - minY) / worldHeight * mapHeight + margin;
 
-                            foreach (var seg in segments)
-                            {
-                                float scaledX1 = (seg.X1 - minX) / worldWidth * mapWidth + margin;
-                                float scaledY1 = (seg.Y1 - minY) / worldHeight * mapHeight + margin;
-
-                                float scaledX2 = (seg.X2 - minX) / worldWidth * mapWidth + margin;
-                                float scaledY2 = (seg.Y2 - minY) / worldHeight * mapHeight + margin;
-
-                                generator.MapSegment(
-                                    scaledX1,
-                                    scaledY1,
-                                    scaledX2,
-                                    scaledY2
-                                );
-                            }
-                        }
-
-                        foreach (var s in settlements)
-                        {
-                            float scaledX = (s.X - minX) / (maxX - minX) * mapWidth + margin;
-                            float scaledY = (s.Y - minY) / (maxY - minY) * mapHeight + margin;
-
-                            generator.MapLabel(
-                                scaledX,
-                                scaledY,
-                                s.Name,
-                                s.Type,
-                                s.KingdomId,
-                                kingdomId => kingdomDict.TryGetValue(kingdomId, out var c) ? c : "#000080",
-                                kingdomId => kingdomBorderDict.TryGetValue(kingdomId, out var c) ? c : "#000000"
+                            generator.MapSegment(
+                                scaledX1,
+                                scaledY1,
+                                scaledX2,
+                                scaledY2
                             );
                         }
+                    }
 
-                        generator.P("</div>"); // close container
-                    });
+                    foreach (var s in settlements)
+                    {
+                        float scaledX = (s.X - minX) / (maxX - minX) * mapWidth + margin;
+                        float scaledY = (s.Y - minY) / (maxY - minY) * mapHeight + margin;
+
+                        generator.MapLabel(
+                            scaledX,
+                            scaledY,
+                            s.Name,
+                            s.Type,
+                            s.KingdomId,
+                            kingdomId => kingdomDict.TryGetValue(kingdomId, out var c) ? c : "#000080",
+                            kingdomId => kingdomBorderDict.TryGetValue(kingdomId, out var c) ? c : "#000000"
+                        );
+                    }
+
+                    generator.P("</div>"); // close container
                 });
-            });
+            }
         }
         #endregion
 

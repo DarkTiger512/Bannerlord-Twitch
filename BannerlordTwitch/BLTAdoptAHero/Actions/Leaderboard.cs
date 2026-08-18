@@ -206,14 +206,14 @@ namespace BLTAdoptAHero
             // Map filter strings to functions
             var statLines = new Dictionary<string, Func<string>>(StringComparer.OrdinalIgnoreCase)
             {
-                { "POWER", () => BuildClanStatLine("POWER", c => (int)c.TotalStrength) },
+                { "POWER", () => BuildClanStatLine("POWER", c => (int)c.CurrentTotalStrength) },
                 { "RENOWN", () => BuildClanStatLine("RENOWN", c => (int)c.Renown) },
                 { "MEMBERS", () => BuildClanStatLine("MEMBERS", c => c.Heroes.Where(h => h.IsAlive).ToList().Count) },
                 { "DEAD", () => BuildClanStatLine("DEAD", c => c.Heroes.Where(h => h.IsDead).ToList().Count) },
                 { "FIEFS", () => BuildClanStatLine("FIEFS", c => c.Fiefs.Count) },
                 { "GOLD", () => BuildClanStatLine("GOLD", c => c.Gold) },
                 { "PARTY", () => BuildClanStatLine("PARTY", c => c.WarPartyComponents.Where(p => p != null && p.Party != null).Select(p => (int)p.Party.MemberRoster.TotalManCount).DefaultIfEmpty(0).Max()) },
-                { "MERC", () =>  (bltClans.Any(c => c.IsUnderMercenaryService) ? BuildClanStatLine("MERC", c => (c.IsUnderMercenaryService ? (int)c.TotalStrength : -1)) : "MERC: No clans currently under mercenary service")  },
+                { "MERC", () =>  (bltClans.Any(c => c.IsUnderMercenaryService) ? BuildClanStatLine("MERC", c => (c.IsUnderMercenaryService ? (int)c.CurrentTotalStrength : -1)) : "MERC: No clans currently under mercenary service")  },
                 { "PROSPERITY", () => BuildClanStatLine("PROSPERITY", c => (int)c.Fiefs.Select(f => f.Prosperity).DefaultIfEmpty(0).Max()) }
             };
 

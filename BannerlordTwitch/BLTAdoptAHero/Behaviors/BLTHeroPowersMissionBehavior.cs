@@ -64,6 +64,10 @@ namespace BLTAdoptAHero
                 => handlers.MissileCollisionReaction(collisionReaction, attackerAgent, attachedAgent,
                     attachedBoneIndex, attachedToShield, attachLocalFrame, missile));
 
+        protected override void OnAgentControllerChanged(Agent agent, AgentControllerType oldController)
+            => powerHandler.CallHandlersForAgent(agent,
+                handlers => handlers.AgentControllerChanged(agent));
+
         public class DecideWeaponCollisionReactionParams
         {
             public Blow registeredBlow;
@@ -314,7 +318,7 @@ namespace BLTAdoptAHero
         // }
 
         [UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "RegisterBlow")]
-        private static void RegisterBlowPrefix(Agent attacker, Agent victim, GameEntity realHitEntity, ref Blow b,
+        private static void RegisterBlowPrefix(Agent attacker, Agent victim, WeakGameEntity realHitEntity, ref Blow b,
     ref AttackCollisionData collisionData, in MissionWeapon attackerWeapon, ref CombatLogData combatLogData)
         {
             Current?.RegisterBlow(attacker, victim, ref b, ref collisionData,

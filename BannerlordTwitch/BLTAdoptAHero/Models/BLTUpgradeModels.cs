@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.ComponentInterfaces;
+using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -82,6 +83,7 @@ namespace BLTAdoptAHero.Models
         private static readonly TextObject MercArmyText =
             new TextObject("{=BLT_MercArmyPartySize}Custom Mercenary Army");
 
+        public override int MinimumNumberOfVillagersAtVillagerParty => _previous.MinimumNumberOfVillagersAtVillagerParty;
 
         public BLTPartySizeLimitModel(PartySizeLimitModel previous)
         {
@@ -123,9 +125,46 @@ namespace BLTAdoptAHero.Models
             return result;
         }
 
+        //public override ExplainedNumber CalculateGarrisonPartySizeLimit(
+        //    Settlement settlement,
+        //    bool includeDescriptions = true)
+        //{
+        //    var result = _previous.CalculateGarrisonPartySizeLimit(settlement, includeDescriptions);
+        //
+        //    if (settlement != null && UpgradeBehavior.Current != null)
+        //    {
+        //        int bonus = UpgradeBehavior.Current.GetTotalGarrisonCapacityBonus(settlement);
+        //        if (bonus != 0)
+        //            result.Add(bonus, UpgradeText);
+        //    }
+        //
+        //    return result;
+        //}
+
+        public override ExplainedNumber CalculateGarrisonPartySizeLimit(
+            Settlement settlement,
+            bool includeDescriptions = true)
+        {
+            // Delegate entirely to _previous — the garrison capacity bonus is now
+            // applied in GetPartyMemberSizeLimit to ensure the engine enforces it.
+            // Previously adding it here caused it to show correctly in the info
+            // screen but have no effect on actual enforcement.
+            return _previous.CalculateGarrisonPartySizeLimit(settlement, includeDescriptions);
+        }
+
         public override ExplainedNumber GetPartyPrisonerSizeLimit(PartyBase party, bool includeDescriptions = false)
         {
             return _previous.GetPartyPrisonerSizeLimit(party, includeDescriptions);
+        }
+
+        public override int GetClanTierPartySizeEffectForHero(Hero hero)
+        {
+            return _previous.GetClanTierPartySizeEffectForHero(hero);
+        }
+
+        public override int GetNextClanTierPartySizeEffectChangeForHero(Hero hero)
+        {
+            return _previous.GetNextClanTierPartySizeEffectChangeForHero(hero);
         }
 
         public override int GetAssumedPartySizeForLordParty(Hero leaderHero, IFaction partyMapFaction, Clan actualClan)
@@ -133,9 +172,19 @@ namespace BLTAdoptAHero.Models
             return _previous.GetAssumedPartySizeForLordParty(leaderHero, partyMapFaction, actualClan);
         }
 
-        public override int GetTierPartySizeEffect(int tier)
+        public override int GetIdealVillagerPartySize(Village village)
         {
-            return _previous.GetTierPartySizeEffect(tier);
+            return _previous.GetIdealVillagerPartySize(village);
+        }
+
+        public override TroopRoster FindAppropriateInitialRosterForMobileParty(MobileParty party, PartyTemplateObject partyTemplate)
+        {
+            return _previous.FindAppropriateInitialRosterForMobileParty(party, partyTemplate);
+        }
+
+        public override List<Ship> FindAppropriateInitialShipsForMobileParty(MobileParty party, PartyTemplateObject partyTemplate)
+        {
+            return _previous.FindAppropriateInitialShipsForMobileParty(party, partyTemplate);
         }
     }
 

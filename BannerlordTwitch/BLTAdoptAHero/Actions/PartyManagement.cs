@@ -27,7 +27,6 @@ using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 using BannerlordTwitch.UI;
-using TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Armies;
 
 namespace BLTAdoptAHero.Actions
 {
@@ -360,12 +359,13 @@ namespace BLTAdoptAHero.Actions
             }
             Army army = party?.Army;
 
-            string armyBehavior = army?.GetBehaviorText()?.ToString() ?? "";
+            string behaviorText = party?.GetBehaviorText()?.ToString() ?? "";
+            string armyBehavior = army?.LeaderParty?.GetBehaviorText()?.ToString() ?? "";
 
             if (string.IsNullOrEmpty(mode))
             {
                 var sb = new StringBuilder();
-                BuildStatusString(adoptedHero, party, army, armyBehavior, sb);
+                BuildStatusString(adoptedHero, party, army, behaviorText, armyBehavior, sb);
                 onSuccess(sb.ToString());
                 return;
             }
@@ -396,8 +396,8 @@ namespace BLTAdoptAHero.Actions
         //  STATUS STRING  (unchanged)
         // ─────────────────────────────────────────────────────────────────────
 
-        private static void BuildStatusString(Hero adoptedHero, MobileParty party, 
-            Army army, string armyBehavior, StringBuilder sb)
+        private static void BuildStatusString(Hero adoptedHero, MobileParty party, Army army,
+            string behaviorText, string armyBehavior, StringBuilder sb)
         {
             if (adoptedHero.HeroState == Hero.CharacterStates.Released)
                 sb.Append("{=r1nJTiSA}Your hero has just been released".Translate());
@@ -423,13 +423,16 @@ namespace BLTAdoptAHero.Actions
                 sb.Append($"Governor: {adoptedHero.GovernorOf.Name}");
             else if (party != null && party.LeaderHero == adoptedHero)
             {
-                sb.Append($"Party(Strength: {(int)party.Party.TotalStrength} - ");
+                sb.Append($"Party(Strength: {(int)party.Party.EstimatedStrength} - ");
                 string sizeStr = $"{party.MemberRoster.TotalHealthyCount}({party.MemberRoster.TotalWounded})/{party.Party.PartySizeLimit}";
                 if (party.PrisonRoster.Count > 0)
                     sb.Append($"Size: {sizeStr} - Prisoners: {party.PrisonRoster.Count}) | ");
                 else
                     sb.Append($"Size: {sizeStr}) | ");
 
+                if (party.IsCurrentlyAtSea) sb.Append("Sailing | ");
+                if (!string.IsNullOrWhiteSpace(behaviorText) && behaviorText != armyBehavior)
+                    sb.Append($"Your party is: {behaviorText} | ");
                 if (party.IsDisbanding) sb.Append("Disbanding");
 
                 // Active order tag
@@ -451,7 +454,7 @@ namespace BLTAdoptAHero.Actions
                 if (army != null)
                 {
                     sb.Append("{=CVzSgXhT}Army: {army}".Translate(("army", army.Name?.ToString() ?? army.LeaderParty?.Name?.ToString() ?? "Unknown army")));
-                    sb.Append("{=d76wc5iS}[Strength: {strength} | ".Translate(("strength", Math.Round(army.TotalStrength).ToString())));
+                    sb.Append("{=d76wc5iS}[Strength: {strength} | ".Translate(("strength", Math.Round(army.EstimatedStrength).ToString())));
                     sb.Append("{=D3dcUxuj}Size: {size} | ".Translate(("size", army.TotalHealthyMembers.ToString())));
                     sb.Append("{=7p5j5Mlx}Party nº: {count}] ".Translate(("count", army.LeaderPartyAndAttachedPartiesCount.ToString())));
                     if (!string.IsNullOrWhiteSpace(armyBehavior)) sb.Append($"Your army is: {armyBehavior} | ");
@@ -509,7 +512,7 @@ namespace BLTAdoptAHero.Actions
             {
                 bool wasLeader = party.LeaderHero == h;
                 party.MemberRoster.RemoveTroop(h.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                MakeHeroFugitiveAction.Apply(h);
+                MakeHeroFugitiveAction.Apply(h, false);
                 if (wasLeader && party.IsLordParty) DisbandPartyAction.StartDisband(party);
             }
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOf(h);
@@ -526,14 +529,15 @@ namespace BLTAdoptAHero.Actions
             if (h.HeroState == Hero.CharacterStates.Fugitive) { onFailure("Your hero is fugitive"); return; }
             if (party != null) { onFailure("You already have a party"); return; }
             if (h.IsPrisoner) { onFailure("You are prisoner"); return; }
-            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.CommanderLimit)
-            { onFailure($"Clan party limit: {h.Clan.CommanderLimit}"); return; }
+            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.WarPartyLimit)
+            { onFailure($"Clan party limit: {h.Clan.WarPartyLimit}"); return; }
 
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOfIfExists(h.GovernorOf);
 
             var spawn = SettlementHelper.GetBestSettlementToSpawnAround(h)
                         ?? h.CurrentSettlement ?? h.HomeSettlement;
-            var newParty = MobilePartyHelper.SpawnLordParty(h, spawn);
+            var newParty = MobilePartyHelper.SpawnLordParty(h, spawn.GatePosition,
+                Campaign.Current.GetAverageDistanceBetweenClosestTwoTownsWithNavigationType(MobileParty.NavigationType.Default) / 2f);
 
             if (newParty == null) { onFailure("Failed to create a party. Wait some time and try again."); return; }
 
@@ -545,10 +549,10 @@ namespace BLTAdoptAHero.Actions
             foreach (var t in BLTAdoptAHeroCampaignBehavior.Current.GetRetinue2(h).ToList())
                 if (t != null) newParty.MemberRoster.AddToCounts(t, 1);
 
-            float range = 6f * (float)CampaignTime.HoursInDay;
+            float range = 2f * Campaign.Current.EstimatedAverageLordPartySpeed * (float)CampaignTime.HoursInDay;
             foreach (var s in Campaign.Current.Settlements.Where(s => s.IsVillage))
             {
-                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, s);
+                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, s, false, newParty.NavigationCapability, out _);
                 if (dist >= range) continue;
                 foreach (var (item, prod) in s.Village.VillageType.Productions)
                 {
@@ -559,7 +563,7 @@ namespace BLTAdoptAHero.Actions
                     if (n > 0) newParty.ItemRoster.AddToCounts(item, n);
                 }
             }
-            newParty.InitializeMobilePartyAtPosition(newParty.MemberRoster, newParty.PrisonRoster, newParty.Position2D);
+            newParty.InitializeMobilePartyAtPosition(spawn.GatePosition);
             onSuccess("Party created!");
         }
 
@@ -570,7 +574,8 @@ namespace BLTAdoptAHero.Actions
             var comp = PartyBaseHelper.PrintRegularTroopCategories(party.MemberRoster) ?? new TextObject("Unknown");
             var roster = party.MemberRoster.GetTroopRoster();
             double tier = roster.Sum(r => r.Character.Tier * r.Number) / (double)Math.Max(1, roster.Sum(r => r.Number));
-            //var near = SettlementHelper.FindNearestFortificationToMobileParty(party, nav);
+            var nav = party.IsCurrentlyAtSea ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.Default;
+            var near = SettlementHelper.FindNearestFortificationToMobileParty(party, nav);
 
             var sb = new StringBuilder();
             sb.Append($"Troops: {comp}(avg Tier {Math.Round(tier, 1)}) | ");
@@ -579,7 +584,7 @@ namespace BLTAdoptAHero.Actions
             sb.Append($"Morale: {(int)party.Morale} | ");
             sb.Append($"Sight: {Math.Round(party.SeeingRange, 1)} | ");
             sb.Append($"Wage: {party.TotalWage}");
-            //if (near != null) sb.Append($" | Near: {near.Name}");
+            if (near != null) sb.Append($" | Near: {near.Name}");
             onSuccess(sb.ToString());
         }
 
@@ -887,7 +892,7 @@ namespace BLTAdoptAHero.Actions
                 { onFailure($"{primaryTarget.Name} is not a fortification"); return; }
                 if (primaryTarget != null && !h.Clan.MapFaction.IsAtWarWith(primaryTarget.MapFaction))
                 { onFailure($"Not at war with {primaryTarget.Name}'s owners"); return; }
-                if (FactionManager.GetEnemyFactions(h.Clan.MapFaction).Count() < 1)
+                if (h.Clan.MapFaction.FactionsAtWarWith.Count == 0)
                 { onFailure("No active wars"); return; }
             }
 
@@ -1100,7 +1105,7 @@ namespace BLTAdoptAHero.Actions
             if (army == null) { onFailure("You have no army"); return; }
 
             var sb = new StringBuilder();
-            sb.Append($"Army: {army.Name} | Str: {(int)army.TotalStrength} | ");
+            sb.Append($"Army: {army.Name} | Str: {(int)army.EstimatedStrength} | ");
             sb.Append($"{army.TotalHealthyMembers} troops / {army.LeaderPartyAndAttachedPartiesCount} parties | ");
             sb.Append($"Cohesion: {(int)army.Cohesion}");
             sb.Append($" | {party.DefaultBehavior} → {party.TargetSettlement?.Name?.ToString() ?? party.TargetParty?.Name?.ToString() ?? "—"}");
@@ -1186,7 +1191,7 @@ namespace BLTAdoptAHero.Actions
             party.Army = null;
             party.AttachedTo = null;
             onSuccess($"Left {old.Name}");
-            if (old.LeaderPartyAndAttachedPartiesCount <= 1 && !(old.Parties.Count() > 2))
+            if (old.LeaderPartyAndAttachedPartiesCount <= 1 && !old.IsWaitingForArmyMembers())
                 DisbandArmyAction.ApplyByUnknownReason(old);
         }
 
@@ -1225,10 +1230,8 @@ namespace BLTAdoptAHero.Actions
             float influenceBefore = h.Clan.Influence;
             var gather = curTarget ?? newLeaderParty.CurrentSettlement ?? h.HomeSettlement;
             AdoptedHeroFlags._allowBLTArmyCreation = true;
-            try { h.Clan.Kingdom.CreateArmy(newLeaderParty.LeaderHero, gather, armyType); }
+            try { h.Clan.Kingdom.CreateArmy(newLeaderParty.LeaderHero, gather, armyType, remaining); }
             finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
-            foreach (MobileParty m in remaining)
-                h?.PartyBelongedTo?.Army.AddPartyToMergedParties(m);
             h.Clan.Influence = influenceBefore;
 
             if (newLeaderParty.Army == null) { onFailure("Failed to transfer army leadership"); return; }
@@ -1299,7 +1302,7 @@ namespace BLTAdoptAHero.Actions
 
             var kickable = targetArmy.Parties
                 .Where(p => p != targetArmy.LeaderParty && p.MapEvent == null)
-                .OrderBy(p => p.Party.TotalStrength)
+                .OrderBy(p => p.Party.EstimatedStrength)
                 .Take(countToKick)
                 .ToList();
 
@@ -1314,7 +1317,7 @@ namespace BLTAdoptAHero.Actions
                 catch (Exception ex) { Log.Error($"[BLT] ArmyKick: AI unlock failed for {pName}: {ex}"); }
                 p.Army = null;
                 p.AttachedTo = null;
-                kicked.Add($"{pName}({(int)p.Party.TotalStrength}str)");
+                kicked.Add($"{pName}({(int)p.Party.EstimatedStrength}str)");
             }
 
             onSuccess($"Kicked {kicked.Count} parties from {targetArmy.Name}: {string.Join(", ", kicked)}");
@@ -1380,6 +1383,64 @@ namespace BLTAdoptAHero.Actions
         private static void ArmyView(Settings settings, Hero h,
             Action<string> onSuccess, Action<string> onFailure)
         {
+            if (h.Clan.Kingdom == null)
+            {
+                var ownArmies = BLTClanArmyBehavior.Current?.GetClanArmies(h.Clan) ?? new List<Army>();
+
+                var alliedArmies = new List<(Clan owner, Army army)>();
+                if (BLTClanDiplomacyBehavior.Current != null)
+                {
+                    foreach (var allied in BLTClanDiplomacyBehavior.Current.GetAlliedClans(h.Clan))
+                    {
+                        foreach (var a in BLTClanArmyBehavior.Current?.GetClanArmies(allied) ?? new List<Army>())
+                            alliedArmies.Add((allied, a));
+                    }
+                }
+
+                if (ownArmies.Count == 0 && alliedArmies.Count == 0)
+                { onSuccess($"{h.Clan.Name} has no active clan armies or allied armies"); return; }
+
+                var sb = new StringBuilder();
+
+                if (ownArmies.Count > 0)
+                {
+                    sb.Append($"{h.Clan.Name} Armies: ");
+                    foreach (var a in ownArmies)
+                    {
+                        var ldr = a.LeaderParty?.LeaderHero;
+                        string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
+                        string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
+                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
+                        sb.Append($"[own] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, " +
+                                  $"Str:{(int)a.EstimatedStrength}, " +
+                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, {behavior}→{tgt}) | ");
+                    }
+                }
+
+                if (alliedArmies.Count > 0)
+                {
+                    sb.Append("Allied Armies (!party army join [n]): ");
+                    int idx = 1;
+                    foreach (var (owner, a) in alliedArmies)
+                    {
+                        var ldr = a.LeaderParty?.LeaderHero;
+                        string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
+                        string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
+                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
+                        bool inCombat = a.LeaderParty?.MapEvent != null;
+                        sb.Append($"[{idx}] {a.Name} ({owner.Name}, Leader:{ldr?.Name.ToString() ?? "?"}, " +
+                                  $"Str:{(int)a.EstimatedStrength}, " +
+                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
+                                  $"{behavior}→{tgt}{(inCombat ? " [COMBAT]" : "")}) | ");
+                        idx++;
+                    }
+                }
+
+                onSuccess(sb.ToString().TrimEnd(' ', '|'));
+                return;
+            }
+
+            if (!settings.KingArmyManageEnabled) { onFailure("King army management is disabled"); return; }
             if (h.Clan.Kingdom == null) { onFailure("You are not in a kingdom"); return; }
 
             var armies = h.Clan.Kingdom.Armies.ToList();
@@ -1390,13 +1451,13 @@ namespace BLTAdoptAHero.Actions
             {
                 var a = armies[i];
                 var ldr = a.LeaderParty?.LeaderHero;
-                string behavior = a?.GetBehaviorText()?.ToString() ?? "—";
+                string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
                 string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
                                   ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
                 string orderTag = PartyOrderBehavior.Current?.HasActiveOrder(a.LeaderParty?.StringId ?? "") == true
                     ? "[order]" : "";
                 sb2.Append($"[{i + 1}] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, Clan:{a.LeaderParty?.ActualClan?.Name.ToString() ?? "?"}, " +
-                           $"Str:{(int)a.TotalStrength}, Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
+                           $"Str:{(int)a.EstimatedStrength}, Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
                            $"{behavior}→{tgt}{orderTag}) | ");
             }
             onSuccess(sb2.ToString().TrimEnd(' ', '|'));
@@ -1447,7 +1508,7 @@ namespace BLTAdoptAHero.Actions
                 .ToMBList();
 
             var gather = leaderParty.CurrentSettlement
-                ?? Campaign.Current.Models.MapDistanceModel.GetClosestSettlementForNavigationMesh(leaderParty.CurrentNavigationFace)
+                ?? SettlementHelper.FindNearestSettlementToMobileParty(leaderParty, leaderParty.NavigationCapability)
                 ?? h.Clan.Kingdom.Settlements.FirstOrDefault(s => s.IsFortification);
             if (gather == null) { onFailure("Could not determine a gather point"); return; }
 
@@ -1471,9 +1532,7 @@ namespace BLTAdoptAHero.Actions
             }
 
             BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.CreateArmyPrice, true);
-            h.Clan.Kingdom.CreateArmy(leaderParty.LeaderHero, gather, Army.ArmyTypes.Patrolling);
-            foreach(MobileParty m in members)
-                h?.PartyBelongedTo?.Army.AddPartyToMergedParties(m);
+            h.Clan.Kingdom.CreateArmy(leaderParty.LeaderHero, gather, Army.ArmyTypes.Patrolling, members);
 
             if (leaderParty.Army == null)
             {
@@ -1584,10 +1643,8 @@ namespace BLTAdoptAHero.Actions
             float influenceBefore = h.Clan.Influence;
             var gather = curTarget ?? oldLeader.CurrentSettlement ?? h.HomeSettlement;
             AdoptedHeroFlags._allowBLTArmyCreation = true;
-            try { h.Clan.Kingdom.CreateArmy(h, gather, armyType); }
+            try { h.Clan.Kingdom.CreateArmy(h, gather, armyType, remaining); }
             finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
-            foreach (MobileParty m in remaining)
-                h?.PartyBelongedTo?.Army.AddPartyToMergedParties(m);
             h.Clan.Influence = influenceBefore;
 
             if (party.Army == null) { onFailure("Failed to seize army leadership"); return; }
@@ -1709,6 +1766,29 @@ namespace BLTAdoptAHero.Actions
                                 && p.MapEvent == null && !p.IsDisbanding && p.IsLordParty
                                 && p.LeaderHero != null && !p.LeaderHero.IsPrisoner
                                 && p.MemberRoster.TotalHealthyCount > 0));
+
+                if (BLTClanDiplomacyBehavior.Current != null)
+                {
+                    foreach (var allied in BLTClanDiplomacyBehavior.Current.GetAlliedClans(h.Clan))
+                    {
+                        eligible.AddRange(allied.WarPartyComponents
+                            .Select(wpc => wpc?.MobileParty)
+                            .Where(p => p != null && p != armyLdrParty && p.Army == null
+                                && p.AttachedTo == null && p.MapEvent == null && !p.IsDisbanding
+                                && p.IsLordParty && p.LeaderHero != null
+                                && !p.LeaderHero.IsPrisoner && p.MemberRoster.TotalHealthyCount > 0));
+
+                        // NEW — ally's vassals
+                        if (VassalBehavior.Current != null)
+                            foreach (var alliedVassal in VassalBehavior.Current.GetVassalClans(allied))
+                                eligible.AddRange(alliedVassal.WarPartyComponents
+                                    .Select(wpc => wpc?.MobileParty)
+                                    .Where(p => p != null && p != armyLdrParty && p.Army == null
+                                        && p.AttachedTo == null && p.MapEvent == null && !p.IsDisbanding
+                                        && p.IsLordParty && p.LeaderHero != null
+                                        && !p.LeaderHero.IsPrisoner && p.MemberRoster.TotalHealthyCount > 0));
+                    }
+                }
             }
 
             if (callType == "nearby")
@@ -1786,7 +1866,73 @@ namespace BLTAdoptAHero.Actions
             if (army != null) { onFailure("You are already in an army — use 'army leave' first"); return; }
 
             // ── Independent clan joining a clan army ───────────────────────────────
-            if (h.Clan.Kingdom == null) { onFailure("Clan diplomacy system not available"); return; }
+            if (h.Clan.Kingdom == null)
+            {
+                if (string.IsNullOrWhiteSpace(tgtArg))
+                { onFailure("Specify an allied army index. Use 'army view' to list joinable armies."); return; }
+
+                var clanDiplomacy = BLTClanDiplomacyBehavior.Current;
+                if (clanDiplomacy == null) { onFailure("Clan diplomacy system not available"); return; }
+
+                var joinable = new List<Army>();
+                foreach (var allied in clanDiplomacy.GetAlliedClans(h.Clan))
+                {
+                    foreach (var a in BLTClanArmyBehavior.Current?.GetClanArmies(allied) ?? new List<Army>())
+                        if (a?.LeaderParty != null)
+                            joinable.Add(a);
+                }
+
+                if (joinable.Count == 0)
+                { onFailure("No allied clan armies are available to join. Use 'army view' to check."); return; }
+
+                Army targetArmy = null;
+                if (int.TryParse(tgtArg, out int idx) && idx >= 1 && idx <= joinable.Count)
+                {
+                    targetArmy = joinable[idx - 1];
+                }
+                else
+                {
+                    targetArmy = joinable.FirstOrDefault(a =>
+                        a.LeaderParty?.ActualClan?.Name.ToString()
+                            .IndexOf(tgtArg, StringComparison.OrdinalIgnoreCase) >= 0
+                        || a.LeaderParty?.LeaderHero?.Name.ToString()
+                            .IndexOf(tgtArg, StringComparison.OrdinalIgnoreCase) >= 0);
+                }
+
+                if (targetArmy == null)
+                { onFailure($"No allied clan army found matching '{tgtArg}'. Use 'army view' to see indices."); return; }
+
+                if (targetArmy.LeaderParty?.MapEvent != null)
+                { onFailure($"{targetArmy.Name} is currently in combat"); return; }
+
+                var toJoin = new List<MobileParty> { party };
+                toJoin.AddRange(h.Clan.WarPartyComponents
+                    .Select(wpc => wpc?.MobileParty)
+                    .Where(mp => mp != null && mp != party && mp.Army == null && mp.AttachedTo == null
+                        && mp.MapEvent == null && !mp.IsDisbanding && mp.IsLordParty
+                        && mp.LeaderHero != null && mp.MemberRoster.TotalHealthyCount > 0));
+
+                int added = 0;
+                foreach (var mp in toJoin)
+                {
+                    try
+                    {
+                        // FIX: release any BLT order lock before assigning to the army
+                        PartyOrderBehavior.Current?.CancelOrdersForParty(mp.StringId, null, false);
+                        try { mp.Ai.SetDoNotMakeNewDecisions(false); }
+                        catch (Exception aiEx) { Log.Error($"[BLT] ArmyJoin (clan): AI unlock failed for {mp.Name}: {aiEx}"); }
+                        mp.Army = targetArmy;
+                        added++;
+                    }
+                    catch (Exception ex) { Log.Error($"[BLT] ArmyJoin (clan): failed to add {mp.Name}: {ex}"); }
+                }
+
+                if (added == 0) { onFailure("Failed to join the army"); return; }
+
+                onSuccess($"Joined {targetArmy.Name} with {added} parties (no influence cost — clan alliance)");
+                Log.ShowInformation($"{h.Name} joined {targetArmy.Name}!", h.CharacterObject, Log.Sound.Horns2);
+                return;
+            }
 
             // ── Kingdom army join ──────────────────────────────────────────────────
             if (string.IsNullOrWhiteSpace(tgtArg))
@@ -1898,7 +2044,7 @@ namespace BLTAdoptAHero.Actions
             if (party == null) { onFailure("You have no party"); return; }
 
             float radius = settings.ThreatScanRadius;
-            float ourStr = party.GetTotalStrengthWithFollowers();
+            float ourStr = party.GetTotalLandStrengthWithFollowers();
             var ourPos = party.GetPosition2D;
 
             var threats = new List<(string name, float eStr, float atkScore, float avoidScore, bool flee)>();
@@ -1916,7 +2062,7 @@ namespace BLTAdoptAHero.Actions
                 {
                     if (threats.Any(t => t.name == other.Name.ToString())) continue;
                 }
-                float eStr = other.GetTotalStrengthWithFollowers();
+                float eStr = other.GetTotalLandStrengthWithFollowers();
                 if (eStr <= 0f) continue;
                 float adv = ourStr / eStr;
                 float atk = MBMath.ClampFloat(0.5f * (1f + adv), 0.05f, 3f);
@@ -1984,7 +2130,7 @@ namespace BLTAdoptAHero.Actions
             // ── Siege-specific validation ──────────────────────────────────────────
             if (subCmd == "siege")
             {
-                if (FactionManager.GetEnemyFactions(h.Clan.MapFaction).Count() < 1)
+                if (h.Clan.Kingdom != null && h.Clan.Kingdom.FactionsAtWarWith.Count == 0)
                 { onFailure("No active wars"); return; }
                 if (target == null) { onFailure("No valid enemy settlement found to besiege"); return; }
                 if (!target.IsFortification) { onFailure($"{target.Name} is not a fortification"); return; }
@@ -2039,6 +2185,9 @@ namespace BLTAdoptAHero.Actions
             if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h) < settings.ArmyPrice)
             { onFailure(Naming.NotEnoughGold(settings.ArmyPrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h))); return; }
 
+            var nav = party.IsCurrentlyAtSea ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.Default;
+            var near = SettlementHelper.FindNearestSettlementToMobileParty(party, nav) ?? h.HomeSettlement;
+            var gather = target ?? near;
 
             Army newArmy;
 
@@ -2084,11 +2233,9 @@ namespace BLTAdoptAHero.Actions
                 h.Clan.Influence += 200f;
                 BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.ArmyPrice, true);
                 AdoptedHeroFlags._allowBLTArmyCreation = true;
-                try { h.Clan.Kingdom.CreateArmy(h, FindBestSettlementToDefend(h.PartyBelongedTo, h?.Clan?.Kingdom), armyType); }
+                try { h.Clan.Kingdom.CreateArmy(h, gather, armyType, merged); }
                 finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
                 newArmy = party.Army;
-                foreach (MobileParty m in merged)
-                    h?.PartyBelongedTo?.Army.AddPartyToMergedParties(m);
 
                 if (newArmy == null)
                 {
@@ -2101,85 +2248,85 @@ namespace BLTAdoptAHero.Actions
                 int mCount = newArmy.Parties.Count - 1;
                 onSuccess($"Gathering {armyType} army ({mCount} joining)" + (target != null ? $" → {target.Name}" : ""));
             }
-            //// ── Independent clan army creation ────────────────────────────────────
-            //else // Independent clan army creation
-            //{
-            //    MBList<MobileParty> merged;
-            //    if (settings.AutoCallPartiesOnCreate)
-            //    {
-            //        var ownCandidates = h.Clan.WarPartyComponents
-            //            .Select(wpc => wpc?.MobileParty)
-            //            .Where(mp => mp != null && mp != party && mp.Army == null && mp.AttachedTo == null
-            //                && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
-            //                && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0)
-            //            .ToList<MobileParty>();
-            //
-            //        // NEW — our own vassals' parties. Vassals are extensions of us; no separate cost/consent.
-            //        var vassalCandidates = new List<MobileParty>();
-            //        if (VassalBehavior.Current != null)
-            //            foreach (var vassal in VassalBehavior.Current.GetVassalClans(h.Clan))
-            //                vassalCandidates.AddRange(vassal.WarPartyComponents
-            //                    .Select(wpc => wpc?.MobileParty)
-            //                    .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
-            //                        && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
-            //                        && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
-            //
-            //        var allyCandidates = new List<MobileParty>();
-            //        if (BLTClanDiplomacyBehavior.Current != null)
-            //        {
-            //            foreach (var allied in BLTClanDiplomacyBehavior.Current.GetAlliedClans(h.Clan))
-            //            {
-            //                allyCandidates.AddRange(allied.WarPartyComponents
-            //                    .Select(wpc => wpc?.MobileParty)
-            //                    .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
-            //                        && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
-            //                        && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
-            //
-            //                // NEW — ally's vassals count as part of the ally's strength too.
-            //                if (VassalBehavior.Current != null)
-            //                    foreach (var alliedVassal in VassalBehavior.Current.GetVassalClans(allied))
-            //                        allyCandidates.AddRange(alliedVassal.WarPartyComponents
-            //                            .Select(wpc => wpc?.MobileParty)
-            //                            .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
-            //                                && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
-            //                                && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
-            //            }
-            //        }
-            //
-            //        var ldrPos = party.GetPosition2D;
-            //        // Priority: own parties → own vassals → allies (incl. their vassals)
-            //        var sorted = ownCandidates.Concat(vassalCandidates).Concat(allyCandidates).Distinct()
-            //            .OrderBy(p => p.GetPosition2D.Distance(ldrPos));
-            //        merged = (createCount.HasValue ? sorted.Take(createCount.Value) : sorted).ToMBList();
-            //    }
-            //    else
-            //    {
-            //        merged = new MBList<MobileParty>();
-            //    }
-            //
-            //    foreach (var mp in merged)
-            //    {
-            //        if (mp?.StringId == null) continue;
-            //        PartyOrderBehavior.Current?.CancelOrdersForParty(mp.StringId, null, false);
-            //        try { mp.Ai.SetDoNotMakeNewDecisions(false); }
-            //        catch (Exception ex) { Log.Error($"[BLT] ArmyOrder (clan): AI unlock failed for {mp.Name}: {ex}"); }
-            //    }
-            //
-            //    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.ArmyPrice, true);
-            //    newArmy = BLTClanArmyBehavior.CreateClanArmy(h, gather, armyType, merged);
-            //
-            //    if (newArmy == null)
-            //    {
-            //        BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, settings.ArmyPrice, false);
-            //        onFailure("Clan army creation failed");
-            //        return;
-            //    }
-            //    int mCount = newArmy.Parties.Count - 1;
-            //    onSuccess($"Gathering clan {armyType} army ({mCount} joining)" + (target != null ? $" → {target.Name}" : ""));
-            //}
+            // ── Independent clan army creation ────────────────────────────────────
+            else // Independent clan army creation
+            {
+                MBList<MobileParty> merged;
+                if (settings.AutoCallPartiesOnCreate)
+                {
+                    var ownCandidates = h.Clan.WarPartyComponents
+                        .Select(wpc => wpc?.MobileParty)
+                        .Where(mp => mp != null && mp != party && mp.Army == null && mp.AttachedTo == null
+                            && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
+                            && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0)
+                        .ToList<MobileParty>();
+
+                    // NEW — our own vassals' parties. Vassals are extensions of us; no separate cost/consent.
+                    var vassalCandidates = new List<MobileParty>();
+                    if (VassalBehavior.Current != null)
+                        foreach (var vassal in VassalBehavior.Current.GetVassalClans(h.Clan))
+                            vassalCandidates.AddRange(vassal.WarPartyComponents
+                                .Select(wpc => wpc?.MobileParty)
+                                .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
+                                    && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
+                                    && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
+
+                    var allyCandidates = new List<MobileParty>();
+                    if (BLTClanDiplomacyBehavior.Current != null)
+                    {
+                        foreach (var allied in BLTClanDiplomacyBehavior.Current.GetAlliedClans(h.Clan))
+                        {
+                            allyCandidates.AddRange(allied.WarPartyComponents
+                                .Select(wpc => wpc?.MobileParty)
+                                .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
+                                    && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
+                                    && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
+
+                            // NEW — ally's vassals count as part of the ally's strength too.
+                            if (VassalBehavior.Current != null)
+                                foreach (var alliedVassal in VassalBehavior.Current.GetVassalClans(allied))
+                                    allyCandidates.AddRange(alliedVassal.WarPartyComponents
+                                        .Select(wpc => wpc?.MobileParty)
+                                        .Where(mp => mp != null && mp.Army == null && mp.AttachedTo == null
+                                            && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
+                                            && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
+                        }
+                    }
+
+                    var ldrPos = party.GetPosition2D;
+                    // Priority: own parties → own vassals → allies (incl. their vassals)
+                    var sorted = ownCandidates.Concat(vassalCandidates).Concat(allyCandidates).Distinct()
+                        .OrderBy(p => p.GetPosition2D.Distance(ldrPos));
+                    merged = (createCount.HasValue ? sorted.Take(createCount.Value) : sorted).ToMBList();
+                }
+                else
+                {
+                    merged = new MBList<MobileParty>();
+                }
+
+                foreach (var mp in merged)
+                {
+                    if (mp?.StringId == null) continue;
+                    PartyOrderBehavior.Current?.CancelOrdersForParty(mp.StringId, null, false);
+                    try { mp.Ai.SetDoNotMakeNewDecisions(false); }
+                    catch (Exception ex) { Log.Error($"[BLT] ArmyOrder (clan): AI unlock failed for {mp.Name}: {ex}"); }
+                }
+
+                BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.ArmyPrice, true);
+                newArmy = BLTClanArmyBehavior.CreateClanArmy(h, gather, armyType, merged);
+
+                if (newArmy == null)
+                {
+                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, settings.ArmyPrice, false);
+                    onFailure("Clan army creation failed");
+                    return;
+                }
+                int mCount = newArmy.Parties.Count - 1;
+                onSuccess($"Gathering clan {armyType} army ({mCount} joining)" + (target != null ? $" → {target.Name}" : ""));
+            }
 
             // ── Shared post-creation setup ─────────────────────────────────────────
-            if (target != null) h.PartyBelongedTo.Army.AiBehaviorObject = target;
+            if (target != null) newArmy.AiBehaviorObject = target;
             PartyOrderBehavior.IssueOrder(party, orderType, target);
             party.Ai.SetDoNotMakeNewDecisions(true);
             PartyOrderBehavior.Current?.RegisterOrder(h, party, orderType, target,
@@ -2200,7 +2347,7 @@ namespace BLTAdoptAHero.Actions
             int stance = 0;
             if (kingdom != null)
             {               
-                foreach (var enemy in FactionManager.GetEnemyFactions(kingdom).ToList())
+                foreach (var enemy in kingdom.FactionsAtWarWith)
                 {
                     stance = faction.GetStanceWith(enemy).BehaviorPriority;
                     if (stance == 1 || enemy.Settlements == null) continue;
@@ -2219,15 +2366,19 @@ namespace BLTAdoptAHero.Actions
                             
                         }
 
-                        float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s);
+                        float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
+                            party, s, false, MobileParty.NavigationType.Default, out _);
                         if (dist >= float.MaxValue - 1f) continue;
                         if (!PartyOrderBehavior.IsSettlementReachable(party, s)) continue;
 
-                        float str = s.Town?.GarrisonParty?.Party.TotalStrength + s.Town?.Militia ?? 0f;
+                        float str = s.Town?.GarrisonParty?.Party.EstimatedStrength + s.Town?.Militia ?? 0f;
+                        var neighbours = Campaign.Current.Models.MapDistanceModel
+                            .GetNeighborsOfFortification(s.Town, MobileParty.NavigationType.Default);
+                        bool direct = neighbours.Any(n => faction.Settlements.Contains(n));
 
                         float prox = 10000f / (dist + 1f);
                         float penalty = Math.Min(str * 0.05f, prox * 0.5f);
-                        float score = (prox - penalty) * Math.Max(1, stance);
+                        float score = (prox - penalty) * Math.Max(1, stance) * (direct ? 1.1f : 1f);
 
                         if (score > bestScore) { bestScore = score; best = s; }
                     }
@@ -2235,22 +2386,31 @@ namespace BLTAdoptAHero.Actions
             }
             else
             {
-                foreach (var enemy in FactionManager.GetEnemyFactions(clan))
+                foreach (var enemy in clan.FactionsAtWarWith)
                 {
                     foreach (var s in enemy.Settlements)
                     {
                         if (!s.IsFortification) continue;
+                        if (s.IsUnderSiege && s.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction != faction)
+                        {                          
+                            var besiegerC = s.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction as Clan;
+                            bool allied = besiegerC != null && BLTClanDiplomacyBehavior.Current?.HasAlliance(clan, besiegerC) == true && besiegerC.IsAtWarWith(s.MapFaction);
+                            if (!allied) continue;
+                        }
 
                         float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                            party, s);
+                            party, s, false, MobileParty.NavigationType.Default, out _);
                         if (dist >= float.MaxValue - 1f) continue;
                         if (!PartyOrderBehavior.IsSettlementReachable(party, s)) continue;
 
-                        float str = s.Town?.GarrisonParty?.Party.TotalStrength + s.Town?.Militia ?? 0f;
+                        float str = s.Town?.GarrisonParty?.Party.EstimatedStrength + s.Town?.Militia ?? 0f;
+                        var neighbours = Campaign.Current.Models.MapDistanceModel
+                            .GetNeighborsOfFortification(s.Town, MobileParty.NavigationType.Default);
+                        bool direct = neighbours.Any(n => faction.Settlements.Contains(n));
 
                         float prox = 10000f / (dist + 1f);
                         float penalty = Math.Min(str * 0.05f, prox * 0.5f);
-                        float score = (prox - penalty) * Math.Max(1, stance);
+                        float score = (prox - penalty) * Math.Max(1, stance) * (direct ? 1.1f : 1f);
 
                         if (score > bestScore) { bestScore = score; best = s; }
                     }
@@ -2269,7 +2429,7 @@ namespace BLTAdoptAHero.Actions
             {
                 if (!s.IsFortification) continue;
                 bool threat = s.IsUnderSiege || (s.LastAttackerParty != null && s.LastAttackerParty.IsActive);
-                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s);
+                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s, false, party.NavigationCapability, out _);
                 float score = (1000f / (dist + 1f)) * (threat ? 10f : 1f);
                 if (score > bestScore) { bestScore = score; best = s; }
             }

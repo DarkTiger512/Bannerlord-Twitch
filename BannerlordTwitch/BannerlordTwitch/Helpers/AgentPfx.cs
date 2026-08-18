@@ -120,7 +120,7 @@ namespace BannerlordTwitch.Helpers
         #region Weapon Effects
         private static List<GameEntityComponent> CreateWeaponEffects(Agent agent, string pfxSystem)
         {
-            var index = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
+            var index = agent.GetPrimaryWieldedItemIndex();
             if (index == EquipmentIndex.None)
                 return default;
 

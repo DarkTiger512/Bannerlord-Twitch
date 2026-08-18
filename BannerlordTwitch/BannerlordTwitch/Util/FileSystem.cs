@@ -60,7 +60,7 @@ namespace BannerlordTwitch.Util
         public static string GetFileContentString(PlatformFilePath path)
             => Common.PlatformFileHelper.GetFileContentString(path);
         public static PlatformFilePath[] GetFiles(PlatformDirectoryPath path, string searchPattern, System.IO.SearchOption searchOption)
-            => Common.PlatformFileHelper.GetFiles(path, searchPattern);
+            => Common.PlatformFileHelper.GetFiles(path, searchPattern, searchOption);
         public static void DeleteFile(PlatformFilePath path) => Common.PlatformFileHelper.DeleteFile(path);
 #endif
     }

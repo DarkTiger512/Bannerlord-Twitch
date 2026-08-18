@@ -265,7 +265,7 @@ namespace BLTAdoptAHero.Actions
                 var oldParty = vassal.PartyBelongedTo;
                 bool wasLeader = oldParty.LeaderHero == vassal;
                 oldParty.MemberRoster.RemoveTroop(vassal.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                MakeHeroFugitiveAction.Apply(vassal);
+                MakeHeroFugitiveAction.Apply(vassal, false);
                 if (wasLeader && oldParty.IsLordParty)
                     DisbandPartyAction.StartDisband(oldParty);
             }
@@ -273,8 +273,8 @@ namespace BLTAdoptAHero.Actions
             var newClan = Clan.CreateClan(fullClanName);
             newClan.ChangeClanName(new TextObject(fullClanName), new TextObject(fullClanName));
             newClan.Culture = vassal.Culture;
-            newClan.InitializeClan(newClan.Name, newClan.InformalName, newClan.Culture, Banner.CreateOneColoredBannerWithOneIcon(adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetFirstIconColor(), -1));
-            newClan.UpdateHomeSettlement(Settlement.All.SelectRandom());
+            newClan.Banner = Banner.CreateOneColoredBannerWithOneIcon(adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetFirstIconColor(), -1);
+            newClan.SetInitialHomeSettlement(Settlement.All.SelectRandom());
             vassal.Clan = newClan;
             if (vassal.Spouse != null)
             {
@@ -287,7 +287,7 @@ namespace BLTAdoptAHero.Actions
                     var oldParty = vassal.Spouse.PartyBelongedTo;
                     bool wasLeader = oldParty.LeaderHero == vassal.Spouse;
                     oldParty.MemberRoster.RemoveTroop(vassal.Spouse.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                    MakeHeroFugitiveAction.Apply(vassal.Spouse);
+                    MakeHeroFugitiveAction.Apply(vassal.Spouse, false);
                     if (wasLeader && oldParty.IsLordParty)
                         DisbandPartyAction.StartDisband(oldParty);
                 }
@@ -306,7 +306,7 @@ namespace BLTAdoptAHero.Actions
                         var oldParty = child.PartyBelongedTo;
                         bool wasLeader = oldParty.LeaderHero == child;
                         oldParty.MemberRoster.RemoveTroop(child.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                        MakeHeroFugitiveAction.Apply(child);
+                        MakeHeroFugitiveAction.Apply(child, false);
                         if (wasLeader && oldParty.IsLordParty)
                             DisbandPartyAction.StartDisband(oldParty);
                     }
@@ -333,6 +333,7 @@ namespace BLTAdoptAHero.Actions
                     AdoptedHeroFlags._allowKingdomMove = false;
                 }
             }
+            CampaignEventDispatcher.Instance.OnClanCreated(newClan, false);
             ChangeRelationAction.ApplyRelationChangeBetweenHeroes(adoptedHero, vassal, 100, false);
 
             // Register the vassal with the VassalBehavior
@@ -446,14 +447,14 @@ namespace BLTAdoptAHero.Actions
             }
             try
             {
-                if (Banner.GetBannerDataFromBannerCode(bannerCode).IsEmpty())
+                if (Banner.TryGetBannerDataFromCode(bannerCode, out var bannerDataList))
                 {
                     var newBanner = new Banner(bannerCode);  // creates a Banner object directly from the code                  
                     var color1 = newBanner.GetPrimaryColor();
                     var color2 = newBanner.GetFirstIconColor();
 
 
-                    vassal.InitializeClan(vassal.Name, vassal.InformalName, vassal.Culture, newBanner);
+                    vassal.Banner = newBanner;
                     vassal.Banner.ChangeBackgroundColor(color1, color2);
                     vassal.Color = color1;
                     vassal.Color2 = color2;

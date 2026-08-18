@@ -46,7 +46,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
   </PropertyGroup>
   <Import Project="$(SolutionDir)BLTProperties.targets" />
-	<ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'false'">
+	<ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
 		<PackageReference Include="Bannerlord.ReferenceAssemblies" />
 	</ItemGroup>
   <ItemGroup>

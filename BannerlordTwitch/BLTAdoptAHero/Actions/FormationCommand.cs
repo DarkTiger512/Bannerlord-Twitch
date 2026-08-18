@@ -61,6 +61,11 @@ namespace BLTAdoptAHero.Actions
                 return;
             }
 
+            if (Mission.Current.IsNavalBattle)
+            {
+                onFailure("{=BLTFormationNoNaval}Cannot change formation in naval battle".Translate());
+                return;
+            }
             if (MissionHelpers.InTournament())
             {
                 onFailure("{=BLTFormationNoTournament}Cannot change formation in tournament".Translate());
@@ -91,7 +96,7 @@ namespace BLTAdoptAHero.Actions
             {      
                 if (!settings.Detach) { onFailure("{=BLTFormationDetachOff}Detach commands are off".Translate()); return; }
                 if (behavior == null) { onFailure("{=BLTFormationDetachInactive}Detachment system not active".Translate()); return; }
-                //if (!Mission.Current.IsDeploymentFinished) { onFailure("{=BLTFormationNoDetachDeploying}Cannot detach while deploying".Translate()); return; }
+                if (!Mission.Current.IsDeploymentFinished) { onFailure("{=BLTFormationNoDetachDeploying}Cannot detach while deploying".Translate()); return; }
 
                 string error = command switch
                 {
@@ -100,7 +105,7 @@ namespace BLTAdoptAHero.Actions
                     "charge" => behavior.Charge(agent),
                     "hold" => behavior.Hold(agent),
                     "follow" => behavior.Follow(agent),
-                    "gate" => behavior.Gate(agent),
+                    "gate" => behavior.TargetDoor(agent),
                     "walls" => behavior.Walls(agent),
                     _ => "Unknown command"
                 };
@@ -130,10 +135,10 @@ namespace BLTAdoptAHero.Actions
             var query = currentFormation.QuerySystem;
             FormationClass formType = query switch
             {
-                _ when query.IsInfantryFormation => FormationClass.Infantry,
-                _ when query.IsRangedFormation => FormationClass.Ranged,
-                _ when query.IsCavalryFormation => FormationClass.Cavalry,
-                _ when query.IsRangedCavalryFormation => FormationClass.HorseArcher,
+                _ when query.IsInfantryFormationReadOnly => FormationClass.Infantry,
+                _ when query.IsRangedFormationReadOnly => FormationClass.Ranged,
+                _ when query.IsCavalryFormationReadOnly => FormationClass.Cavalry,
+                _ when query.IsRangedCavalryFormationReadOnly => FormationClass.HorseArcher,
                 _ => FormationClass.Infantry
             };
 
@@ -196,10 +201,10 @@ namespace BLTAdoptAHero.Actions
                     var q = f.QuerySystem;
                     string type = q switch
                     {
-                        _ when q.IsInfantryFormation => GetFormationClassDisplayName(FormationClass.Infantry),
-                        _ when q.IsRangedFormation => GetFormationClassDisplayName(FormationClass.Ranged),
-                        _ when q.IsCavalryFormation => GetFormationClassDisplayName(FormationClass.Cavalry),
-                        _ when q.IsRangedCavalryFormation => GetFormationClassDisplayName(FormationClass.HorseArcher),
+                        _ when q.IsInfantryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Infantry),
+                        _ when q.IsRangedFormationReadOnly => GetFormationClassDisplayName(FormationClass.Ranged),
+                        _ when q.IsCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Cavalry),
+                        _ when q.IsRangedCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.HorseArcher),
                         _ => "{=BLTFormationClassUnknown}unknown".Translate()
                     };
 
@@ -260,15 +265,15 @@ namespace BLTAdoptAHero.Actions
             if (f.TargetFormation != null)
             {
                 var q = f.TargetFormation.QuerySystem;
-                var myPos = f.GetAveragePositionOfUnits(true, true);
-                var targetPos = f.TargetFormation.GetAveragePositionOfUnits(true, true);
+                var myPos = f.CachedAveragePosition;
+                var targetPos = f.TargetFormation.CachedAveragePosition;
                 float pos = (targetPos - myPos).Length;
                 string type = q switch
                 {
-                    _ when q.IsInfantryFormation => GetFormationClassDisplayName(FormationClass.Infantry),
-                    _ when q.IsRangedFormation => GetFormationClassDisplayName(FormationClass.Ranged),
-                    _ when q.IsCavalryFormation => GetFormationClassDisplayName(FormationClass.Cavalry),
-                    _ when q.IsRangedCavalryFormation => GetFormationClassDisplayName(FormationClass.HorseArcher),
+                    _ when q.IsInfantryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Infantry),
+                    _ when q.IsRangedFormationReadOnly => GetFormationClassDisplayName(FormationClass.Ranged),
+                    _ when q.IsCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Cavalry),
+                    _ when q.IsRangedCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.HorseArcher),
                     _ => "{=BLTFormationClassUnknown}unknown".Translate()
                 };
 
