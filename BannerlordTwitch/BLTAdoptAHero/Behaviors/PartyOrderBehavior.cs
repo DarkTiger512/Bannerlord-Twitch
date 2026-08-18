@@ -538,11 +538,7 @@ namespace BLTAdoptAHero
 
                 case PartyOrderType.Raid:
                     if (target != null)
-<<<<<<< HEAD
                         SetPartyAiAction.GetActionForRaidingSettlement(party, target, nav, isFromPort, isFromPort);
-=======
-                        SetPartyAiAction.GetActionForRaidingSettlement(party, target, nav, isFromPort);
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                     break;
 
                 case PartyOrderType.SmartGuard:

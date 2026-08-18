@@ -256,11 +256,7 @@ namespace BLTAdoptAHero
                             {
                                 allianceBehavior.EndAlliance(kingdom, desiredKingdom);
                             }
-<<<<<<< HEAD
                             if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
-=======
-                            if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom))
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                             {
                                 tradeBehavior.EndTradeAgreement(kingdom, desiredKingdom);
                             }
@@ -517,11 +513,7 @@ namespace BLTAdoptAHero
                             onFailure($"At war with {desiredKingdom}");
                             return;
                         }
-<<<<<<< HEAD
                         if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
-=======
-                        if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom))
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                         {
                             onFailure($"Already trading with {desiredKingdom}");
                             return;

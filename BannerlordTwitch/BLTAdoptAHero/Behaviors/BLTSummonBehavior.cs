@@ -26,6 +26,13 @@ namespace BLTAdoptAHero
         }
 
         private readonly Dictionary<Agent, bool> _retinueResolution = new();
+        private static readonly HashSet<Agent> ManualFormationOverrides = new();
+
+        internal static void MarkManualFormationOverride(Agent agent)
+        {
+            if (agent != null)
+                ManualFormationOverrides.Add(agent);
+        }
 
         public class HeroSummonState
         {
@@ -420,19 +427,5 @@ namespace BLTAdoptAHero
         }
 
         public static bool RetinueAllowed() => MissionHelpers.InSiegeMission() || MissionHelpers.InFieldBattleMission();
-
-<<<<<<< HEAD
-=======
-        [HarmonyPatch(typeof(ShipAgentSpawnLogic), "IsAnyTeamsUnfilled")]
-        public static class Patch_IsAnyTeamsUnfilled
-        {
-            static bool Prefix(ref bool __result)
-            {
-                // Always return true, ignoring original logic
-                __result = true;
-                return false; // skip original method
-            }
-        }
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
     }
 }

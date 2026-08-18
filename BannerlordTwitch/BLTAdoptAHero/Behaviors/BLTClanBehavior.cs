@@ -285,20 +285,17 @@ namespace BLTAdoptAHero
                     r.HasEquipmentFlags(EquipmentFlags.IsNobleTemplate) &&
                     r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
 
-<<<<<<< HEAD
                 // 2) Fallback to any if no noble found
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
                         r.EquipmentCulture == hero.Culture);
-=======
-                // 2) Fallback to combatant if no noble found
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
                         r.EquipmentCulture == hero.Culture &&
-                        r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsChildEquipmentTemplate) &&
+                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsTeenagerEquipmentTemplate));
                 }
 
                 if (roster?.AllEquipments?.Count > 0)

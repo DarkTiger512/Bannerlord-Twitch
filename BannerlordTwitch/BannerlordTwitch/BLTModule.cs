@@ -31,11 +31,7 @@ namespace BannerlordTwitch
         [DllImport("user32.dll")]
         private static extern int SetWindowText(IntPtr hWnd, string text);
 
-<<<<<<< HEAD
         private const string ExpectedVersion = "v1.4.7";
-=======
-        private const string ExpectedVersion = "v1.3.15";
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
 
         static BLTModule()
         {

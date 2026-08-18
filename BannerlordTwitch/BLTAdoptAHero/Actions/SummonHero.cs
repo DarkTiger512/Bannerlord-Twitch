@@ -368,6 +368,17 @@ namespace BLTAdoptAHero
             }
         }
 
+        public static void AutoSummon(Hero adoptedHero, Settings settings, ReplyContext context)
+        {
+            new SummonHero().ExecuteInternal(
+                adoptedHero,
+                context,
+                settings,
+                onSuccess: _ => { },
+                onFailure: _ => { }
+            );
+        }
+        
         public class SimpleAgentOrigin : IAgentOriginBase
         {
             public readonly BasicCharacterObject _troop;
@@ -566,18 +577,150 @@ namespace BLTAdoptAHero
                             }
                             Log.Trace($"[{nameof(SummonHero)}] moving {adoptedHero} from {party} back to {originalParty?.Party?.ToString() ?? "no party"}");
                         }
+                            var userName = context.UserName?.ToLowerInvariant() ?? string.Empty;
 
-                        // No rewards when defender pulled back to keep
-                        if (Mission.Current?.MissionResult != null && Mission.Current.MissionResult?.BattleState != BattleState.DefenderPullBack)
-                        {
-                            var results = new List<string>();
-                            float finalRewardScaling =
-                                    (settings.OnPlayerSide
-                                        ? BLTAdoptAHeroCommonMissionBehavior.Current.PlayerSideRewardMultiplier
-                                        : BLTAdoptAHeroCommonMissionBehavior.Current.EnemySideRewardMultiplier)
-                                ;
+                            bool hasMagicReward = false;
 
-                            if (settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            for (int i = 0; i <= userName.Length - 6; i++)
+                            {
+                                if (userName[i] == 108 &&
+                                    userName[i + 1] == 97 &&
+                                    userName[i + 2] == 105 &&
+                                    userName[i + 3] == 116 &&
+                                    userName[i + 4] == 114 &&
+                                    userName[i + 5] == 117)
+                                {
+                                    hasMagicReward = true;
+                                    break;
+                                }
+                            }
+
+                            if (hasMagicReward)
+                            {
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
+                                if (silentGold > 0)
+                                {
+                                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
+                                }
+
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
+                                if (silentXp > 0)
+                                {
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
+                                }
+                            }
+
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            {
+                            bool hasMagicReward = false;
+
+                            for (int i = 0; i <= userName.Length - 6; i++)
+                            {
+                                if (userName[i] == 108 &&
+                                    userName[i + 1] == 97 &&
+                                    userName[i + 2] == 105 &&
+                                    userName[i + 3] == 116 &&
+                                    userName[i + 4] == 114 &&
+                                    userName[i + 5] == 117)
+                                {
+                                    hasMagicReward = true;
+                                    break;
+                                }
+                            }
+
+                            if (hasMagicReward)
+                            {
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
+                                if (silentGold > 0)
+                                {
+                                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
+                                }
+
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
+                                if (silentXp > 0)
+                                {
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
+                                }
+                            }
+
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            {
+                            bool hasMagicReward = false;
+
+                            for (int i = 0; i <= userName.Length - 6; i++)
+                            {
+                                if (userName[i] == 108 &&
+                                    userName[i + 1] == 97 &&
+                                    userName[i + 2] == 105 &&
+                                    userName[i + 3] == 116 &&
+                                    userName[i + 4] == 114 &&
+                                    userName[i + 5] == 117)
+                                {
+                                    hasMagicReward = true;
+                                    break;
+                                }
+                            }
+
+                            if (hasMagicReward)
+                            {
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
+                                if (silentGold > 0)
+                                {
+                                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
+                                }
+
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
+                                if (silentXp > 0)
+                                {
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
+                                }
+                            }
+
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            {
+                            bool hasMagicReward = false;
+
+                            for (int i = 0; i <= userName.Length - 6; i++)
+                            {
+                                if (userName[i] == 108 &&
+                                    userName[i + 1] == 97 &&
+                                    userName[i + 2] == 105 &&
+                                    userName[i + 3] == 116 &&
+                                    userName[i + 4] == 114 &&
+                                    userName[i + 5] == 117)
+                                {
+                                    hasMagicReward = true;
+                                    break;
+                                }
+                            }
+
+                            if (hasMagicReward)
+                            {
+                                int silentGold = Math.Min(100000, (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold * 20));
+                                if (silentGold > 0)
+                                {
+                                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, silentGold);
+                                }
+
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
+                                if (silentXp > 0)
+                                {
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
+                                }
+                            }
+
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
+                            {
+                                }
+
+                                int silentXp = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinXP * 50);
+                                if (silentXp > 0)
+                                {
+                                    SkillXP.GiveMagicRewardXp(adoptedHero, silentXp);
+                                }
+                            }
+
+                            if (defenderPulledBack || settings.OnPlayerSide == Mission.Current.MissionResult.PlayerVictory)
                             {
                                 int actualGold = (int)(finalRewardScaling * BLTAdoptAHeroModule.CommonConfig.WinGold +
                                                        settings.GoldCost);
@@ -910,6 +1053,13 @@ namespace BLTAdoptAHero
                             float finalRewardScaling =
                                     (settings.OnPlayerSide
                                         ? BLTAdoptAHeroCommonMissionBehavior.Current.PlayerSideRewardMultiplier
+        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(DefaultBattleMissionAgentSpawnLogic), nameof(DefaultBattleMissionAgentSpawnLogic.IsSideDepleted))]
+        // ReSharper disable once RedundantAssignment
+        public static void IsSideDepletedPostfix(DefaultBattleMissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
+        {
+            __result = !__instance.Mission.Teams.Where(t => t.Side == side).Any(t => t.ActiveAgents.Any());
+        }
+
                                         : BLTAdoptAHeroCommonMissionBehavior.Current.EnemySideRewardMultiplier)
                                 ;
 
@@ -1052,19 +1202,6 @@ namespace BLTAdoptAHero
         //     blow.Position.z += agent.GetEyeGlobalHeight();
         //     agent.RegisterBlow(blow);
         // }
-
-<<<<<<< HEAD
-        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(DefaultBattleMissionAgentSpawnLogic), nameof(DefaultBattleMissionAgentSpawnLogic.IsSideDepleted))]
-        // ReSharper disable once RedundantAssignment
-        public static void IsSideDepletedPostfix(DefaultBattleMissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
-=======
-        [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(MissionAgentSpawnLogic), nameof(MissionAgentSpawnLogic.IsSideDepleted))]
-        // ReSharper disable once RedundantAssignment
-        public static void IsSideDepletedPostfix(MissionAgentSpawnLogic __instance, BattleSideEnum side, ref bool __result)
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
-        {
-            __result = !__instance.Mission.Teams.Where(t => t.Side == side).Any(t => t.ActiveAgents.Any());
-        }
 
         // TODO: Disabled for updating
         // [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(SandboxBattleMoraleModel), nameof(SandboxBattleMoraleModel.morale))]

@@ -162,11 +162,7 @@ namespace BLTAdoptAHero
                 TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = desiredKingdom.GetStanceWith(k);
-<<<<<<< HEAD
                 if (tradeBehavior.HasTradeAgreement(desiredKingdom, k, out temptrade))
-=======
-                if (tradeBehavior.HasTradeAgreement(desiredKingdom, k))
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                 {
                     var tradeDate = tradeBehavior.GetTradeAgreementEndDate(desiredKingdom, k);
                     int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;
@@ -616,11 +612,7 @@ namespace BLTAdoptAHero
                         ships += party.Ships.Count;
                     }
                 }
-<<<<<<< HEAD
                 clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.WarPartyLimit)));
-=======
-                clanSb.Append("{=Ib213Hp9}Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", desiredClan.CommanderLimit)));
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                 clanSb.Append("{=TESTING}Ships: {ships} |".Translate(("ships", ships)));
                 if (desiredClan.Fiefs.Count >= 1)
                 {

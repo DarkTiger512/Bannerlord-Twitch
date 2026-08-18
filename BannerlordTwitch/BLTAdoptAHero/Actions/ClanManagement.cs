@@ -717,12 +717,9 @@ namespace BLTAdoptAHero.Actions
                         ships += party.Ships.Count;
                 }
             }
-<<<<<<< HEAD
             clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.WarPartyLimit)));
             if (CampaignHelpers.NavalDLC())
                 clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
-=======
-            clanStats.Append("{=Ib213Hp9}| Parties: {cparties}/{mparties} | ".Translate(("cparties", parties), ("mparties", adoptedHero.Clan.CommanderLimit)));
             clanStats.Append("{=TESTING}Ships: {ships} ".Translate(("ships", ships)));
 >>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
             if (adoptedHero.Clan.Fiefs.Count >= 1)

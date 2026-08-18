@@ -529,13 +529,8 @@ namespace BLTAdoptAHero.Actions
             if (h.HeroState == Hero.CharacterStates.Fugitive) { onFailure("Your hero is fugitive"); return; }
             if (party != null) { onFailure("You already have a party"); return; }
             if (h.IsPrisoner) { onFailure("You are prisoner"); return; }
-<<<<<<< HEAD
             if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.WarPartyLimit)
             { onFailure($"Clan party limit: {h.Clan.WarPartyLimit}"); return; }
-=======
-            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.CommanderLimit)
-            { onFailure($"Clan party limit: {h.Clan.CommanderLimit}"); return; }
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
 
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOfIfExists(h.GovernorOf);
 
@@ -1501,11 +1496,7 @@ namespace BLTAdoptAHero.Actions
                 leaderParty = candidates.GetRandomElement();
 
             var vassalClans = VassalBehavior.Current?.GetVassalClans(h.Clan) ?? new List<Clan>();
-<<<<<<< HEAD
             var modelParties = GetPartiesToCallToArmy(leaderParty);
-=======
-            var modelParties = Campaign.Current.Models.ArmyManagementCalculationModel.GetMobilePartiesToCallToArmy(leaderParty);
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
             var members = candidates
                 .Where(p => p != leaderParty)
                 .Concat(modelParties.Where(p => p != leaderParty && p != null))
@@ -2208,13 +2199,7 @@ namespace BLTAdoptAHero.Actions
                             && p != party && p.Army == null && p.AttachedTo == null
                             && p.LeaderHero != null && p.MapEvent == null && !p.IsDisbanding)
                         .ToList();
-<<<<<<< HEAD
                     var modelParties = GetPartiesToCallToArmy(party).Where(p => p != null);
-=======
-                    var modelParties = Campaign.Current.Models.ArmyManagementCalculationModel
-                        .GetMobilePartiesToCallToArmy(party)
-                        .Where(p => p != null);
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                     var ldrPos = party.GetPosition2D;
                     var sorted = vassalParties.Concat(modelParties).Distinct()
                         .OrderBy(p => p.GetPosition2D.Distance(ldrPos));

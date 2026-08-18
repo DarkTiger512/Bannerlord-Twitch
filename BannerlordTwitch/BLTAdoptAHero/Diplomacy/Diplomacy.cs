@@ -2543,11 +2543,7 @@ namespace BLTAdoptAHero
             // Check for existing trade agreement
             TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
             TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
-<<<<<<< HEAD
             if (tradeBehavior.HasTradeAgreement(kingdom, target, out temptrade))
-=======
-            if (tradeBehavior.HasTradeAgreement(kingdom, target))
->>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
             {
                 onFailure($"Already have trade agreement with {target.Name}");
                 return;
