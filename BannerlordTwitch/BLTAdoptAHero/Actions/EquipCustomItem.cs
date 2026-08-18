@@ -7,7 +7,6 @@ using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero.Annotations;
-using BLTAdoptAHero.Actions.Util;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -210,22 +209,11 @@ namespace BLTAdoptAHero.Actions
             // Get indexed slots from hero's class (tuple of index and type)
             var indexedSlots = heroClass.IndexedSlots;
 
-            if (customItem.Item?.HasWeaponComponent == true)
-            {
-                Log.Info($"EquipCustomItem requested for {hero.Name}: modifierId={customItem.ItemModifier?.StringId}, {CustomItems.DescribeWeaponMetadata(customItem.Item)}");
-            }
-
             foreach (var (slotIndex, slotType) in indexedSlots)
             {
                 // Check if this slot type can hold this item
                 if (!IsItemCompatibleWithSlot(customItem.Item, slotType))
-                {
-                    if (customItem.Item?.HasWeaponComponent == true)
-                    {
-                        Log.Info($"EquipCustomItem skipped slot for {hero.Name}: slot={slotIndex}, slotType={slotType}, itemEquipmentType={customItem.Item.GetEquipmentType()}, primaryClass={customItem.Item.PrimaryWeapon?.WeaponClass}");
-                    }
                     continue;
-                }
 
                 var currentItem = equipment[slotIndex];
 
@@ -235,7 +223,6 @@ namespace BLTAdoptAHero.Actions
                 {
                     equipment[slotIndex] = customItem;
                     slotsEquipped++;
-                    Log.Info($"EquipCustomItem equipped for {hero.Name}: slot={slotIndex}, slotType={slotType}, itemId={customItem.Item.StringId}, itemType={customItem.Item.ItemType}, modifierId={customItem.ItemModifier?.StringId}");
                 }
             }
 

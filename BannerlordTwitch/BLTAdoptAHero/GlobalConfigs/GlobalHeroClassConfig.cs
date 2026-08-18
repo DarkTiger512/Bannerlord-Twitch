@@ -16,7 +16,7 @@ using YamlDotNet.Serialization;
 
 namespace BLTAdoptAHero
 {
-    [LocDisplayName("{=GlobalHeroClassConfig_Name}Class Config")]
+    [LocDisplayName("{=3rL4RHje}Class Config")]
     internal class GlobalHeroClassConfig : IUpdateFromDefault, IDocumentable
     {
         #region Static
@@ -27,14 +27,14 @@ namespace BLTAdoptAHero
         #endregion
 
         #region User Editable
-        [LocDisplayName("{=GlobalHeroClassConfig_ClassDefs_Name}Class Definitions"),
-         LocDescription("{=GlobalHeroClassConfig_ClassDefs_Desc}Defined classes"),
+        [LocDisplayName("{=462kHfn2}Class Definitions"),
+         LocDescription("{=NFjlVt57}Defined classes"),
          Editor(typeof(DefaultCollectionEditor), typeof(DefaultCollectionEditor)),
          PropertyOrder(1), UsedImplicitly]
         public ObservableCollection<HeroClassDef> ClassDefs { get; set; } = new();
 
-        [LocDisplayName("{=GlobalHeroClassConfig_ClassLevelRequirements_Name}Class Level Requirements"),
-         LocDescription("{=GlobalHeroClassConfig_ClassLevelRequirements_Desc}Requirements for class levels"),
+        [LocDisplayName("{=Q0yTbTCT}Class Level Requirements"),
+         LocDescription("{=y8LLccGK}Requirements for class levels"),
          Editor(typeof(DefaultCollectionEditor), typeof(DefaultCollectionEditor)),
          PropertyOrder(2), UsedImplicitly]
         public ObservableCollection<ClassLevelRequirementsDef> ClassLevelRequirements { get; set; } = new();
@@ -95,8 +95,11 @@ namespace BLTAdoptAHero
         {
             generator.Div("class-config", () =>
             {
-                generator.H1("{=GlobalHeroClassConfig_Doc_Classes}Classes".Translate());
-
+                generator.H1("{=E0CBnj57}Classes".Translate());
+                // foreach (var cl in ClassDefs)
+                // {
+                //     generator.LinkToAnchor(cl.Name, () => generator.H2(cl.Name));
+                // }
                 foreach (var cl in ValidClasses)
                 {
                     generator.MakeAnchor(cl.Name.ToString(), () => generator.H2(cl.Name.ToString()));
@@ -108,7 +111,7 @@ namespace BLTAdoptAHero
         #endregion
     }
 
-    [LocDisplayName("{=GlobalHeroClassConfig_ClassLevelRequirementsDef_Name}Class Level Requirements Definition")]
+    [LocDisplayName("{=uZUsZLGm}Class Level Requirements Definition")]
     public class ClassLevelRequirementsDef : INotifyPropertyChanged, ICloneable
     {
         #region User Editable
@@ -118,13 +121,13 @@ namespace BLTAdoptAHero
         [PropertyOrder(1), UsedImplicitly]
         public bool Enabled { get; set; }
 
-        [LocDisplayName("{=GlobalHeroClassConfig_ClassLevelRequirementsDef_ClassLevel_Name}Class Level"),
-         LocDescription("{=GlobalHeroClassConfig_ClassLevelRequirementsDef_ClassLevel_Desc}Class level"),
+        [LocDisplayName("{=0raqv788}ClassLevel"),
+         LocDescription("{=el4y84iD}Class level"),
          PropertyOrder(2), UsedImplicitly]
         public int ClassLevel { get; set; }
 
-        [LocDisplayName("{=GlobalHeroClassConfig_ClassLevelRequirementsDef_Requirements_Name}Requirements"),
-         LocDescription("{=GlobalHeroClassConfig_ClassLevelRequirementsDef_Requirements_Desc}Requirements for this class level"),
+        [LocDisplayName("{=aMGoiH53}Requirements"),
+         LocDescription("{=G95DA4OM}Requirements for this class level"),
          PropertyOrder(3), UsedImplicitly,
          Editor(typeof(DerivedClassCollectionEditor<IAchievementRequirement>),
              typeof(DerivedClassCollectionEditor<IAchievementRequirement>))]
@@ -135,7 +138,7 @@ namespace BLTAdoptAHero
         public override string ToString()
             => $"{ClassLevel}: "
                + (!Requirements.Any()
-                   ? "{=GlobalHeroClassConfig_Runtime_NoRequirements}(no requirements)".Translate()
+                   ? "{=7WLbMjpz}(no requirements)".Translate()
                    : string.Join(" + ", Requirements.Select(r => r.ToString())));
 
         public bool IsMet(Hero hero) => Requirements.All(r => r.IsMet(hero));

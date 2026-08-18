@@ -4,353 +4,352 @@
         <tag language="English" />
     </tags>
     <strings>
-        <!-- GlobalCommonConfig.cs -->
-        <string id="GlobalCommonConfig_Name" text="Common Config"/>
-        <!-- General -->
-        <string id="GlobalCommonConfig_Category_General" text="General"/>
-        <string id="GlobalCommonConfig_Category_General_SubBoost_Name" text="Sub Boost"/>
-        <string id="GlobalCommonConfig_Category_General_SubBoost_Desc" text="Multiplier applied to all rewards for subscribers (less or equal to 1 means no boost). NOTE: This is only partially implemented, it works for bot commands only currently."/>
-        <string id="GlobalCommonConfig_Category_General_CustomRewardModifiers_Name" text="Custom Reward Modifiers"/>
-        <string id="GlobalCommonConfig_Category_General_CustomRewardModifiers_Desc" text="The specification for custom item rewards, applies to tournament prize and achievement rewards"/>
-        <string id="GlobalCommonConfig_Category_General_CustomItemLimit_Name" text="Custom Inventory Item Limit"/>
-        <string id="GlobalCommonConfig_Category_General_CustomItemLimit_Desc" text="Maximum custom inventory items allowed. This only applies when smithing, other rewards will always be added to inventory (but they will contribute to the limit). If you set this high then inventory management and console spam may become a problem."/>
-        <string id="GlobalCommonConfig_Category_General_RestrictedItems_Name" text="Restricted Items"/>
-        <string id="GlobalCommonConfig_Category_General_RestrictedItems_Desc" text="Comma-separated list of ItemObject StringIds to exclude from equipment selection in equip, smith, and rewards (e.g., 'battanian_noble_sword,empire_spear_1')"/>
-        <string id="GlobalCommonConfig_Category_General_CustomCompanionLimit_Name" text="Custom Companion Limit"/>
-        <string id="GlobalCommonConfig_Category_General_CustomCompanionLimit_Desc" text="Flat number increase to companion limit"/>
-        <string id="GlobalCommonConfig_Category_General_BLTChildAgeMult_Name" text="BLT children aging multiplier"/>
-        <string id="GlobalCommonConfig_Category_General_BLTChildAgeMult_Desc" text="Multiplier to BLT children age"/>
-        <string id="GlobalCommonConfig_Category_General_ShowCampaignMapOverlay_Name" text="Show Campaign Map Overlay"/>
-        <string id="GlobalCommonConfig_Category_General_ShowCampaignMapOverlay_Desc" text="Enable or disable the campaign map overlay that shows in the top portion of the overlay. The map automatically hides during missions."/>
-        <string id="GlobalCommonConfig_Category_General_MapOverlayMinSpacing_Name" text="Overlay Map Settlement Spacing"/>
-        <string id="GlobalCommonConfig_Category_General_MapOverlayMinSpacing_Desc" text="Minimum centre-to-centre space between settlements."/>
-        <string id="GlobalCommonConfig_Category_General_UncapFoodStocks_Name" text="Uncap Maximum Foodstocks in Settlements"/>
-        <string id="GlobalCommonConfig_Category_General_UncapFoodStocks_Desc" text="Enable or disable the vanilla maximum of 300 foodstocks in towns and castles for all settlements."/>
-        <string id="GlobalCommonConfig_Category_General_HearthPerVillageTier_Name" text="Hearth Per Village Tier"/>
-        <string id="GlobalCommonConfig_Category_General_HearthPerVillageTier_Desc" text="How much hearth is required per village prosperity level (affects food and goods production)."/>
-        <string id="GlobalCommonConfig_Category_General_BLTArmyMinLifetimeDays_Name" text="Minimum BLT-Led Army Lifetime"/>
-        <string id="GlobalCommonConfig_Category_General_BLTArmyMinLifetimeDays_Desc" text="Minimum days a BLT-led army will persist before being allowed to disband."/>
-        <string id="GlobalCommonConfig_Category_General_LockBLTArmyCohesion_Name" text="Lock BLT Army Cohesion"/>
-        <string id="GlobalCommonConfig_Category_General_LockBLTArmyCohesion_Desc" text="When enabled, standard armies led by adopted heroes also have their cohesion locked at 100 and are exempt from automatic dispersion checks. Mercenary armies always have this applied regardless."/>
-        <string id="GlobalCommonConfig_Category_General_AllowAIJoinBLT_Name" text="Allow AI Clans to Join BLT Kingdoms"/>
-        <string id="GlobalCommonConfig_Category_General_AllowAIJoinBLT_Desc" text="Allow AI clans to join BLT kingdoms."/>
+        <!-- Get more string codes here: https://www.random.org/strings/?num=100&len=8&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new-->
+        
+        <!-- GlobalCommonConfig -->
+        <!-- Common Config -->
+        <string id="vDjnDtoL" text="Common Config"/>
+        <!-- Sub Boost -->
+        <string id="xwcKN7sH" text="Sub Boost"/>
+        <!-- Multiplier applied to all rewards for subscribers (less or equal to 1 means no boost). NOTE: This is only partially implemented, it works for bot commands only currently. -->
+        <string id="rX68wbfF" text="Multiplier applied to all rewards for subscribers (less or equal to 1 means no boost). NOTE: This is only partially implemented, it works for bot commands only currently."/>
+        <!-- Custom Reward Modifiers -->
+        <string id="O0LU5WBa" text="Custom Reward Modifiers"/>
+        <!-- The specification for custom item rewards, applies to tournament prize and achievement rewards -->
+        <string id="tp3YdGmo" text="The specification for custom item rewards, applies to tournament prize and achievement rewards"/>
+        <!-- Start With Full Health -->
+        <string id="X8r0C5fx" text="Start With Full Health"/>
+        <!-- Whether the hero will always start with full health -->
+        <string id="HbNVrZuv" text="Whether the hero will always start with full health"/>
+        <!-- Start Health Multiplier -->
+        <string id="fxZIKL65" text="Start Health Multiplier"/>
+        <!-- Amount to multiply normal starting health by, to give heroes better staying power vs others -->
+        <string id="8yNIRS9S" text="Amount to multiply normal starting health by, to give heroes better staying power vs others"/>
+        <!-- Start Retinue Health Multiplier -->
+        <string id="HvcTekVk" text="Start Retinue Health Multiplier"/>
+        <!-- Amount to multiply normal retinue starting health by, to give retinue better staying power vs others -->
+        <string id="G6JJT2ot" text="Amount to multiply normal retinue starting health by, to give retinue better staying power vs others"/>
+        <!-- Morale Loss Factor -->
+        <string id="ZPmBe7XI" text="Morale Loss Factor"/>
+        <!-- Reduces morale loss when summoned heroes die -->
+        <string id="tpgJtS5q" text="Reduces morale loss when summoned heroes die"/>
+        <!-- Retinue Use Heroes Formation -->
+        <string id="bXdC2trk" text="Retinue Use Heroes Formation"/>
+        <!-- Whether an adopted heroes retinue should spawn in the same formation as the hero (otherwise they will go into default formations) -->
+        <string id="D8uDzXlV" text="Whether an adopted heroes retinue should spawn in the same formation as the hero (otherwise they will go into default formations)"/>
+        <!-- Summon Cooldown In Seconds -->
+        <string id="OlJrCEyE" text="Summon Cooldown In Seconds"/>
+        <!-- Minimum time between summons for a specific hero -->
+        <string id="DeGB2BGZ" text="Minimum time between summons for a specific hero"/>
+        <!-- Summon Cooldown Use Multiplier -->
+        <string id="f9HVD2cC" text="Summon Cooldown Use Multiplier"/>
+        <!-- How much to multiply the cooldown by each time summon is used. e.g. if Summon Cooldown is 20 seconds, and UseMultiplier is 1.1 (the default), then the first summon has a cooldown of 20 seconds, and the next 24 seconds, the 10th 52 seconds, and the 20th 135 seconds. See https://www.desmos.com/calculator/muej1o5eg5 for a visualization of this. -->
+        <string id="4gZlfHzM" text="How much to multiply the cooldown by each time summon is used. e.g. if Summon Cooldown is 20 seconds, and UseMultiplier is 1.1 (the default), then the first summon has a cooldown of 20 seconds, and the next 24 seconds, the 10th 52 seconds, and the 20th 135 seconds. See https://www.desmos.com/calculator/muej1o5eg5 for a visualization of this."/>
+        <!-- Summon Cooldown Example -->
+        <string id="ViLoy0k3" text="Summon Cooldown Example"/>
+        <!-- Shows the consecutive cooldowns (in seconds) for 10 summons -->
+        <string id="xZoSFrAb" text="Shows the consecutive cooldowns (in seconds) for 10 summons"/>
+        <!-- Allow Death -->
+        <string id="4sNJRQyw" text="Allow Death"/>
+        <!-- Whether an adopted hero is allowed to die -->
+        <string id="VbBUYOfc" text="Whether an adopted hero is allowed to die"/>
+        <!-- Final Death Chance Percent -->
+        <string id="ZEfAPyOm" text="Final Death Chance Percent"/>
+        <!-- Final death chance percent (includes vanilla chance) -->
+        <string id="xlt1pNuT" text="Final death chance percent (includes vanilla chance)"/>
+        <!-- Apply Death Chance To All Heroes -->
+        <string id="sbc5Fp4o" text="Apply Death Chance To All Heroes"/>
+        <!-- Whether to apply the Death Chance changes to all heroes, not just adopted ones -->
+        <string id="nbR7NLNz" text="Whether to apply the Death Chance changes to all heroes, not just adopted ones"/>
+        <!-- Use Raw XP -->
+        <string id="lwU4dELT" text="Use Raw XP"/>
+        <!-- Use raw XP values instead of adjusting by focus and attributes, also ignoring skill cap. This avoids characters getting stuck when focus and attributes are not well distributed.  -->
+        <string id="dICRr4BH" text="Use raw XP values instead of adjusting by focus and attributes, also ignoring skill cap. This avoids characters getting stuck when focus and attributes are not well distributed. "/>
+        <!-- Raw XP Skill Cap -->
+        <string id="S5FAna09" text="Raw XP Skill Cap"/>
+        <!-- Skill cap when using Raw XP. Skills will not go above this value. 330 is the vanilla XP skill cap. -->
+        <string id="WUzqXuHN" text="Skill cap when using Raw XP. Skills will not go above this value. 330 is the vanilla XP skill cap."/>
+        <!-- Gold Per Kill -->
+        <string id="94Ouh5It" text="Gold Per Kill"/>
+        <!-- Gold the hero gets for every kill -->
+        <string id="iSAMxZ8a" text="Gold the hero gets for every kill"/>
+        <!-- XP Per Kill -->
+        <string id="DMGKBoJT" text="XP Per Kill"/>
+        <!-- XP the hero gets for every kill -->
+        <string id="kwW5pZT9" text="XP the hero gets for every kill"/>
+        <!-- XP Per Killed -->
+        <string id="a1zjEuUe" text="XP Per Killed"/>
+        <!-- XP the hero gets for being killed -->
+        <string id="bW8t2g5N" text="XP the hero gets for being killed"/>
+        <!-- Heal Per Kill -->
+        <string id="cRV9HDdf" text="Heal Per Kill"/>
+        <!-- HP the hero gets for every kill -->
+        <string id="7VWAZgfK" text="HP the hero gets for every kill"/>
+        <!-- Retinue Gold Per Kill -->
+        <string id="lIhhHjih" text="Retinue Gold Per Kill"/>
+        <!-- Gold the hero gets for every kill their retinue gets -->
+        <string id="h93j0qw3" text="Gold the hero gets for every kill their retinue gets"/>
+        <!-- Retinue Heal Per Kill -->
+        <string id="KwlWrzDS" text="Retinue Heal Per Kill"/>
+        <!-- HP the hero's retinue gets for every kill -->
+        <string id="Q3UVoHmt" text="HP the hero's retinue gets for every kill"/>
+        <!-- Relative Level Scaling -->
+        <string id="wSzUkbNR" text="Relative Level Scaling"/>
+        <!-- How much to scale the kill rewards by, based on relative level of the two characters. If this is 0 (or not set) then the rewards are always as specified, if this is higher than 0 then the rewards increase if the killed unit is higher level than the hero, and decrease if it is lower. At a value of 0.5 (recommended) at level difference of 10 would give about 2.5 times the normal rewards for gold, xp and health. -->
+        <string id="1LTDJZ7Y" text="How much to scale the kill rewards by, based on relative level of the two characters. If this is 0 (or not set) then the rewards are always as specified, if this is higher than 0 then the rewards increase if the killed unit is higher level than the hero, and decrease if it is lower. At a value of 0.5 (recommended) at level difference of 10 would give about 2.5 times the normal rewards for gold, xp and health."/>
+        <!-- Level Scaling Cap -->
+        <string id="BDk1G4nc" text="Level Scaling Cap"/>
+        <!-- Caps the maximum multiplier for the level difference, defaults to 5 if not specified -->
+        <string id="Vod0pJEN" text="Caps the maximum multiplier for the level difference, defaults to 5 if not specified"/>
+		<!-- Minimum Gold Per Kill -->
+        <string id="EYXeYMQo" text="Minimum Gold Per Kill"/>
+		<!-- Minimum percent gold earned per kill -->
+        <string id="J2GKeUI9" text="Minimum percent gold earned per kill"/>
 
-        <!-- Battle -->
-        <string id="GlobalCommonConfig_Category_Battle" text="Battle"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartWithFullHealth_Name" text="Start With Full Health"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartWithFullHealth_Desc" text="Whether the hero will always start with full health"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartHealthMultiplier_Name" text="Start Health Multiplier"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartHealthMultiplier_Desc" text="Amount to multiply normal starting health by, to give heroes better staying power vs others"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartRetinueHealthMultiplier_Name" text="Start Retinue Health Multiplier"/>
-        <string id="GlobalCommonConfig_Category_Battle_StartRetinueHealthMultiplier_Desc" text="Amount to multiply normal retinue starting health by, to give retinue better staying power vs others"/>
-        <string id="GlobalCommonConfig_Category_Battle_MoraleLossFactor_Name" text="Morale Loss Factor (not implemented)"/>
-        <string id="GlobalCommonConfig_Category_Battle_MoraleLossFactor_Desc" text="Reduces morale loss when summoned heroes die"/>
-        <string id="GlobalCommonConfig_Category_Battle_RetinueUseHeroesFormation_Name" text="Retinue Use Heroes Formation"/>
-        <string id="GlobalCommonConfig_Category_Battle_RetinueUseHeroesFormation_Desc" text="Whether an adopted hero's retinue should spawn in the same formation as the hero (otherwise they will go into default formations)"/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownInSeconds_Name" text="Summon Cooldown In Seconds"/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownInSeconds_Desc" text="Minimum time between summons for a specific hero"/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownUseMultiplier_Name" text="Summon Cooldown Use Multiplier"/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownUseMultiplier_Desc" text="How much to multiply the cooldown by each time summon is used. e.g. if Summon Cooldown is 20 seconds, and UseMultiplier is 1.1 (the default), then the first summon has a cooldown of 20 seconds, and the next 24 seconds, the 10th 52 seconds, and the 20th 135 seconds. See https://www.desmos.com/calculator/muej1o5eg5 for a visualization of this."/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownExample_Name" text="Summon Cooldown Example"/>
-        <string id="GlobalCommonConfig_Category_Battle_SummonCooldownExample_Desc" text="Shows the consecutive cooldowns (in seconds) for 10 summons"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagEnabled_Name" text="Nametags"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagEnabled_Desc" text="Enable or disable nametags"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagWidth_Name" text="Nametag Width"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagWidth_Desc" text="Width of the nametag"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagHeight_Name" text="Nametag Height"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagHeight_Desc" text="Height of the nametag"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagFontsize_Name" text="Nametag Font Size"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagFontsize_Desc" text="Font size of the nametag text"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagKey_Name" text="Nametag Toggle Key"/>
-        <string id="GlobalCommonConfig_Category_Battle_NametagKey_Desc" text="Key used to toggle nametags (case sensitive)"/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Name" text="Auto Formation For BLT Heroes"/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoFormationForHeroes_Desc" text="Automatically assign adopted BLT heroes to predefined formations during battle. Field battles: infantry (4), ranged (5), cavalry (6), horse archers (7). Sieges: infantry (6), ranged (7). Manual formation commands override this for that hero until the mission ends."/>
-        <string id="GlobalCommonConfig_Category_Battle_EnableEnemyBltAttack_Name" text="Enable Enemy BLT Attack"/>
-        <string id="GlobalCommonConfig_Category_Battle_EnableEnemyBltAttack_Desc" text="Continuously moves all enemy adopted BLT heroes into the last formation and forces that formation to attack during field battles. Siege battles are ignored. Non-BLT units already assigned to that formation may also be sent into attack."/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoSummonStreamerOnly_Name" text="Auto Summon Streamer Only"/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoSummonStreamerOnly_Desc" text="Automatically summons only the streamer's adopted hero in field and siege battles."/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoSummonStreamerEnemySide_Name" text="Summon Streamer On Enemy Side"/>
-        <string id="GlobalCommonConfig_Category_Battle_AutoSummonStreamerEnemySide_Desc" text="If enabled, the streamer's hero is auto-summoned on the enemy side. If disabled, the hero is summoned on the player side."/>
-
-        <!-- Death -->
-        <string id="GlobalCommonConfig_Category_Death" text="Death"/>
-        <string id="GlobalCommonConfig_Category_Death_AllowDeath_Name" text="Allow Death"/>
-        <string id="GlobalCommonConfig_Category_Death_AllowDeath_Desc" text="Whether an adopted hero is allowed to die"/>
-        <string id="GlobalCommonConfig_Category_Death_FinalDeathChancePercent_Name" text="Final Death Chance Percent"/>
-        <string id="GlobalCommonConfig_Category_Death_FinalDeathChancePercent_Desc" text="Final death chance percent (includes vanilla chance)"/>
-        <string id="GlobalCommonConfig_Category_Death_ApplyDeathChanceToAllHeroes_Name" text="Apply Death Chance To All Heroes"/>
-        <string id="GlobalCommonConfig_Category_Death_ApplyDeathChanceToAllHeroes_Desc" text="Whether to apply the Death Chance changes to all heroes, not just adopted ones"/>
-        <string id="GlobalCommonConfig_Category_Death_RetinueDeathChancePercent_Name" text="Retinue Death Chance Percent"/>
-        <string id="GlobalCommonConfig_Category_Death_RetinueDeathChancePercent_Desc" text="Retinue death chance percent (this determines the chance that a killing blow will actually kill the retinue, removing them from the adopted hero's retinue list)"/>
-        <string id="GlobalCommonConfig_Category_Death_Retinue2DeathChancePercent_Name" text="Secondary Retinue Death Chance Percent"/>
-        <string id="GlobalCommonConfig_Category_Death_Retinue2DeathChancePercent_Desc" text="Secondary retinue death chance percent (this determines the chance that a killing blow will actually kill the retinue, removing them from the adopted hero's retinue list)"/>
-
-        <!-- Income -->
-        <string id="GlobalCommonConfig_Category_Income" text="Income"/>
-        <string id="GlobalCommonConfig_Category_Income_GoldIncomeEnabled_Name" text="Enabled"/>
-        <string id="GlobalCommonConfig_Category_Income_GoldIncomeEnabled_Desc" text="Enable daily BLT gold income"/>
-        <string id="GlobalCommonConfig_Category_Income_FiefIncomeEnabled_Name" text="Enable Fief Income"/>
-        <string id="GlobalCommonConfig_Category_Income_FiefIncomeEnabled_Desc" text="Enable BLT gold from owned settlements"/>
-        <string id="GlobalCommonConfig_Category_Income_TownBaseGold_Name" text="Town Base Gold"/>
-        <string id="GlobalCommonConfig_Category_Income_TownBaseGold_Desc" text="Base BLT gold per town per day"/>
-        <string id="GlobalCommonConfig_Category_Income_CastleBaseGold_Name" text="Castle Base Gold"/>
-        <string id="GlobalCommonConfig_Category_Income_CastleBaseGold_Desc" text="Base BLT gold per castle per day"/>
-        <string id="GlobalCommonConfig_Category_Income_IncludeProsperity_Name" text="Include Prosperity"/>
-        <string id="GlobalCommonConfig_Category_Income_IncludeProsperity_Desc" text="Add prosperity-based income"/>
-        <string id="GlobalCommonConfig_Category_Income_ProsperityMultiplier_Name" text="Prosperity Multiplier"/>
-        <string id="GlobalCommonConfig_Category_Income_ProsperityMultiplier_Desc" text="Prosperity multiplier"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryIncomeEnabled_Name" text="Enable Mercenary Income"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryIncomeEnabled_Desc" text="Enable BLT gold from mercenary contracts"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryMultiplier_Name" text="Mercenary Multiplier"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryMultiplier_Desc" text="Multiplier applied to mercenary contract value (used for BLT clans and their vassals)"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryMaxIncome_Name" text="Mercenary Maximum Daily Income"/>
-        <string id="GlobalCommonConfig_Category_Income_MercenaryMaxIncome_Desc" text="Maximum BLT daily income from mercenary contract"/>
-
-        <!-- Upgrades -->
-        <string id="GlobalCommonConfig_Category_Upgrades" text="Upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_FiefUpgrades_Name" text="Fief Upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_FiefUpgrades_Desc" text="List of available fief (settlement) upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_ClanUpgrades_Name" text="Clan Upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_ClanUpgrades_Desc" text="List of available clan-wide upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_KingdomUpgrades_Name" text="Kingdom Upgrades"/>
-        <string id="GlobalCommonConfig_Category_Upgrades_KingdomUpgrades_Desc" text="List of available kingdom-wide upgrades"/>
-
-        <!-- XP -->
-        <string id="GlobalCommonConfig_Category_XP" text="XP"/>
-        <string id="GlobalCommonConfig_Category_XP_UseRawXP_Name" text="Use Raw XP"/>
-        <string id="GlobalCommonConfig_Category_XP_UseRawXP_Desc" text="Use raw XP values instead of adjusting by focus and attributes, also ignoring skill cap. This avoids characters getting stuck when focus and attributes are not well distributed."/>
-        <string id="GlobalCommonConfig_Category_XP_RawXPSkillCap_Name" text="Raw XP Skill Cap"/>
-        <string id="GlobalCommonConfig_Category_XP_RawXPSkillCap_Desc" text="Skill cap when using Raw XP. Skills will not go above this value. 330 is the vanilla XP skill cap."/>
-
-        <!-- Kill Rewards -->
-        <string id="GlobalCommonConfig_Category_KillRewards" text="Kill Rewards"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_GoldPerKill_Name" text="Gold Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_GoldPerKill_Desc" text="Gold the hero gets for every kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_XPPerKill_Name" text="XP Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_XPPerKill_Desc" text="XP the hero gets for every kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_XPPerKilled_Name" text="XP Per Death"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_XPPerKilled_Desc" text="XP the hero gets for being killed"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_HealPerKill_Name" text="Heal Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_HealPerKill_Desc" text="HP the hero gets for every kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RetinueGoldPerKill_Name" text="Retinue Gold Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RetinueGoldPerKill_Desc" text="Gold the hero gets for every kill their retinue gets"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RetinueHealPerKill_Name" text="Retinue Heal Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RetinueHealPerKill_Desc" text="HP the hero's retinue gets for every kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RelativeLevelScaling_Name" text="Relative Level Scaling"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_RelativeLevelScaling_Desc" text="How much to scale the kill rewards by, based on relative level of the two characters. If this is 0 (or not set) then the rewards are always as specified, if this is higher than 0 then the rewards increase if the killed unit is higher level than the hero, and decrease if it is lower. At a value of 0.5 (recommended) at level difference of 10 would give about 2.5 times the normal rewards for gold, xp and health."/>
-        <string id="GlobalCommonConfig_Category_KillRewards_LevelScalingCap_Name" text="Level Scaling Cap"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_LevelScalingCap_Desc" text="Caps the maximum multiplier for the level difference, defaults to 5 if not specified"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_MinimumGoldPerKill_Name" text="Minimum Gold Per Kill"/>
-        <string id="GlobalCommonConfig_Category_KillRewards_MinimumGoldPerKill_Desc" text="Minimum percent gold earned per kill"/>
-
-        <!-- Battle End Rewards -->
-        <string id="GlobalCommonConfig_Category_BattleEndRewards" text="Battle End Rewards"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_WinGold_Name" text="Win Gold"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_WinGold_Desc" text="Gold won if the hero's side wins"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_WinXP_Name" text="Win XP"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_WinXP_Desc" text="XP the hero gets if the hero's side wins"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_LoseGold_Name" text="Lose Gold"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_LoseGold_Desc" text="Gold lost if the hero's side loses (negative relative to win gold)"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_LoseXP_Name" text="Lose XP"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_LoseXP_Desc" text="XP the hero gets if the hero's side loses"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingOnPlayersSide_Name" text="Difficulty Scaling On Player's Side"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingOnPlayersSide_Desc" text="Apply difficulty scaling to the player's side"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingOnEnemySide_Name" text="Difficulty Scaling On Enemy Side"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingOnEnemySide_Desc" text="Apply difficulty scaling to the enemy side"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScaling_Name" text="Difficulty Scaling"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScaling_Desc" text="End reward difficulty scaling: determines how much higher difficulty battles increase the above rewards (0 to 1)"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingMin_Name" text="Difficulty Scaling Min"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingMin_Desc" text="Minimum difficulty scaling multiplier"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingMax_Name" text="Difficulty Scaling Max"/>
-        <string id="GlobalCommonConfig_Category_BattleEndRewards_DifficultyScalingMax_Desc" text="Maximum difficulty scaling multiplier"/>
-
-        <!-- Kill Streak Rewards -->
-        <string id="GlobalCommonConfig_Category_KillStreakRewards" text="Kill Streak Rewards"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_KillStreaks_Name" text="Kill Streaks"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_KillStreaks_Desc" text="Kill streak configuration list"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_ShowKillStreakPopup_Name" text="Show Kill Streak Popup"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_ShowKillStreakPopup_Desc" text="Whether to use the popup banner to announce kill streaks. If disabled, it will only print in the overlay."/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_KillStreakPopupAlertSound_Name" text="Kill Streak Popup Alert Sound"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_KillStreakPopupAlertSound_Desc" text="Sound to play when kill streak popup is disabled."/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_ReferenceLevelReward_Name" text="Reference Level Reward"/>
-        <string id="GlobalCommonConfig_Category_KillStreakRewards_ReferenceLevelReward_Desc" text="The level at which rewards normalize and begin to decrease (if relative level scaling is enabled)."/>
-
+        <!-- Win Gold -->
+        <string id="IQTT5vYE" text="Win Gold"/>
+        <!-- Lose Gold -->
+        <string id="lfCWK7aA" text="Lose Gold"/>
+        <!-- Win XP -->
+        <string id="h8I3PWkV" text="Win XP"/>
+        <!-- Lose XP -->
+        <string id="Vobr36Bl" text="Lose XP"/>
+        
+        <!-- Gold won if the heroes side wins -->
+        <string id="pc3G0W39" text="Gold won if the heroes side wins"/>
+        <!-- XP the hero gets if the heroes side wins -->
+        <string id="F7Tw4D07" text="XP the hero gets if the heroes side wins"/>
+        <!-- Gold lost if the heroes side loses(negative to win gold) -->
+        <string id="E209XRml" text="Gold lost if the heroes side loses(negative to win gold)"/>
+        <!-- XP the hero gets if the heroes side loses -->
+        <string id="itAfYdmO" text="XP the hero gets if the heroes side loses"/>
+        <!-- Difficulty Scaling On Players Side -->
+        <string id="ihB1KMOY" text="Difficulty Scaling On Players Side"/>
+        <!-- Apply difficulty scaling to players side -->
+        <string id="Bt1PS0aC" text="Apply difficulty scaling to players side"/>
+        <!-- Difficulty Scaling On Enemy Side -->
+        <string id="nym7EtAd" text="Difficulty Scaling On Enemy Side"/>
+        <!-- Apply difficulty scaling to enemy side -->
+        <string id="U0hZef9L" text="Apply difficulty scaling to enemy side"/>
+        <!-- Difficulty Scaling -->
+        <string id="CaVuq5tE" text="Difficulty Scaling"/>
+        <!-- End reward difficulty scaling: determines the extent to which higher difficulty battles increase the above rewards (0 to 1) -->
+        <string id="IhhfIQ74" text="End reward difficulty scaling: determines the extent to which higher difficulty battles increase the above rewards (0 to 1)"/>
+        <!-- Difficulty Scaling Min -->
+        <string id="891WqOrJ" text="Difficulty Scaling Min"/>
+        <!-- Min difficulty scaling multiplier -->
+        <string id="FPXz7lBi" text="Min difficulty scaling multiplier"/>
+        <!-- Difficulty Scaling Max -->
+        <string id="Wsho5Yns" text="Difficulty Scaling Max"/>
+        <!-- Max difficulty scaling multiplier -->
+        <string id="ZW7O1JTv" text="Max difficulty scaling multiplier"/>
+        <!-- Kill Streaks -->
+        <string id="3DZYc6hN" text="Kill Streaks"/>
+        <!-- Show Kill Streak Popup -->
+        <string id="wQ7lXgLA" text="Show Kill Streak Popup"/>
+        <!-- Whether to use the popup banner to announce kill streaks. Will only print in the overlay instead if disabled. -->
+        <string id="wDW3143d" text="Whether to use the popup banner to announce kill streaks. Will only print in the overlay instead if disabled."/>
+        <!-- Kill Streak Popup Alert Sound -->
+        <string id="rhwujKvf" text="Kill Streak Popup Alert Sound"/>
+        <!-- Sound to play when killstreak popup is disabled. -->
+        <string id="1GVV1fjY" text="Sound to play when killstreak popup is disabled."/>
+        <!-- Reference Level Reward -->
+        <string id="dP9AoB9o" text="Reference Level Reward"/>
+        <!-- The level at which the rewards normalize and start to reduce (if relative level scaling is enabled). -->
+        <string id="y7AZjeSK" text="The level at which the rewards normalize and start to reduce (if relative level scaling is enabled)."/>
         <!-- Achievements -->
-        <string id="GlobalCommonConfig_Category_Achievements" text="Achievements"/>
-        <string id="GlobalCommonConfig_Category_Achievements_Achievements_Name" text="Achievements"/>
-        <string id="GlobalCommonConfig_Category_Achievements_Achievements_Desc" text="List of available achievements"/>
-
+        <string id="zTLei6dQ" text="Achievements"/>
         <!-- Shouts -->
-        <string id="GlobalCommonConfig_Category_Shouts" text="Shouts"/>
-        <string id="GlobalCommonConfig_Category_Shouts_Shouts_Name" text="Shouts"/>
-        <string id="GlobalCommonConfig_Category_Shouts_Shouts_Desc" text="Custom shouts"/>
-        <string id="GlobalCommonConfig_Category_Shouts_IncludeDefaultShouts_Name" text="Include Default Shouts"/>
-        <string id="GlobalCommonConfig_Category_Shouts_IncludeDefaultShouts_Desc" text="Whether to include default shouts"/>
-
-        <!-- Documentation -->
-        <string id="GlobalCommonConfig_Doc_CommonConfig" text="Common Config"/>
-        <string id="GlobalCommonConfig_Doc_KillStreaks" text="Kill Streaks"/>
-        <string id="GlobalCommonConfig_Doc_Achievements" text="Achievements"/>
-        <string id="GlobalCommonConfig_Doc_Name" text="Name"/>
-        <string id="GlobalCommonConfig_Doc_KillsRequired" text="Kills Required"/>
-        <string id="GlobalCommonConfig_Doc_Reward" text="Reward"/>
-        <string id="GlobalCommonConfig_Doc_Requirements" text="Requirements"/>
-        <string id="GlobalCommonConfig_Doc_MapLegend" text="Map Legend"/>
-        <string id="GlobalCommonConfig_Doc_Color" text="Color"/>
-        <string id="GlobalCommonConfig_Doc_Name" text="Имя"/>
-
-        <!-- GlobalHeroClassConfig.cs -->
-        <string id="GlobalHeroClassConfig_Name" text="Class Config"/>
-        <!-- Hero Class Config -->
-        <string id="GlobalHeroClassConfig_ClassDefs_Name" text="Class Definitions"/>
-        <string id="GlobalHeroClassConfig_ClassDefs_Desc" text="Defined classes"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirements_Name" text="Class Level Requirements"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirements_Desc" text="Requirements for class levels"/>
-
-        <!-- Hero Class Documentation -->
-        <string id="GlobalHeroClassConfig_Doc_Classes" text="Classes"/>
-
+        <string id="HkD6326j" text="Shouts"/>
+        <!-- Custom shouts -->
+        <string id="ufqtH5QV" text="Custom shouts"/>
+        <!-- Include Default Shouts -->
+        <string id="wehigXCC" text="Include Default Shouts"/>
+        <!-- Whether to include default shouts -->
+        <string id="m6Vv2LBt" text="Whether to include default shouts"/>
+        <!-- Common Config -->
+        <string id="F6vM1OJo" text="Common Config"/>
+        
+        <!-- GlobalHeroClassConfig -->
+        <!-- Class Config -->
+        <string id="3rL4RHje" text="Class Config"/>
+        <!-- Class Definitions -->
+        <string id="462kHfn2" text="Class Definitions"/>
+        <!-- Defined classes -->
+        <string id="NFjlVt57" text="Defined classes"/>
         <!-- Class Level Requirements -->
-        <string id="GlobalHeroClassConfig_ClassLevelRequirementsDef_Name" text="Class Level Requirements Definition"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirementsDef_ClassLevel_Name" text="Class Level"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirementsDef_ClassLevel_Desc" text="Class level"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirementsDef_Requirements_Name" text="Requirements"/>
-        <string id="GlobalHeroClassConfig_ClassLevelRequirementsDef_Requirements_Desc" text="Requirements for this class level"/>
-        <string id="GlobalHeroClassConfig_Runtime_NoRequirements" text="(no requirements)"/>
-
-        <!-- GlobalHeroPowerConfig.cs -->
-        <string id="GlobalHeroPowerConfig_Name" text="Power Config"/>
-        <!-- Hero Power Config -->
-        <string id="GlobalHeroPowerConfig_PowerDefs_Name" text="Power Definitions"/>
-        <string id="GlobalHeroPowerConfig_PowerDefs_Desc" text="Defined powers"/>
-        <string id="GlobalHeroPowerConfig_DisablePowersInTournaments_Name" text="Disable Powers In Tournaments"/>
-        <string id="GlobalHeroPowerConfig_DisablePowersInTournaments_Desc" text="Whether powers are disabled in a tournament"/>
-
-        <!-- GlobalTournamentConfig.cs -->
-        <string id="GlobalTournamentConfig_Name" text="Tournament Config"/>
-
-        <!-- Skill Debuff -->
-        <string id="GlobalTournamentConfig_SkillDebuffDef_Skill_Name" text="Skill"/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_Skill_Desc" text="Skill or skill group to modify (all skills in a group will be modified)"/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_SkillReductionPercentPerWin_Name" text="Skill Reduction Percent Per Win"/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_SkillReductionPercentPerWin_Desc" text="Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified."/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_FloorPercent_Name" text="Floor Percent"/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_FloorPercent_Desc" text="The lower limit (in %) that the skill(s) can be reduced to."/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_Example_Name" text="Example"/>
-        <string id="GlobalTournamentConfig_SkillDebuffDef_Example_Desc" text="Shows the % reduction of the skill over 20 tournaments"/>
-
-        <!-- Tournament General -->
-        <string id="GlobalTournamentConfig_Category_General" text="General"/>
-        <string id="GlobalTournamentConfig_Category_General_StartHealthMultiplier_Name" text="Start Health Multiplier"/>
-        <string id="GlobalTournamentConfig_Category_General_StartHealthMultiplier_Desc" text="Amount to multiply normal starting health by"/>
-        <string id="GlobalTournamentConfig_Category_General_DisableKillRewardsInTournament_Name" text="Disable Kill Rewards In Tournament"/>
-        <string id="GlobalTournamentConfig_Category_General_DisableKillRewardsInTournament_Desc" text="Heroes won't get any kill rewards in tournaments"/>
-        <string id="GlobalTournamentConfig_Category_General_DisableTrackingKillsTournament_Name" text="Disable Tracking Kills In Tournament"/>
-        <string id="GlobalTournamentConfig_Category_General_DisableTrackingKillsTournament_Desc" text="Tournament kills/deaths won't be counted towards achievements or kill streaks"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoUnarmed_Name" text="No Unarmed"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoUnarmed_Desc" text="Disable unarmed (fist) rounds in tournaments"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoRanged_Name" text="No Ranged Weapons"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoRanged_Desc" text="Disable bows, crossbows and throwing weapons in tournaments"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_OverrideAmmo_Name" text="Override Ammo"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_OverrideAmmo_Desc" text="Force all ranged ammo to a fixed amount"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_AmmoAmount_Name" text="Ammo Amount"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_AmmoAmount_Desc" text="Amount of ammo for bows, crossbows and throwing weapons"/>
+        <string id="Q0yTbTCT" text="Class Level Requirements"/>
+        <!-- Requirements for class levels -->
+        <string id="y8LLccGK" text="Requirements for class levels"/>
+        <!-- Classes -->
+        <string id="E0CBnj57" text="Classes"/>
+        <!-- (no requirements) -->
+        <string id="7WLbMjpz" text="(no requirements)"/>
         
+        <!-- GlobalHeroPowerConfig -->
+        <!-- Power Config -->
+        <string id="v75UOuDM" text="Power Config"/>
+        <!-- Power Defs -->
+        <string id="9vUtdRu2" text="Power Defs"/>
+        <!-- Defined powers -->
+        <string id="ymGZUjoU" text="Defined powers"/>
+        <!-- Disable Powers In Tournaments -->
+        <string id="5CD7bmuC" text="Disable Powers In Tournaments"/>
+        <!-- Whether powers are disabled in a tournament -->
+        <string id="K7uKtO90" text="Whether powers are disabled in a tournament"/>
         
-        <!-- Tournament Equipment -->
-        <string id="GlobalTournamentConfig_Category_Equipment" text="Equipment"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoHorses_Name" text="No Horses"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoHorses_Desc" text="Remove horses completely from BLT tournaments"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoSpears_Name" text="No Spears"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NoSpears_Desc" text="Replaces all lances and spears with swords"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NormalizeArmor_Name" text="Normalize Armor"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NormalizeArmor_Desc" text="Replace all armor with fixed tier armor based on culture (see tier below)"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NormalizeArmorTier_Name" text="Normalize Armor Tier"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_NormalizeArmorTier_Desc" text="Armor tier applied to all contestants (1 to 6) if normalization is enabled"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_RandomizeWeaponTypes_Name" text="Randomize Weapon Types"/>
-        <string id="GlobalTournamentConfig_Category_Equipment_RandomizeWeaponTypes_Desc" text="Randomize weapons each round based on participant classes"/>
-
-        <!-- Tournament Balancing -->
-        <string id="GlobalTournamentConfig_Category_Balancing" text="Balancing"/>
-        <string id="GlobalTournamentConfig_Category_Balancing_PreviousWinnerDebuffs_Name" text="Previous Winner Debuffs"/>
-        <string id="GlobalTournamentConfig_Category_Balancing_PreviousWinnerDebuffs_Desc" text="Applies skill debuffs to previous tournament winners"/>
-
-        <!-- Round Types -->
-        <!-- Round1 -->
-        <string id="GlobalTournamentConfig_RoundType_Vanilla_Name" text="Vanilla"/>
-        <string id="GlobalTournamentConfig_RoundType_Vanilla_Desc" text="Allow the vanilla round setup"/>
-        <string id="GlobalTournamentConfig_RoundType_1Match4Teams_Name" text="1 Match 4 Teams"/>
-        <string id="GlobalTournamentConfig_RoundType_2Match2Teams_Name" text="2 Matches 2 Teams"/>
-        <string id="GlobalTournamentConfig_RoundType_2Match4Teams_Name" text="2 Matches 4 Teams"/>
-        <string id="GlobalTournamentConfig_RoundType_4Match2Teams_Name" text="4 Matches 2 Teams"/>
-        <string id="GlobalTournamentConfig_RoundType_4Match4Teams_Name" text="4 Matches 4 Teams"/>
-        <string id="GlobalTournamentConfig_RoundType_8Match2Teams_Name" text="8 Matches 2 Teams"/>
-        <string id="GlobalTournamentConfig_Round1Def_1Match4Teams_Desc" text="Allow 1 match with 4 teams of 4"/>
-        <string id="GlobalTournamentConfig_Round1Def_2Match2Teams_Desc" text="Allow 2 matches with 2 teams of 4"/>
-        <string id="GlobalTournamentConfig_Round1Def_2Match4Teams_Desc" text="Allow 2 matches with 4 teams of 2"/>
-        <string id="GlobalTournamentConfig_Round1Def_4Match2Teams_Desc" text="Allow 4 matches with 2 teams of 2"/>
-        <string id="GlobalTournamentConfig_Round1Def_4Match4Teams_Desc" text="Allow 4 matches with 4 teams of 1"/>
-        <string id="GlobalTournamentConfig_Round1Def_8Match2Teams_Desc" text="Allow 8 matches with 2 teams of 1"/>
-
-        <!-- Round2 -->
-        <string id="GlobalTournamentConfig_RoundType_1Match2Teams_Name" text="1 Match 2 Teams"/>
-        <string id="GlobalTournamentConfig_Round2Def_1Match2Teams_Desc" text="Allow 1 match with 2 teams of 4"/>
-        <string id="GlobalTournamentConfig_Round2Def_1Match4Teams_Desc" text="Allow 1 match with 4 teams of 2"/>
-        <string id="GlobalTournamentConfig_Round2Def_2Match2Teams_Desc" text="Allow 2 matches with 2 teams of 2"/>
-        <string id="GlobalTournamentConfig_Round2Def_2Match4Teams_Desc" text="Allow 2 matches with 4 teams of 1"/>
-        <string id="GlobalTournamentConfig_Round2Def_4Match2Teams_Desc" text="Allow 4 matches with 2 teams of 1"/>
-
-        <!-- Round3 -->
-        <string id="GlobalTournamentConfig_Round3Def_1Match2Teams_Desc" text="Allow 1 match with 2 teams of 2"/>
-        <string id="GlobalTournamentConfig_Round3Def_1Match4Teams_Desc" text="Allow 1 match with 4 teams of 1"/>
-        <string id="GlobalTournamentConfig_Round3Def_2Match2Teams_Desc" text="Allow 2 matches with 2 teams of 1"/>
-
-        <!-- Round Other -->
-        <string id="GlobalTournamentConfig_Category_RoundType" text="Round Type"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round1Type_Name" text="Round 1 Type"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round1Type_Desc" text="Configuration for the first round"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round2Type_Name" text="Round 2 Type"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round2Type_Desc" text="Configuration for the second round"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round3Type_Name" text="Round 3 Type"/>
-        <string id="GlobalTournamentConfig_Category_RoundType_Round3Type_Desc" text="Configuration for the third round"/>
-
+        <!-- GlobalTournamentConfig -->
+        <!-- Tournament Config -->
+        <string id="AkDCrLgg" text="Tournament Config"/>
+        <!-- Equipment -->
+        <string id="i7ZDVTaw" text="Equipment"/>
+        <!-- Balancing -->
+        <string id="Zwh9GYUE" text="Balancing"/>
+        <!-- Round Type -->
+        <string id="KOIu6Q7d" text="Round Type"/>
+        <!-- Start Health Multiplier -->
+        <string id="P1ZCMZbp" text="Start Health Multiplier"/>
+        <!-- Disable Kill Rewards In Tournament -->
+        <string id="x3wiU1LY" text="Disable Kill Rewards In Tournament"/>
+        <!-- Disable Tracking Kills Tournament -->
+        <string id="ksB1FmZV" text="Disable Tracking Kills Tournament"/>
+        <!-- No Horses -->
+        <string id="bBipANlh" text="No Horses"/>
+        <!-- No Spears -->
+        <string id="CYVy4Hhx" text="No Spears"/>
+        <!-- Normalize Armor -->
+        <string id="Ed55OyZ5" text="Normalize Armor"/>
+        <!-- Normalize Armor Tier -->
+        <string id="xHJbcOaV" text="Normalize Armor Tier"/>
+        <!-- Randomize Weapon Types -->
+        <string id="5Y08IsDl" text="Randomize Weapon Types"/>
+        <!-- Previous Winner Debuffs -->
+        <string id="UCAbZYqU" text="Previous Winner Debuffs"/>
+        <!-- Vanilla -->
+        <string id="WUQRg4yA" text="Vanilla"/>
+        <!-- 1 Match 4 Teams -->
+        <string id="ErBd0iuP" text="1 Match 4 Teams"/>
+        <!-- 1 Match 2 Teams -->
+        <string id="uuBzCFgM" text="1 Match 2 Teams"/>
+        <!-- 2 Matches 2 Teams -->
+        <string id="SsArdTT9" text="2 Matches 2 Teams"/>
+        <!-- 2 Matches 4 Teams -->
+        <string id="qb1yo7DZ" text="2 Matches 4 Teams"/>
+        <!-- 4 Matches 2 Teams -->
+        <string id="WAzvdvAJ" text="4 Matches 2 Teams"/>
+        <!-- 4 Matches 4 Teams -->
+        <string id="sMCb8Xeu" text="4 Matches 4 Teams"/>
+        <!-- 8 Matches 2 Teams -->
+        <string id="URNM9UqS" text="8 Matches 2 Teams"/>
+        <!-- Round 1 Type -->
+        <string id="eivyBgAa" text="Round 1 Type"/>
+        <!-- Round 2 Type -->
+        <string id="pefX6BdQ" text="Round 2 Type"/>
+        <!-- Round 3 Type -->
+        <string id="GpV7pKPY" text="Round 3 Type"/>
+        <!-- Round 1 Rewards -->
+        <string id="VeSh8k7c" text="Round 1 Rewards"/>
+        <!-- Round 2 Rewards -->
+        <string id="gQ9YX7my" text="Round 2 Rewards"/>
+        <!-- Round 3 Rewards -->
+        <string id="17pTC7NS" text="Round 3 Rewards"/>
+        <!-- Round 4 Rewards -->
+        <string id="pxMWYe5J" text="Round 4 Rewards"/>
+        <!-- Participate XP -->
+        <string id="5vMTYqdu" text="Participate XP"/>
+        <!-- Prize -->
+        <string id="Xu2KD7Kc" text="Prize"/>
+        <!-- Enable Betting -->
+        <string id="rne7aMUR" text="Enable Betting"/>
+        <!-- Betting On Final Only -->
+        <string id="njh9b5GB" text="Betting On Final Only"/>
+        <!-- Skill Reduction Percent Per Win -->
+        <string id="5a40vmYi" text="Skill Reduction Percent Per Win"/>
+        <!-- Floor Percent -->
+        <string id="hMB4oFmk" text="Floor Percent"/>
+        <!-- Example -->
+        <string id="L7AKFlpb" text="Example"/>
+        <!-- Amount to multiply normal starting health by -->
+        <string id="n6Bc5M3s" text="Amount to multiply normal starting health by"/>
+        <!-- Heroes won't get any kill rewards in tournaments -->
+        <string id="j63d8DuH" text="Heroes won't get any kill rewards in tournaments"/>
+        <!-- Tournament kills / deaths won't be counted towards achievements or kill streaks -->
+        <string id="o5aH9rTO" text="Tournament kills / deaths won't be counted towards achievements or kill streaks"/>
+        <!-- Remove horses completely from the BLT tournaments (the horse AI is terrible) -->
+        <string id="sJ68yZs1" text="Remove horses completely from the BLT tournaments (the horse AI is terrible)"/>
+        <!-- Replaces all lances and spears with swords, because lance and spear combat is terrible -->
+        <string id="BjMC8Htn" text="Replaces all lances and spears with swords, because lance and spear combat is terrible"/>
+        <!-- Replaces all armor with fixed tier armor, based on Culture if possible (tier specified by Normalized Armor Tier below) -->
+        <string id="kYFdZ8Yx" text="Replaces all armor with fixed tier armor, based on Culture if possible (tier specified by Normalized Armor Tier below)"/>
+        <!-- Armor tier to set all contestants to (1 to 6), if Normalize Armor is enabled -->
+        <string id="HnqCyrDD" text="Armor tier to set all contestants to (1 to 6), if Normalize Armor is enabled"/>
+        <!-- Randomizes the weapons used in each round, weighted based on the classes of the participants -->
+        <string id="oSCPOoqi" text="Randomizes the weapons used in each round, weighted based on the classes of the participants"/>
+        <!-- Applies skill debuffs to previous tournament winners -->
+        <string id="FrloGGew" text="Applies skill debuffs to previous tournament winners"/>
+        <!-- Allow the vanilla round setup -->
+        <string id="nfYBftnO" text="Allow the vanilla round setup"/>
+        <!-- Allow 1 match with 2 teams of 2 -->
+        <string id="t9yLB8gB" text="Allow 1 match with 2 teams of 2"/>
+        <!-- Allow 1 match with 2 teams of 4 -->
+        <string id="5hLSHeuv" text="Allow 1 match with 2 teams of 4"/>
+        <!-- Allow 1 match with 4 teams of 1 -->
+        <string id="YfOnzOH6" text="Allow 1 match with 4 teams of 1"/>
+        <!-- Allow 1 match with 4 teams of 2 -->
+        <string id="CLbRKpZp" text="Allow 1 match with 4 teams of 2"/>
+        <!-- Allow 1 match with 4 teams of 4 -->
+        <string id="5E1lXDYh" text="Allow 1 match with 4 teams of 4"/>
+        <!-- Allow 2 matches with 2 teams of 1 -->
+        <string id="OrZaS458" text="Allow 2 matches with 2 teams of 1"/>
+        <!-- Allow 2 matches with 2 teams of 2 -->
+        <string id="Dr1Js5fB" text="Allow 2 matches with 2 teams of 2"/>
+        <!-- Allow 2 matches with 2 teams of 4 -->
+        <string id="jEghMKUV" text="Allow 2 matches with 2 teams of 4"/>
+        <!-- Allow 2 matches with 4 teams of 1 -->
+        <string id="nmMzoqeC" text="Allow 2 matches with 4 teams of 1"/>
+        <!-- Allow 2 matches with 4 teams of 2 -->
+        <string id="f8rXSGwN" text="Allow 2 matches with 4 teams of 2"/>
+        <!-- Allow 4 matches with 2 teams of 2 -->
+        <string id="GPCYzshA" text="Allow 4 matches with 2 teams of 2"/>
+        <!-- Allow 4 matches with 4 teams of 1 -->
+        <string id="MjsTFwUv" text="Allow 4 matches with 4 teams of 1"/>
+        <!-- Allow 4 matches with 2 teams of 1 -->
+        <string id="xMaA76xu" text="Allow 4 matches with 2 teams of 1"/>
+        <!-- Allow 8 matches with 2 teams of 1 -->
+        <string id="otwzXPTQ" text="Allow 8 matches with 2 teams of 1"/>
+        <!-- Gold won if the hero wins their match in the round -->
+        <string id="i7Ns7K2i" text="Gold won if the hero wins their match in the round"/>
+        <!-- XP given if the hero wins their match in the round -->
+        <string id="b0MeEmOS" text="XP given if the hero wins their match in the round"/>
+        <!-- XP given if the hero loses their match in a round -->
+        <string id="Oq7LMvoF" text="XP given if the hero loses their match in a round"/>
+        <!-- Gold won if the hero wins the tournaments -->
+        <string id="F8g49VCy" text="Gold won if the hero wins the tournaments"/>
+        <!-- XP given if the hero wins the tournaments -->
+        <string id="3BudXy0O" text="XP given if the hero wins the tournaments"/>
+        <!-- XP given if the hero participates in a tournament but doesn't win -->
+        <string id="TXqjPXh7" text="XP given if the hero participates in a tournament but doesn't win"/>
+        <!-- Winners prize -->
+        <string id="wYzmyUCE" text="Winners prize"/>
+        <!-- Enable betting -->
+        <string id="FOQEPZD5" text="Enable betting"/>
+        <!-- Only allow betting on the final betting -->
+        <string id="KGcz71VJ" text="Only allow betting on the final betting"/>
+        <!-- Skill or skill group to modifier (all skills in a group will be modified) -->
+        <string id="twgHWqU6" text="Skill or skill group to modifier (all skills in a group will be modified)"/>
+        <!-- Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified. -->
+        <string id="zoMHI9O3" text="Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified."/>
+        <!-- The lower limit (in %) that the skill(s) can be reduced to. -->
+        <string id="HebJIfaE" text="The lower limit (in %) that the skill(s) can be reduced to."/>
+        <!-- Shows the % reduction of the skill over 20 tournaments -->
+        <string id="vgXMv8oH" text="Shows the % reduction of the skill over 20 tournaments"/>
+        <!-- Prize {ITEMNAME} -->
+        <string id="hCNpHVJY" text="Prize {ITEMNAME}"/>
         <!-- Round Rewards -->
-        <string id="GlobalTournamentConfig_Category_RoundRewards" text="Round Rewards"/>
-        <string id="GlobalTournamentConfig_RoundRewards_WinGold_Name" text="Win Gold"/>
-        <string id="GlobalTournamentConfig_RoundRewards_WinGold_Desc" text="Gold awarded if the hero wins their match in the round"/>
-        <string id="GlobalTournamentConfig_RoundRewards_WinXP_Name" text="Win XP"/>
-        <string id="GlobalTournamentConfig_RoundRewards_WinXP_Desc" text="XP awarded if the hero wins their match in the round"/>
-        <string id="GlobalTournamentConfig_RoundRewards_LoseXP_Name" text="Lose XP"/>
-        <string id="GlobalTournamentConfig_RoundRewards_LoseXP_Desc" text="XP awarded if the hero loses their match in the round"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round1Rewards_Name" text="Round 1 Rewards"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round1Rewards_Desc" text="Rewards for round 1"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round2Rewards_Name" text="Round 2 Rewards"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round2Rewards_Desc" text="Rewards for round 2"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round3Rewards_Name" text="Round 3 Rewards"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round3Rewards_Desc" text="Rewards for round 3"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round4Rewards_Name" text="Round 4 Rewards"/>
-        <string id="GlobalTournamentConfig_Category_RoundRewards_Round4Rewards_Desc" text="Rewards for round 4"/>
-
+        <string id="g0A4pXY2" text="Round Rewards"/>
         <!-- Rewards -->
-        <string id="GlobalTournamentConfig_Category_Rewards" text="Rewards"/>
-        <string id="GlobalTournamentConfig_Rewards_WinGold_Name" text="Win Gold"/>
-        <string id="GlobalTournamentConfig_Rewards_WinGold_Desc" text="Gold awarded if the hero wins the tournament"/>
-        <string id="GlobalTournamentConfig_Rewards_WinXP_Name" text="Win XP"/>
-        <string id="GlobalTournamentConfig_Rewards_WinXP_Desc" text="XP awarded if the hero wins the tournament"/>
-        <string id="GlobalTournamentConfig_Rewards_ParticipateXP_Name" text="Participate XP"/>
-        <string id="GlobalTournamentConfig_Rewards_ParticipateXP_Desc" text="XP awarded if the hero participates but does not win"/>
-        <string id="GlobalTournamentConfig_Rewards_Prize_Name" text="Prize"/>
-        <string id="GlobalTournamentConfig_Rewards_Prize_Desc" text="Reward granted to the tournament winner"/>
-        <string id="GlobalTournamentConfig_Rewards_Prize_CustomItemName" text="Prize {ITEMNAME}"/>
-
+        <string id="FHkvQbcR" text="Rewards"/>
         <!-- Betting -->
-        <string id="GlobalTournamentConfig_Category_Betting" text="Betting"/>
-        <string id="GlobalTournamentConfig_Betting_EnableBetting_Name" text="Enable Betting"/>
-        <string id="GlobalTournamentConfig_Betting_EnableBetting_Desc" text="Enable or disable betting"/>
-        <string id="GlobalTournamentConfig_Betting_BettingOnFinalOnly_Name" text="Betting On Final Only"/>
-        <string id="GlobalTournamentConfig_Betting_BettingOnFinalOnly_Desc" text="Allow betting only on the final round"/>
-        
-        
-        
+        <string id="n1Agm9uJ" text="Betting"/>
     </strings>
 </base>

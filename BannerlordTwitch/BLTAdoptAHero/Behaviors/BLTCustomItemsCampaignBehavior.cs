@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.SaveSystem;
-using BannerlordTwitch.Util;
 using BLTAdoptAHero.Actions.Util;
 using JetBrains.Annotations;
 using TaleWorlds.CampaignSystem;
@@ -62,7 +61,6 @@ namespace BLTAdoptAHero
         }
 
         private Dictionary<ItemModifier, ItemModifierData> customItemModifiers = new();
-        private readonly Dictionary<string, ItemModifier> customItemModifiersById = new(StringComparer.Ordinal);
 
         public override void RegisterEvents() { }
 
@@ -78,7 +76,6 @@ namespace BLTAdoptAHero
 
                 // ItemModifier is hashed by string id, so we need to initialize them BEFORE putting them into the dictionary
                 customItemModifiers = new();
-                customItemModifiersById.Clear();
                 foreach (var (modifier, data) in savedModiferList
                     .Zip(savedModiferDataList, (modifier, data) => (modifier, data)))
                 {
@@ -86,7 +83,7 @@ namespace BLTAdoptAHero
                     var registeredModifier = MBObjectManager.Instance.RegisterObject(modifier);
                     registeredModifier.IsReady = true;
                     data.Apply(registeredModifier);
-                    AddRegisteredModifier(registeredModifier, data);
+                    customItemModifiers.Add(registeredModifier, data);
                 }
             }
             else
@@ -155,67 +152,17 @@ namespace BLTAdoptAHero
                 MountHitPoints = 0,
             });
 
-        public bool IsRegistered(ItemModifier modifier) =>
-            TryGetRegisteredModifier(modifier, out _, out _);
+        public bool IsRegistered(ItemModifier modifier) => modifier != null && customItemModifiers.ContainsKey(modifier);
 
-        public bool ItemCanBeNamed(ItemModifier itemModifier) =>
-            IsRegistered(itemModifier);
+        public bool ItemCanBeNamed(ItemModifier itemModifier) => itemModifier != null && customItemModifiers.ContainsKey(itemModifier);
 
-        public bool NameItem(ItemModifier itemModifier, string name)
+        public void NameItem(ItemModifier itemModifier, string name)
         {
-            if (itemModifier == null)
+            if (customItemModifiers.TryGetValue(itemModifier, out ItemModifierData modifierData))
             {
-                Log.Error("NameItem failed: item modifier is null");
-                return false;
-            }
-
-            if (TryGetRegisteredModifier(itemModifier, out var registeredModifier, out var modifierData))
-            {
-                if (!ReferenceEquals(registeredModifier, itemModifier))
-                {
-                    Log.Info($"NameItem recovered modifier by StringId, id={itemModifier.StringId}, requestedHash={itemModifier.GetHashCode()}, registeredHash={registeredModifier.GetHashCode()}");
-                }
-                registeredModifier.SetName(new(name));
-                if (!ReferenceEquals(registeredModifier, itemModifier))
-                {
-                    itemModifier.SetName(new(name));
-                }
+                itemModifier.SetName(new(name));
                 modifierData.CustomName = name;
-                return true;
             }
-
-            Log.Error($"NameItem failed: modifier is not registered, id={itemModifier.StringId}, name={itemModifier.Name}");
-            return false;
-        }
-
-        private bool TryGetRegisteredModifier(
-            ItemModifier itemModifier,
-            out ItemModifier registeredModifier,
-            out ItemModifierData modifierData)
-        {
-            registeredModifier = null;
-            modifierData = null;
-
-            if (itemModifier == null)
-            {
-                return false;
-            }
-
-            var modifierId = itemModifier.StringId;
-            if (!string.IsNullOrEmpty(modifierId)
-                && customItemModifiersById.TryGetValue(modifierId, out registeredModifier)
-                && customItemModifiers.TryGetValue(registeredModifier, out modifierData))
-            {
-                return true;
-            }
-
-            if (customItemModifiers.TryGetValue(itemModifier, out modifierData))
-            {
-                registeredModifier = itemModifier;
-                return true;
-            }
-
-            return false;
         }
 
         private ItemModifier RegisterModifier(ItemModifierData modifierData)
@@ -224,18 +171,8 @@ namespace BLTAdoptAHero
             var modifier = new ItemModifier();
             modifierData.Apply(modifier);
             var registeredModifier = MBObjectManager.Instance.RegisterObject(modifier);
-            AddRegisteredModifier(registeredModifier, modifierData);
-            return registeredModifier;
-        }
-
-        private void AddRegisteredModifier(ItemModifier registeredModifier, ItemModifierData modifierData)
-        {
             customItemModifiers.Add(registeredModifier, modifierData);
-
-            if (!string.IsNullOrEmpty(registeredModifier.StringId))
-            {
-                customItemModifiersById[registeredModifier.StringId] = registeredModifier;
-            }
+            return registeredModifier;
         }
 
         // public void InitializeCraftingElements()

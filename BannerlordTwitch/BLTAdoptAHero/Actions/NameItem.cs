@@ -59,16 +59,7 @@ namespace BLTAdoptAHero
             // sanitize # out of the new name in case it breaks something 
             string itemNewName = string.Join(" ", argParts.Skip(1)).Replace("#", "");
 
-            Log.Info($"NameItem requested by {context.UserName}: old='{previousName}', new='{itemNewName}', itemId={element.Item?.StringId}, itemType={element.Item?.ItemType}, modifierId={element.ItemModifier?.StringId}, canName={BLTCustomItemsCampaignBehavior.Current.ItemCanBeNamed(element.ItemModifier)}");
-
-            if (!BLTCustomItemsCampaignBehavior.Current.NameItem(element.ItemModifier, itemNewName))
-            {
-                ActionManager.SendReply(context,
-                    "{=rXVOIMri}Could not rename this item; custom item data was not found".Translate());
-                return;
-            }
-
-            Log.Info($"NameItem completed for {context.UserName}: itemId={element.Item?.StringId}, modifierId={element.ItemModifier?.StringId}, result='{element.GetModifiedItemName()}'");
+            BLTCustomItemsCampaignBehavior.Current.NameItem(element.ItemModifier, itemNewName);
             ActionManager.SendReply(context,
                 "{=iqNEr6Y7}{PreviousName} renamed to {NewName}"
                     .Translate(("PreviousName", previousName), ("NewName", element.GetModifiedItemName().ToString()))

@@ -173,8 +173,6 @@ namespace BannerlordTwitch
                     }
 
                     var user = t.Result.Users.First();
-                    
-                    TwitchSharedState.StreamerLogin = user.Login;
 
                     Log.Info($"Channel ID is {user.Id}");
                     channelId = user.Id;

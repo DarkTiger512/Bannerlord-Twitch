@@ -15,31 +15,31 @@ using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace BLTAdoptAHero.Actions
 {
-    [LocDisplayName("{=BLTFormationCommandName}Formation Command"),
-     LocDescription("{=BLTFormationCommandDesc}Show and change your hero formation"),
+    [LocDisplayName("{=TESTING}FormationCommand"),
+     LocDescription("{=TESTING}Show and change hero formation"),
      UsedImplicitly]
     public class FormationCommand : HeroCommandHandlerBase
     {
         public class Settings : IDocumentable
         {
-            [LocDisplayName("{=BLTFormationRespectClassName}Respect class"),
+            [LocDisplayName("{=TESTING}Respect class"),
              LocCategory("General", "{=TESTING}General"),
-             LocDescription("{=BLTFormationRespectClassDesc}Turn off to allow any formation; otherwise infantry can only change to other infantry formations"),
+             LocDescription("{=TESTING}Turn off to allow any formation otherwise infantry can only change to other infantry formations"),
              PropertyOrder(1), UsedImplicitly]
             public bool Filter { get; set; } = true;
 
-            [LocDisplayName("{=BLTFormationDetachmentsName}Detachments"),
+            [LocDisplayName("{=TESTING}Detachments"),
              LocCategory("General", "{=TESTING}General"),
-             LocDescription("{=BLTFormationDetachmentsDesc}Allow detached hero commands"),
+             LocDescription("{=TESTING}Detach commands"),
              PropertyOrder(2), UsedImplicitly]
             public bool Detach { get; set; } = true;
 
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
-                generator.Value("{=BLTFormationUsageNumber}<strong>Usage:</strong> number".Translate());
-                generator.Value("{=BLTFormationUsageFrontBack}- front/back".Translate());
-                generator.Value("{=BLTFormationUsageDetachAttach}- detach/attach".Translate());
-                generator.Value("{=BLTFormationUsageDetached}- (while detached): charge/hold/follow/gate/walls".Translate());
+                generator.Value("<strong>Usage:</strong> number");
+                generator.Value("- front/back");
+                generator.Value("- detach/attach");
+                generator.Value("- (while detached): charge/hold/follow/gate/walls");
             }
         }
 
@@ -60,45 +60,43 @@ namespace BLTAdoptAHero.Actions
                 onFailure("{=TESTING}No mission!".Translate());
                 return;
             }
-
             if (Mission.Current.IsNavalBattle)
             {
-                onFailure("{=BLTFormationNoNaval}Cannot change formation in naval battle".Translate());
+                onFailure("Cannot change formation in naval battle");
                 return;
             }
             if (MissionHelpers.InTournament())
             {
-                onFailure("{=BLTFormationNoTournament}Cannot change formation in tournament".Translate());
+                onFailure("Cannot change formation in tournament");
                 return;
             }
-            
-            var splitArgs = context.Args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string num = splitArgs.Length > 0 ? splitArgs[0] : "";
+            var splitArgs = context.Args.Split(' ');
+
+            string num = context.Args.Length > 0 ? splitArgs[0].ToString() : "";
 
             var agent = adoptedHero.GetAgent();
             if (agent == null)
             {
-                onFailure("{=BLTFormationNoHero}No hero".Translate());
+                onFailure("No hero");
                 return;
             }
 
             Formation currentFormation = agent.Formation;
             if (currentFormation == null)
             {
-                onFailure("{=BLTFormationNoFormation}No formation".Translate());
+                onFailure("No formation");
                 return;
             }
-
+           
             var behavior = BLTHeroDetachmentBehavior.Current;
-            string command = GetFormationCommand(num);
             var keywords = new[] { "detach", "attach", "charge", "hold", "follow", "gate", "walls" };
-            if (keywords.Contains(command))
+            if (keywords.Contains(num))
             {      
-                if (!settings.Detach) { onFailure("{=BLTFormationDetachOff}Detach commands are off".Translate()); return; }
-                if (behavior == null) { onFailure("{=BLTFormationDetachInactive}Detachment system not active".Translate()); return; }
-                if (!Mission.Current.IsDeploymentFinished) { onFailure("{=BLTFormationNoDetachDeploying}Cannot detach while deploying".Translate()); return; }
+                if (!settings.Detach) { onFailure("Detach commands are off"); return; }
+                if (behavior == null) { onFailure("Detachment system not active"); return; }
+                if (!Mission.Current.IsDeploymentFinished) { onFailure("Cannot detach while deploying"); return; }
 
-                string error = command switch
+                string error = num switch
                 {
                     "detach" => behavior.Detach(agent),
                     "attach" => behavior.Attach(agent),
@@ -111,24 +109,18 @@ namespace BLTAdoptAHero.Actions
                 };
 
                 if (error != null) onFailure(error);
-                else onSuccess("{=BLTFormationCommandOk}{command} ok".Translate(("command", GetFormationCommandDisplayName(command))));
+                else onSuccess($"{num} ok");
                 return;
             }
 
-            if (command == "front" || command == "back")
+            if (num == "front" || num == "back")
             {
-                if (Mission.Current.IsSiegeBattle)
-                {
-                    onFailure("{=BLTFormationNoFrontBackSiege}Front/back movement is disabled in sieges".Translate());
-                    return;
-                }
                 if (agent.IsDetachedFromFormation)
                 {
-                    onFailure("{=BLTFormationAttachBeforeMoving}Reattach before moving".Translate());
+                    onFailure("Reattach before moving");
                     return;
                 }
-                BLTSummonBehavior.MarkManualFormationOverride(agent);
-                SetHeroFormationPosition(agent, command, onSuccess, onFailure);
+                SetHeroFormationPosition(agent, num, onSuccess, onFailure);
                 return;
             }
 
@@ -166,24 +158,24 @@ namespace BLTAdoptAHero.Actions
 
                 if (string.IsNullOrEmpty(num) || !int.TryParse(num, out int numb))
                 {
-                    onSuccess($"{GetFormationClassDisplayName(formType)} {position}/{count} {currentFormation.CountOfUnits} | {sb}");
+                    onSuccess($"{formType} {position}/{count} {currentFormation.CountOfUnits} | {sb}");
                     return;
                 }
                 if (agent.IsDetachedFromFormation)
                 {
-                    onFailure("{=BLTFormationAttachBeforeChanging}Reattach before changing formations".Translate());
+                    onFailure("Reattach before changing formations");
                     return;
                 }
                 if (numb > count || numb <= 0)
                 {
-                    onFailure("{=BLTFormationInvalidNumber}Invalid number".Translate());
+                    onFailure("Invalid number");
                     return;
                 }
 
                 var newformation = allFormations.ElementAt(numb - 1);
                 TransferHeroToFormation(agent, newformation);
 
-                onSuccess("{=BLTFormationMoved}Moved. {troops} troops".Translate(("troops", newformation.CountOfUnits)));
+                onSuccess($"Moved. {newformation.CountOfUnits} troops");
             }
             else
             {
@@ -201,11 +193,11 @@ namespace BLTAdoptAHero.Actions
                     var q = f.QuerySystem;
                     string type = q switch
                     {
-                        _ when q.IsInfantryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Infantry),
-                        _ when q.IsRangedFormationReadOnly => GetFormationClassDisplayName(FormationClass.Ranged),
-                        _ when q.IsCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Cavalry),
-                        _ when q.IsRangedCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.HorseArcher),
-                        _ => "{=BLTFormationClassUnknown}unknown".Translate()
+                        _ when q.IsInfantryFormationReadOnly => "Infantry",
+                        _ when q.IsRangedFormationReadOnly => "Ranged",
+                        _ when q.IsCavalryFormationReadOnly => "Cavalry",
+                        _ when q.IsRangedCavalryFormationReadOnly => "Horse archer",
+                        _ => "unknown"
                     };
 
                     int troops = f.CountOfUnits;
@@ -220,24 +212,24 @@ namespace BLTAdoptAHero.Actions
 
                 if (string.IsNullOrEmpty(num) || !int.TryParse(num, out int numb))
                 {
-                    onSuccess($"{GetFormationClassDisplayName(formType)} {position}/{count} {currentFormation.CountOfUnits} | {sb}");
+                    onSuccess($"{formType} {position}/{count} {currentFormation.CountOfUnits} | {sb}");
                     return;
                 }
                 if (agent.IsDetachedFromFormation)
                 {
-                    onFailure("{=BLTFormationAttachBeforeChanging}Reattach before changing formations".Translate());
+                    onFailure("Reattach before changing formations");
                     return;
                 }
                 if (numb > count || numb <= 0)
                 {
-                    onFailure("{=BLTFormationInvalidNumber}Invalid number".Translate());
+                    onFailure("Invalid number");
                     return;
                 }
 
                 var newformation = allFormations.ElementAt(numb - 1);
                 TransferHeroToFormation(agent, newformation);
 
-                onSuccess("{=BLTFormationMoved}Moved. {troops} troops".Translate(("troops", newformation.CountOfUnits)));
+                onSuccess($"Moved. {newformation.CountOfUnits} troops");
             }
         }
 
@@ -247,7 +239,6 @@ namespace BLTAdoptAHero.Actions
 
             var oldFormation = heroAgent.Formation;
             heroAgent.Formation = target;
-            BLTSummonBehavior.MarkManualFormationOverride(heroAgent);
 
             oldFormation?.Team.TriggerOnFormationsChanged(oldFormation);
             target.Team.TriggerOnFormationsChanged(target);
@@ -270,15 +261,14 @@ namespace BLTAdoptAHero.Actions
                 float pos = (targetPos - myPos).Length;
                 string type = q switch
                 {
-                    _ when q.IsInfantryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Infantry),
-                    _ when q.IsRangedFormationReadOnly => GetFormationClassDisplayName(FormationClass.Ranged),
-                    _ when q.IsCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.Cavalry),
-                    _ when q.IsRangedCavalryFormationReadOnly => GetFormationClassDisplayName(FormationClass.HorseArcher),
-                    _ => "{=BLTFormationClassUnknown}unknown".Translate()
+                    _ when q.IsInfantryFormationReadOnly => "Infantry",
+                    _ when q.IsRangedFormationReadOnly => "Ranged",
+                    _ when q.IsCavalryFormationReadOnly => "Cavalry",
+                    _ when q.IsRangedCavalryFormationReadOnly => "Horse archer",
+                    _ => "unknown"
                 };
 
-                string targetLabel = "{=BLTFormationTarget}Target".Translate();
-                dist += $"-{targetLabel}:{type}-{pos:0}";
+                dist += $"-Target:{type}-{pos:0}";
             }
 
             return $"{M(m)}-{A(a)}{dist}";
@@ -286,123 +276,81 @@ namespace BLTAdoptAHero.Actions
 
         string M(MovementOrder.MovementOrderEnum o) => o switch
         {
-            MovementOrder.MovementOrderEnum.Charge => "{=BLTFormationOrderCharge}Charge".Translate(),
-            MovementOrder.MovementOrderEnum.ChargeToTarget => "{=BLTFormationOrderCharge}Charge".Translate(),
-            MovementOrder.MovementOrderEnum.Advance => "{=BLTFormationOrderAdvance}Advance".Translate(),
-            MovementOrder.MovementOrderEnum.FallBack => "{=BLTFormationOrderRetreat}Retreat".Translate(),
-            MovementOrder.MovementOrderEnum.Retreat => "{=BLTFormationOrderRetreat}Retreat".Translate(),
-            MovementOrder.MovementOrderEnum.Invalid => "{=BLTFormationOrderHold}Hold".Translate(),
-            MovementOrder.MovementOrderEnum.Stop => "{=BLTFormationOrderHold}Hold".Translate(),
-            MovementOrder.MovementOrderEnum.Follow => "{=BLTFormationOrderFollow}Follow".Translate(),
-            MovementOrder.MovementOrderEnum.FollowEntity => "{=BLTFormationOrderFollow}Follow".Translate(),
-            MovementOrder.MovementOrderEnum.Move => "{=BLTFormationOrderMove}Move".Translate(),
+            MovementOrder.MovementOrderEnum.Charge => "Charge",
+            MovementOrder.MovementOrderEnum.ChargeToTarget => "Charge",
+            MovementOrder.MovementOrderEnum.Advance => "Advance",
+            MovementOrder.MovementOrderEnum.FallBack => "Retreat",
+            MovementOrder.MovementOrderEnum.Retreat => "Retreat",
+            MovementOrder.MovementOrderEnum.Invalid => "Hold",
+            MovementOrder.MovementOrderEnum.Stop => "Hold",
+            MovementOrder.MovementOrderEnum.Follow => "Follow",
+            MovementOrder.MovementOrderEnum.FollowEntity => "Follow",
+            MovementOrder.MovementOrderEnum.Move => "Move",
             _ => "?"
         };
 
         string A(ArrangementOrder.ArrangementOrderEnum o) => o switch
         {
-            ArrangementOrder.ArrangementOrderEnum.Line => "{=BLTFormationArrangementLine}Line".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.ShieldWall => "{=BLTFormationArrangementWall}Wall".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.Loose => "{=BLTFormationArrangementLoose}Loose".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.Square => "{=BLTFormationArrangementSquare}Square".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.Circle => "{=BLTFormationArrangementCircle}Circle".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.Column => "{=BLTFormationArrangementColumn}Column".Translate(),
-            ArrangementOrder.ArrangementOrderEnum.Scatter => "{=BLTFormationArrangementScatter}Scatter".Translate(),
+            ArrangementOrder.ArrangementOrderEnum.Line => "Line",
+            ArrangementOrder.ArrangementOrderEnum.ShieldWall => "Wall",
+            ArrangementOrder.ArrangementOrderEnum.Loose => "Loose",
+            ArrangementOrder.ArrangementOrderEnum.Square => "Square",
+            ArrangementOrder.ArrangementOrderEnum.Circle => "Circle",
+            ArrangementOrder.ArrangementOrderEnum.Column => "Column",
+            ArrangementOrder.ArrangementOrderEnum.Scatter => "Scatter",
             _ => "--"
-        };
-
-        private string GetFormationClassDisplayName(FormationClass formationClass) => formationClass switch
-        {
-            FormationClass.Infantry => "{=BLTFormationClassInfantry}Infantry".Translate(),
-            FormationClass.Ranged => "{=BLTFormationClassRanged}Ranged".Translate(),
-            FormationClass.Cavalry => "{=BLTFormationClassCavalry}Cavalry".Translate(),
-            FormationClass.HorseArcher => "{=BLTFormationClassHorseArcher}Horse archer".Translate(),
-            _ => formationClass.ToString()
-        };
-
-        private string GetFormationCommand(string command)
-        {
-            if (string.IsNullOrWhiteSpace(command)) return "";
-
-            command = command.Trim();
-
-            if (MatchesCommand(command, "{=BLTFormationSubFront}front".Translate(), "front")) return "front";
-            if (MatchesCommand(command, "{=BLTFormationSubBack}back".Translate(), "back")) return "back";
-            if (MatchesCommand(command, "{=BLTFormationSubDetach}detach".Translate(), "detach")) return "detach";
-            if (MatchesCommand(command, "{=BLTFormationSubAttach}attach".Translate(), "attach")) return "attach";
-            if (MatchesCommand(command, "{=BLTFormationSubCharge}charge".Translate(), "charge")) return "charge";
-            if (MatchesCommand(command, "{=BLTFormationSubHold}hold".Translate(), "hold")) return "hold";
-            if (MatchesCommand(command, "{=BLTFormationSubFollow}follow".Translate(), "follow")) return "follow";
-            if (MatchesCommand(command, "{=BLTFormationSubGate}gate".Translate(), "gate")) return "gate";
-            if (MatchesCommand(command, "{=BLTFormationSubWalls}walls".Translate(), "walls")) return "walls";
-
-            return command.ToLowerInvariant();
-        }
-
-        private bool MatchesCommand(string command, string translatedCommand, string defaultCommand)
-            => command.Equals(defaultCommand, StringComparison.OrdinalIgnoreCase)
-               || command.Equals(translatedCommand, StringComparison.OrdinalIgnoreCase);
-
-        private string GetFormationCommandDisplayName(string command) => command switch
-        {
-            "front" => "{=BLTFormationSubFront}front".Translate(),
-            "back" => "{=BLTFormationSubBack}back".Translate(),
-            "detach" => "{=BLTFormationSubDetach}detach".Translate(),
-            "attach" => "{=BLTFormationSubAttach}attach".Translate(),
-            "charge" => "{=BLTFormationSubCharge}charge".Translate(),
-            "hold" => "{=BLTFormationSubHold}hold".Translate(),
-            "follow" => "{=BLTFormationSubFollow}follow".Translate(),
-            "gate" => "{=BLTFormationSubGate}gate".Translate(),
-            "walls" => "{=BLTFormationSubWalls}walls".Translate(),
-            _ => command
         };
 
         private void SetHeroFormationPosition(Agent heroAgent, string position, Action<string> onSuccess, Action<string> onFailure)
         {
             var formation = heroAgent.Formation;
-            if (formation == null) { onFailure("{=BLTFormationNoFormation}No formation".Translate()); return; }
+            if (formation == null) { onFailure("No formation"); return; }
 
             var unit = heroAgent as IFormationUnit;
-            if (unit == null) { onFailure("{=BLTFormationNotUnit}Not a formation unit".Translate()); return; }
+            if (unit == null) { onFailure("Not a formation unit"); return; }
 
-            var unit = (IFormationUnit)heroAgent;
-            int fileWidth = Math.Max(1, arrangement.UnitCount / Math.Max(1, arrangement.RankCount));
+            var arrangement = formation.Arrangement;
 
             try
             {
-                Agent candidate;
-                if (position == "front")
+                switch (position.ToLowerInvariant())
                 {
-                    candidate = arrangement.GetAllUnits()
-                        .Select(u => u as Agent)
-                        .Where(a => a != null && a != heroAgent && a.GetHero() == null)
-                        .OrderBy(a => ((IFormationUnit)a).FormationRankIndex)
-                        .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
-                        .Take(fileWidth)
-                        .SelectRandom();
+                    case "front":
+                        {
+                            var candidate = arrangement.GetAllUnits()
+                                .Select(u => u as Agent)
+                                .Where(a => a != null && a != heroAgent && a.GetHero() == null)
+                                .OrderBy(a => ((IFormationUnit)a).FormationRankIndex)
+                                .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
+                                .Take((int)arrangement.Width).SelectRandom();
 
-                    if (candidate == null) { onFailure("No eligible troop in the front rank"); return; }
-                    arrangement.SwitchUnitLocations(candidate, unit);
-                    onSuccess("Moved to front rank");
-                }
-                else
-                {
-                    candidate = arrangement.GetAllUnits()
-                        .Select(u => u as Agent)
-                        .Where(a => a != null && a != heroAgent && a.GetHero() == null)
-                        .OrderByDescending(a => ((IFormationUnit)a).FormationRankIndex)
-                        .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
-                        .Take(Math.Max(1, fileWidth / 2))
-                        .SelectRandom();
+                            if (candidate == null) { onFailure("No troop found"); break; }
 
-                    if (candidate == null) { onFailure("No eligible troop in the back rank"); return; }
-                    arrangement.SwitchUnitLocations(candidate, unit);
-                    onSuccess("Moved to back rank");
+                            arrangement.SwitchUnitLocations(candidate, unit);
+                            onSuccess($"Moved to front");
+                            break;
+                        }
+
+                    case "back":
+                        {
+                            var candidate = arrangement.GetAllUnits()
+                                .Select(u => u as Agent)
+                                .Where(a => a != null && a != heroAgent && a.GetHero() == null)
+                                .OrderByDescending(a => ((IFormationUnit)a).FormationRankIndex)
+                                .ThenBy(a => ((IFormationUnit)a).FormationFileIndex)
+                                .Take((int)arrangement.Width).SelectRandom();
+
+                            if (candidate == null) { onFailure("No troop found"); break; }
+
+                            arrangement.SwitchUnitLocations(candidate, unit);
+                            onSuccess($"Moved to back");
+                            break;
+                        }
                 }
             }
             catch (Exception e)
             {
-                onFailure("{=BLTFormationUnsupported}Formation type does not support this operation ({message})".Translate(("message", e.Message)));
+                onFailure($"Formation type does not support this operation ({e.Message})");
             }
         }
     }

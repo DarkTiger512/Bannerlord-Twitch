@@ -27,21 +27,6 @@ namespace BLTAdoptAHero
              LocDescription("{=ijkjWj5q}Interval at which to output a reminder of the auction"),
              PropertyOrder(2), UsedImplicitly]
             public int AuctionReminderIntervalInSeconds { get; set; } = 15;
-
-            [LocDisplayName("{=BLT_AuctionExtendOnBid_Name}Extend Auction On Bid"),
-             LocDescription("{=BLT_AuctionExtendOnBid_Desc}Add time to the auction whenever a valid bid is placed"),
-             PropertyOrder(3), UsedImplicitly]
-            public bool ExtendAuctionOnBid { get; set; } = true;
-
-            [LocDisplayName("{=BLT_AuctionBidExtensionSeconds_Name}Bid Extension In Seconds"),
-             LocDescription("{=BLT_AuctionBidExtensionSeconds_Desc}How many seconds to add to the auction after each valid bid"),
-             PropertyOrder(4), UsedImplicitly]
-            public int BidExtensionInSeconds { get; set; } = 15;
-
-            [LocDisplayName("{=BLT_AuctionMinimumBidIncrement_Name}Minimum Bid Increment"),
-             LocDescription("{=BLT_AuctionMinimumBidIncrement_Desc}Minimum amount a new bid must exceed the current highest bid by"),
-             PropertyOrder(5), UsedImplicitly]
-            public int MinimumBidIncrement { get; set; } = 1;
         }
 
         public override Type HandlerConfigType => typeof(Settings);
@@ -87,8 +72,6 @@ namespace BLTAdoptAHero
 
             BLTAdoptAHeroCampaignBehavior.Current.StartItemAuction(element, adoptedHero, reservePrice,
                 settings.AuctionDurationInSeconds, settings.AuctionReminderIntervalInSeconds,
-                settings.MinimumBidIncrement,
-                settings.ExtendAuctionOnBid ? settings.BidExtensionInSeconds : 0,
                 s => ActionManager.SendNonReply(context, s));
 
             ActionManager.SendNonReply(context,

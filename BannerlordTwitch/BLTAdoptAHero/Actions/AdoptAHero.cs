@@ -343,9 +343,6 @@ namespace BLTAdoptAHero
                         {
                             return (false, "{=dVVduPvy}No culture starting with '{Text}' found".Translate(("Text", contextArgs)));
                         }
-                        var forbidden = GlobalCommonConfig.Get().RestrictedCulturesStrings;
-                        if (forbidden.Contains(desiredCulture.Name.ToString()))
-                            return (false, "Forbidden culture");
                     }
                     else
                     {
@@ -431,23 +428,8 @@ namespace BLTAdoptAHero
 
                 if (character != null)
                 {
-                    var forbiddenRaces = GlobalCommonConfig.Get().RestrictedRacesIds;
-                    var forbidden = GlobalCommonConfig.Get().RestrictedCulturesStrings;
-
                     newHero = HeroCreator.CreateSpecialHero(character);
                     newHero.ChangeState(Hero.CharacterStates.Active);
-                    if (forbiddenRaces.Contains(character.Race))
-                    {
-                        BodyProperties newBody = newHero.CharacterObject.GetBodyPropertiesMin();
-                        int race = Enumerable.Range(0, int.MaxValue).First(i => !forbiddenRaces.Contains(i));
-                        newHero.CharacterObject.UpdatePlayerCharacterBodyProperties(newBody, race, newHero.IsFemale);
-
-                        Log.Trace($"Changed invalid race to {TaleWorlds.Core.FaceGen.GetBaseMonsterFromRace(race)?.StringId}");
-                    }
-                    if (forbidden.Contains(newHero.Culture.Name.ToString()))
-                    {
-                        newHero.Culture = CampaignHelpers.MainCultures.Where(c=> !forbidden.Contains(c.Name.ToString())).SelectRandom();
-                    }
                     BLTAdoptAHeroCampaignBehavior.Current.SetIsCreatedHero(newHero, true);
                     var targetSettlement = Settlement.All.Where(s => s.IsTown).SelectRandom();
                     EnterSettlementAction.ApplyForCharacterOnly(newHero, targetSettlement);

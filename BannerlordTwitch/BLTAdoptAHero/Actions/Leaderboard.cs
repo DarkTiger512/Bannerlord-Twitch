@@ -21,7 +21,7 @@ namespace BLTAdoptAHero
         {
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
-                generator.Value($"Usage: !leaderboard hero (kills|deaths|battles|summons|attacks|tournaments|"/*1H-AXE|1H-MACE|1H-POLE|1H-SWORD|2H-AXE|2H-MACE|2H-POLE|2H-SWORD|BOW|DAGGER|JAVELIN|PICK|SLING|STONE|THROW-AXE|THROW-KNIFE|XBOW|*/+ "family|class)" +
+                generator.Value($"Usage: !leaderboard hero (kills|deaths|battles|summons|attacks|tournaments|"/*1H-AXE|1H-MACE|1H-POLE|1H-SWORD|2H-AXE|2H-MACE|2H-POLE|2H-SWORD|BOW|DAGGER|JAVELIN|PICK|SLING|STONE|THROW-AXE|THROW-KNIFE|XBOW|*/+ "family)" +
                     " or !leaderboard clan (power|renown|members|dead|fiefs|gold|party|merc|prosperity)");
             }
         }
@@ -60,7 +60,7 @@ namespace BLTAdoptAHero
         {
             if (filter.Length == 0)
             {
-                return "kills|deaths|battles|summons|attacks|tournaments|"/*1H-AXE|1H-MACE|1H-POLE|1H-SWORD|2H-AXE|2H-MACE|2H-POLE|2H-SWORD|BOW|DAGGER|JAVELIN|PICK|SLING|STONE|THROW-AXE|THROW-KNIFE|XBOW|*/+ "family|class";
+                return "kills|deaths|battles|summons|attacks|tournaments|"/*1H-AXE|1H-MACE|1H-POLE|1H-SWORD|2H-AXE|2H-MACE|2H-POLE|2H-SWORD|BOW|DAGGER|JAVELIN|PICK|SLING|STONE|THROW-AXE|THROW-KNIFE|XBOW|*/+ "family";
             }
             var adoptedHeroes = BLTAdoptAHeroCampaignBehavior.GetAllAdoptedHeroes();
 
@@ -168,13 +168,6 @@ namespace BLTAdoptAHero
                      : value.ToString();
             }
 
-            string GetFiefLabel(Clan c)
-            {
-                return c.Fiefs
-                    .OrderByDescending(f => f.Prosperity)
-                    .FirstOrDefault()?.Name?.ToString() ?? "None";
-            }
-
             string BuildClanStatLine(string label, Func<Clan, int> statFunc)
             {
                 var sorted = bltClans
@@ -184,7 +177,7 @@ namespace BLTAdoptAHero
                     .ToList();
 
                 var top3 = sorted.Take(3)
-                    .Select((x, i) => $"{i + 1}-{x.Clan.Name}({(label == "PROSPERITY" ? GetFiefLabel(x.Clan)+"-" : "")}{(label == "GOLD" ? FormatGold(x.Value) : x.Value.ToString())})")
+                    .Select((x, i) => $"{i + 1}-{x.Clan.Name}({(label == "GOLD" ? FormatGold(x.Value) : x.Value.ToString())})")
                     .ToList();
 
                 int userRank = sorted.FindIndex(x => x.Clan == userHero.Clan);
@@ -194,7 +187,7 @@ namespace BLTAdoptAHero
                     if (userRank > 3)
                     {
                         var userValue = sorted[userRank - 1].Value;
-                        top3.Add($"{userRank}-{userHero.Clan.Name}({(label == "PROSPERITY" ? GetFiefLabel(userHero.Clan)+"-" : "")}{(label == "GOLD" ? FormatGold(userValue) : userValue.ToString())})");
+                        top3.Add($"{userRank}-{userHero.Clan.Name}({(label == "GOLD" ? FormatGold(userValue) : userValue.ToString())})");
                     }
                 }
 

@@ -222,14 +222,11 @@ namespace BLTAdoptAHero
 
                             //Log.LogFeedResponse($"[DEBUG] Vassal {vassal.Name} now in kingdom: {vassal.Kingdom?.Name?.ToString() ?? "None"}");
 
+                            AdoptedHeroFlags._allowKingdomMove = false;
                         }
                         catch (Exception ex)
                         {
-                            Log.LogFeedResponse($"[BLT Vassal] Error moving vassal {vassal?.Name}: {ex.Message}");
-                        }
-                        finally
-                        {
-                            AdoptedHeroFlags._allowKingdomMove = false;
+                            Log.LogFeedResponse($"[BLT Vassal] Error moving vassal {vassal.Name}: {ex.Message}");
                         }
                     }
                 }
@@ -278,14 +275,11 @@ namespace BLTAdoptAHero
                                 }
                             }
 
+                            AdoptedHeroFlags._allowKingdomMove = false;
                         }
                         catch (Exception ex)
                         {
                             Log.LogFeedResponse($"[BLT Vassal] Error correcting vassal {clan.Name}: {ex.Message}");
-                        }
-                        finally
-                        {
-                            AdoptedHeroFlags._allowKingdomMove = false;
                         }
                     }
                 }
@@ -394,42 +388,38 @@ namespace BLTAdoptAHero
                                 }
                                 else if (Kingdom.All.Contains(vassal.Kingdom) && vassal?.Kingdom == faction2)
                                 {
-                                    try
-                                    {
-                                        AdoptedHeroFlags._allowKingdomMove = true;
-                                        bool rebel = false;
-                                        List<Settlement> transferred = new();
+                                    AdoptedHeroFlags._allowKingdomMove = true;
+                                    bool rebel = false;
+                                    List<Settlement> transferred = null;
 
-                                        if (vassal.IsUnderMercenaryService)
-                                        {
-                                            vassal.EndMercenaryService(true);
-                                        }
-                                        else
-                                        {
-                                            foreach (var fief in vassal.Settlements.ToList())
-                                            {
-                                                Hero ruler = vassal.Kingdom?.RulingClan?.Leader;
-                                                if (ruler != null && ruler != vassal.Leader)
-                                                {
-                                                    ChangeOwnerOfSettlementAction.ApplyByDefault(ruler, fief);
-                                                    transferred.Add(fief);
-                                                }
-                                            }
-                                            rebel = true;
-                                        }
-                                        vassal.ClanLeaveKingdom(false);
-                                        if (rebel)
-                                        {
-                                            foreach (var fief in transferred)
-                                            {
-                                                ChangeOwnerOfSettlementAction.ApplyByDefault(vassal.Leader, fief);
-                                            }
-                                        }
-                                    }
-                                    finally
+                                    if (vassal.IsUnderMercenaryService)
                                     {
-                                        AdoptedHeroFlags._allowKingdomMove = false;
+                                        vassal.EndMercenaryService(true);
                                     }
+                                    else
+                                    {
+                                        foreach (var fief in vassal.Settlements.ToList())
+                                        {
+                                            Hero ruler = vassal.Kingdom?.RulingClan?.Leader;
+                                            if (ruler != null && ruler != vassal.Leader)
+                                            {
+                                                ChangeOwnerOfSettlementAction.ApplyByDefault(ruler, fief);
+                                                transferred.Add(fief);
+                                            }
+                                        }
+                                        rebel = true;
+                                    }
+                                    vassal.ClanLeaveKingdom(false);
+                                    if (rebel)
+                                    {
+                                        foreach (var fief in transferred)
+                                        {
+                                            ChangeOwnerOfSettlementAction.ApplyByDefault(vassal.Leader, fief);
+                                            transferred.Remove(fief);
+                                        }
+                                    }
+
+                                    AdoptedHeroFlags._allowKingdomMove = false;
 
                                     DeclareWarAction.ApplyByDefault(vassal, faction2);
                                 }
@@ -458,20 +448,15 @@ namespace BLTAdoptAHero
                                 }
                                 else if (Kingdom.All.Contains(vassal.Kingdom) && vassal?.Kingdom == faction1)
                                 {
-                                    try
-                                    {
-                                        AdoptedHeroFlags._allowKingdomMove = true;
+                                    AdoptedHeroFlags._allowKingdomMove = true;
 
-                                        if (vassal.IsUnderMercenaryService)
-                                        {
-                                            vassal.EndMercenaryService(true);
-                                        }
-                                        vassal.ClanLeaveKingdom(false);
-                                    }
-                                    finally
+                                    if (vassal.IsUnderMercenaryService)
                                     {
-                                        AdoptedHeroFlags._allowKingdomMove = false;
+                                        vassal.EndMercenaryService(true);
                                     }
+                                    vassal.ClanLeaveKingdom(false);
+
+                                    AdoptedHeroFlags._allowKingdomMove = false;
 
                                     DeclareWarAction.ApplyByDefault(vassal, faction1);
                                 }

@@ -20,7 +20,6 @@ namespace BLTBuffet
      UsedImplicitly]
     public partial class CharacterEffect : ActionHandlerBase
     {
-        
         protected override Type ConfigType => typeof(Config);
 
         protected override void ExecuteInternal(ReplyContext context, object baseConfig,

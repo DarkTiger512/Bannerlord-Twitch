@@ -116,10 +116,6 @@ namespace BLTAdoptAHero
             // Determine heir logic
             if (adoptedHero != null && heirHero == null)
             {
-                if (adoptedHero.Clan == null)
-                {
-                    return(false,"{=B86KnTcu}You are not in a clan".Translate());
-                }
                 if (string.IsNullOrWhiteSpace(contextArgs))
                 {
                     Hero newHeir = adoptedHero.Clan.Heroes
@@ -148,10 +144,6 @@ namespace BLTAdoptAHero
             }
             else if (adoptedHero != null && heirHero != null)
             {
-                if (adoptedHero.Clan == null)
-                {
-                    return (false, "{=B86KnTcu}You are not in a clan".Translate());
-                }
                 if (!string.IsNullOrWhiteSpace(contextArgs) && heirHero.FirstName.ToString() != (contextArgs))
                 {
 

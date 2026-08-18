@@ -146,7 +146,6 @@ namespace BLTAdoptAHero.Actions.Util
 
             int itr = 0;
             var itemsOfCorrectType = new List<ItemObject>();
-            ItemObject firstRejectedItem = null;
             do
             {
                 var crafting = CampaignHelpers.NewCrafting(validTemplates.SelectRandom(), hero.Culture);
@@ -154,7 +153,7 @@ namespace BLTAdoptAHero.Actions.Util
                 crafting.Randomize();
 
                 var generatedItem = (ItemObject)AccessTools.Field(typeof(Crafting), "_craftedItemObject").GetValue(crafting);
-                if (WeaponMetadataMatches(generatedItem, weaponType))
+                if (generatedItem.IsEquipmentType(weaponType))
                 {
                     itemsOfCorrectType.Add(generatedItem);
 
@@ -164,26 +163,23 @@ namespace BLTAdoptAHero.Actions.Util
                         break;
                     }
                 }
-                else
-                {
-                    firstRejectedItem ??= generatedItem;
-                }
                 // SetItemName(generatedItem, new ($"{crafting.CurrentCraftingTemplate.TemplateName} (Tournament Prize of {hero.FirstName})"));
             } while (++itr < 500);
 
             if (!itemsOfCorrectType.Any() && itr >= 500)
             {
-                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} in {itr} iterations. First rejected metadata: {DescribeWeaponMetadata(firstRejectedItem)}");
+                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} in {itr} iterations");
                 return null;
             }
 
             var bestItem = itemsOfCorrectType.OrderByDescending(item => item.Tier).First();
 
             Log.Info($"Created {bestItem.Tier} ({bestItem.Tierf:0.00}) {bestItem.WeaponComponent?.PrimaryWeapon.WeaponClass} {bestItem.Name} for {hero.Name} in {itr} iterations");
-            Log.Info($"Created crafted weapon metadata: requested={weaponType}, {DescribeWeaponMetadata(bestItem)}");
 
             bestItem.StringId = Guid.NewGuid().ToString();
-            return CompleteCraftedItem(bestItem);
+            CompleteCraftedItem(bestItem);
+
+            return MBObjectManager.Instance.RegisterObject(bestItem);
         }
 
         public static ItemObject CreateCulturedCraftedWeapon(Hero hero, EquipmentType weaponType, int desiredTier, CultureObject culture)
@@ -200,7 +196,6 @@ namespace BLTAdoptAHero.Actions.Util
 
             int itr = 0;
             var itemsOfCorrectType = new List<ItemObject>();
-            ItemObject firstRejectedItem = null;
             do
             {
                 var crafting = CampaignHelpers.NewCrafting(validTemplates.SelectRandom(), culture ?? hero.Culture);
@@ -208,7 +203,7 @@ namespace BLTAdoptAHero.Actions.Util
                 crafting.Randomize();
 
                 var generatedItem = (ItemObject)AccessTools.Field(typeof(Crafting), "_craftedItemObject").GetValue(crafting);
-                if (WeaponMetadataMatches(generatedItem, weaponType))
+                if (generatedItem.IsEquipmentType(weaponType))
                 {
                     itemsOfCorrectType.Add(generatedItem);
 
@@ -218,88 +213,31 @@ namespace BLTAdoptAHero.Actions.Util
                         break;
                     }
                 }
-                else
-                {
-                    firstRejectedItem ??= generatedItem;
-                }
             } while (++itr < 500);
 
             if (!itemsOfCorrectType.Any() && itr >= 500)
             {
-                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} with culture {culture?.Name} in {itr} iterations. First rejected metadata: {DescribeWeaponMetadata(firstRejectedItem)}");
+                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} with culture {culture?.Name} in {itr} iterations");
                 return null;
             }
 
             var bestItem = itemsOfCorrectType.OrderByDescending(item => item.Tier).First();
 
             Log.Info($"Created {bestItem.Tier} ({bestItem.Tierf:0.00}) {bestItem.WeaponComponent?.PrimaryWeapon.WeaponClass} {bestItem.Name} for {hero.Name} with culture {culture?.Name} in {itr} iterations");
-            Log.Info($"Created cultured crafted weapon metadata: requested={weaponType}, {DescribeWeaponMetadata(bestItem)}");
 
             bestItem.StringId = Guid.NewGuid().ToString();
-            return CompleteCraftedItem(bestItem);
+            CompleteCraftedItem(bestItem);
+
+            return MBObjectManager.Instance.RegisterObject(bestItem);
         }
 
         private static void SetItemName(ItemObject item, TextObject name) => AccessTools.Property(typeof(ItemObject), nameof(ItemObject.Name)).SetValue(item, name);
 
-        private static ItemObject CompleteCraftedItem(ItemObject item)
+        private static void CompleteCraftedItem(ItemObject item)
         {
             //ItemObject.InitAsPlayerCraftedItem(ref item);
-            var registeredItem = MBObjectManager.Instance.RegisterObject(item);
-            CampaignEventDispatcher.Instance.OnNewItemCrafted(registeredItem, null, false);
-            return registeredItem;
-        }
-
-        private static bool WeaponMetadataMatches(ItemObject item, EquipmentType weaponType)
-        {
-            if (item?.PrimaryWeapon == null)
-            {
-                return false;
-            }
-
-            var expectedWeaponClass = EquipmentTypeHelpers.GetWeaponClass(weaponType);
-            var expectedItemType = GetExpectedItemType(weaponType);
-            var matches = item.IsEquipmentType(weaponType)
-                && item.PrimaryWeapon.WeaponClass == expectedWeaponClass
-                && (expectedItemType == ItemObject.ItemTypeEnum.Invalid || item.ItemType == expectedItemType);
-
-            return matches;
-        }
-
-        private static ItemObject.ItemTypeEnum GetExpectedItemType(EquipmentType weaponType) =>
-            weaponType switch
-            {
-                EquipmentType.Dagger
-                    or EquipmentType.OneHandedSword
-                    or EquipmentType.OneHandedAxe
-                    or EquipmentType.OneHandedMace => ItemObject.ItemTypeEnum.OneHandedWeapon,
-                EquipmentType.TwoHandedSword
-                    or EquipmentType.TwoHandedAxe
-                    or EquipmentType.TwoHandedMace => ItemObject.ItemTypeEnum.TwoHandedWeapon,
-                EquipmentType.OneHandedLance
-                    or EquipmentType.TwoHandedLance
-                    or EquipmentType.OneHandedGlaive
-                    or EquipmentType.TwoHandedGlaive => ItemObject.ItemTypeEnum.Polearm,
-                EquipmentType.ThrowingKnives
-                    or EquipmentType.ThrowingAxes
-                    or EquipmentType.ThrowingJavelins
-                    or EquipmentType.Stone => ItemObject.ItemTypeEnum.Thrown,
-                _ => ItemObject.ItemTypeEnum.Invalid
-            };
-
-        public static string DescribeWeaponMetadata(ItemObject item)
-        {
-            if (item == null)
-            {
-                return "item=null";
-            }
-
-            var primary = item.PrimaryWeapon;
-            var weaponEntries = item.Weapons == null
-                ? "weapons=null"
-                : string.Join("; ", item.Weapons.Select((w, i) =>
-                    $"{i}:class={w.WeaponClass},usage={w.ItemUsage},flags={w.WeaponFlags},melee={w.IsMeleeWeapon},ranged={w.IsRangedWeapon},swing={w.SwingDamageType}"));
-
-            return $"itemId={item.StringId}, name='{item.Name}', itemType={item.ItemType}, equipmentType={item.GetEquipmentType()}, primaryClass={primary?.WeaponClass}, primaryUsage={primary?.ItemUsage}, primaryFlags={primary?.WeaponFlags}, weapons=[{weaponEntries}]";
+            MBObjectManager.Instance.RegisterObject(item);
+            CampaignEventDispatcher.Instance.OnNewItemCrafted(item, null, false);
         }
 
         // The vanilla tier calculation for weapons:

@@ -739,7 +739,11 @@ namespace BLTAdoptAHero.Actions
                 TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
                 StanceLink stance = adoptedHero.Clan.Kingdom.GetStanceWith(k);
+<<<<<<< HEAD
                 if (tradeBehavior.HasTradeAgreement(adoptedHero.Clan.Kingdom, k, out temptrade))
+=======
+                if (tradeBehavior.HasTradeAgreement(adoptedHero.Clan.Kingdom, k))
+>>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                 {
                     var tradeDate = tradeBehavior.GetTradeAgreementEndDate(adoptedHero.Clan.Kingdom, k);
                     int tradeDays = (int)(tradeDate - CampaignTime.Now).ToDays;

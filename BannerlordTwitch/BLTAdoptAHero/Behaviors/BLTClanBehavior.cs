@@ -224,18 +224,16 @@ namespace BLTAdoptAHero
                 foreach (var bltHero in bltHeroes)
                 {
                     var spouse = bltHero.Spouse;
-                    if (spouse != null && !spouse.IsAdopted())
+                    if (spouse != null)
                     {                     
                         EquipBLTChildren(spouse);
                     }
                     foreach (var child in bltHero.Children)
                     {
-                        if (!child.IsAdopted())
-                            EquipBLTChildren(child);
+                        EquipBLTChildren(child);
                         foreach (var grandchild in child.Children)
                         {
-                            if (!grandchild.IsAdopted())
-                                EquipBLTChildren(grandchild);
+                            EquipBLTChildren(grandchild);
                         }
                     }
                 }
@@ -255,12 +253,12 @@ namespace BLTAdoptAHero
                     var armorEquipment = GetStandardNobleArmor(child);
                     if (armorEquipment != null)
                     {
-                        // Copy armor pieces only, but do not let sparse templates clear existing gear.
-                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Head);
-                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Cape);
-                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Body);
-                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Gloves);
-                        CopyArmorSlotIfPresent(child, armorEquipment, EquipmentIndex.Leg);
+                        // Copy armor pieces only
+                        child.BattleEquipment[EquipmentIndex.Head] = armorEquipment[EquipmentIndex.Head];
+                        child.BattleEquipment[EquipmentIndex.Cape] = armorEquipment[EquipmentIndex.Cape];
+                        child.BattleEquipment[EquipmentIndex.Body] = armorEquipment[EquipmentIndex.Body];
+                        child.BattleEquipment[EquipmentIndex.Gloves] = armorEquipment[EquipmentIndex.Gloves];
+                        child.BattleEquipment[EquipmentIndex.Leg] = armorEquipment[EquipmentIndex.Leg];
                     }
                 }
                     
@@ -274,15 +272,6 @@ namespace BLTAdoptAHero
                 }
             }
 
-            private static void CopyArmorSlotIfPresent(Hero hero, Equipment sourceEquipment, EquipmentIndex index)
-            {
-                var sourceItem = sourceEquipment[index];
-                if (!sourceItem.IsEmpty)
-                {
-                    hero.BattleEquipment[index] = sourceItem;
-                }
-            }
-
             private Equipment GetStandardNobleArmor(Hero hero)
             {
                 // Find noble equipment roster for culture
@@ -293,17 +282,25 @@ namespace BLTAdoptAHero
                 // 1) Try noble templates first
                 roster = rosters.FirstOrDefault(r =>
                     r.EquipmentCulture == hero.Culture &&
-                    r.EquipmentCategories.HasFlag(EquipmentCategories.IsLordTemplate));
+                    r.HasEquipmentFlags(EquipmentFlags.IsNobleTemplate) &&
+                    r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
 
+<<<<<<< HEAD
+                // 2) Fallback to any if no noble found
+                if (roster == null)
+                {
+                    roster = rosters.FirstOrDefault(r =>
+                        r.EquipmentCulture == hero.Culture);
+=======
+                // 2) Fallback to combatant if no noble found
                 if (roster == null)
                 {
                     roster = rosters.FirstOrDefault(r =>
                         r.EquipmentCulture == hero.Culture &&
-                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsChildEquipmentTemplate) &&
-                        !r.EquipmentCategories.HasFlag(EquipmentCategories.IsTeenagerEquipmentTemplate));
+                        r.HasEquipmentFlags(EquipmentFlags.IsCombatantTemplate));
+>>>>>>> parent of bb55724 (Merge branch 'Development' into Random)
                 }
 
-                //roster = roster.AllEquipments.RemoveAll(e => e as ItemObject && )
                 if (roster?.AllEquipments?.Count > 0)
                 {
                     return roster.AllEquipments[MBRandom.RandomInt(roster.AllEquipments.Count)];

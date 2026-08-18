@@ -11,7 +11,6 @@ namespace BLTAdoptAHero
     public static class HeroExtensions
     {
         public static bool IsAdopted(this Hero hero) => hero.FirstName != null && (hero.Name?.Contains(BLTAdoptAHeroModule.Tag) == true || hero.Name?.Contains(BLTAdoptAHeroModule.DevTag) == true);
-        public static bool IsRetired(this Hero hero) => hero.Name.Contains("retired") || hero.Name.Contains("deceased");
         public static bool IsAdoptedBy(this Hero hero, string user)
             => hero.IsAdopted()
             && string.Equals(hero.FirstName?.Raw(), user, StringComparison.CurrentCultureIgnoreCase);
