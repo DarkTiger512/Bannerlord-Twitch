@@ -381,6 +381,31 @@ namespace BLTAdoptAHero
     //    }
 #endregion
 
+    #region DiplomacyProposalPatches
+
+    //    // Additional safety - block at the proposal level
+    //    [HarmonyPatch(typeof(KingdomDiplomacyVM))]
+    //    internal static class KingdomDiplomacyVMPatches
+    //    {
+    //        // This blocks the UI from even showing diplomacy options for BLT kingdoms
+    //        [HarmonyPatch("CanProposeAction")]
+    //        [HarmonyPrefix]
+    //        private static bool Prefix_CanProposeAction(ref bool __result, Kingdom ____playerKingdom)
+    //        {
+    //            if (____playerKingdom?.Leader != null && ____playerKingdom.Leader.IsAdopted())
+    //            {
+    //                __result = false;
+    // #if DEBUG
+    //            Log.Trace($"[BLT] Blocked CanProposeAction in KingdomDiplomacyVM for BLT kingdom");
+    //#endif
+    //                return false;
+    //            }
+    //            return true;
+    //        }
+    //    }
+
+    #endregion
+
     #region KingdomDecisionProposalBehaviorPatches
 
     // Block the behavior that creates kingdom decisions
@@ -616,6 +641,7 @@ namespace BLTAdoptAHero
             IFaction faction1,
             IFaction faction2,
             int dailyTributeFrom1To2,
+            int dailyTributeDuration,
             MakePeaceAction.MakePeaceDetail detail = MakePeaceAction.MakePeaceDetail.Default)
         {
             // Always allow peace that BLT itself initiated
@@ -844,7 +870,7 @@ namespace BLTAdoptAHero
     [HarmonyPatch(typeof(MakeHeroFugitiveAction), nameof(MakeHeroFugitiveAction.Apply))]
     internal static class BLT_SiegeLordFugitiveFix
     {
-        static bool Prefix(Hero fugitive)
+        static bool Prefix(Hero fugitive, bool showNotification)
         {
             try
             {
