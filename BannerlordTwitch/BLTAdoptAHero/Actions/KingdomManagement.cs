@@ -1568,7 +1568,14 @@ namespace BLTAdoptAHero.Actions
                 return;
             }
 
-            int totalCost = influenceAmount * settings.SponsorGoldPerInfluence;
+            long calculatedCost = (long)influenceAmount * settings.SponsorGoldPerInfluence;
+            if (settings.SponsorGoldPerInfluence <= 0 || calculatedCost > int.MaxValue)
+            {
+                onFailure("Sponsor amount is too large or the gold-per-influence setting is invalid");
+                return;
+            }
+
+            int totalCost = (int)calculatedCost;
             int heroGold = BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero);
 
             if (heroGold < totalCost)
