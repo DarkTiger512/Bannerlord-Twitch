@@ -167,6 +167,19 @@ Assert(!StreamObjectivePolicy.TryParseStart("start kills 2 gold=-1 xp=1", _ => t
 Assert(!StreamObjectivePolicy.TryParseStart("start captures 2 culture=missing gold=1 xp=1", _ => false, out _, out _),
     "Unknown capture cultures must be rejected.");
 
+StreamObjectiveState noObjective = null;
+StreamObjectivePolicy.RestoreCollections(noObjective);
+Assert(noObjective == null, "Fresh-campaign save must preserve the absence of an objective.");
+var legacyObjective = new StreamObjectiveState { Contributors = null, ProcessedEvents = null };
+StreamObjectivePolicy.RestoreCollections(legacyObjective);
+Assert(legacyObjective.Contributors != null && legacyObjective.ProcessedEvents != null,
+    "Legacy objective collections must be restored.");
+legacyObjective.Contributors["Viewer"] = new StreamObjectiveContribution { Amount = 3 };
+legacyObjective.ProcessedEvents.Add("event-1");
+StreamObjectivePolicy.RestoreCollections(legacyObjective);
+Assert(legacyObjective.Contributors["viewer"].Amount == 3 && legacyObjective.ProcessedEvents.Contains("event-1"),
+    "Restoring objective collections must preserve progress and comparer behavior.");
+
 var objective = new StreamObjectiveState { Kind = StreamObjectiveKind.Kills, Target = 2 };
 Assert(StreamObjectivePolicy.AddProgress(objective, "kill-1", "Viewer", "hero-1", "Viewer Hero"),
     "First objective contribution failed.");

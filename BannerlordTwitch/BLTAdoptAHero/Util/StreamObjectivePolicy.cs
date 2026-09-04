@@ -51,6 +51,14 @@ namespace BLTAdoptAHero.Util
 
     public static class StreamObjectivePolicy
     {
+        // No active objective is normal on fresh campaigns and after clearing an objective.
+        public static void RestoreCollections(StreamObjectiveState state)
+        {
+            if (state == null) return;
+            state.Contributors ??= new Dictionary<string, StreamObjectiveContribution>(StringComparer.OrdinalIgnoreCase);
+            state.ProcessedEvents ??= new HashSet<string>(StringComparer.Ordinal);
+        }
+
         public static readonly string[] KindNames = { "kills", "cavalry", "battles", "tournaments", "captures", "survive" };
 
         public static bool TryParseStart(string args, Func<string, bool> cultureExists,

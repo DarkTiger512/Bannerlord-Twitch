@@ -43,8 +43,7 @@ namespace BLTAdoptAHero.Behaviors
             sync.SyncDataAsJson("Active", ref active);
             sync.SyncDataAsJson("History", ref history);
             history ??= new List<StreamObjectiveState>();
-            if (active?.Contributors == null) active.Contributors = new Dictionary<string, StreamObjectiveContribution>(StringComparer.OrdinalIgnoreCase);
-            if (active?.ProcessedEvents == null) active.ProcessedEvents = new HashSet<string>(StringComparer.Ordinal);
+            StreamObjectivePolicy.RestoreCollections(active);
         }
 
         public bool Start(StreamObjectiveStart definition, string moderator, out string message)
