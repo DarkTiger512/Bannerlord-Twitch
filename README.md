@@ -1,4 +1,6 @@
-# [Download](https://github.com/DarkTiger512/BLTRefreshed/releases/latest) | [Discord](https://discord.gg/AnStVFb2jG) | [Github](https://github.com/DarkTiger512/BLTRefreshed) | [Installation Guide](https://youtu.be/ATf5zilwNWk)
+# [Download](https://github.com/DarkTiger512/Bannerlord-Twitch/releases/latest) | [Discord](https://discord.gg/AnStVFb2jG) | [Github](https://github.com/DarkTiger512/Bannerlord-Twitch) | [Installation Guide](https://youtu.be/ATf5zilwNWk)
+
+BLTRefreshed has been consolidated into this fork. Development, downloads, and issue tracking now live here; the project history and release variants are preserved.
 
 ## Choose your version
 
@@ -137,3 +139,19 @@ BLTRefreshed stands on years of work by the Bannerlord Twitch community. Special
 Thank you as well to every developer, tester, streamer, translator, and community member who contributed code, reports, feedback, or time. The complete record of individual code contributions remains available in the repository history.
 
 Original community links: [Discord](https://discord.gg/q2p4eHsxFn) | [YouTube](https://www.youtube.com/@billw2461)
+
+## Contributing fixes upstream
+
+This fork's `main` contains the complete BLTRefreshed consolidation. For focused
+fixes to Randomchair22's project, start a separate branch from `upstream/main`
+and apply only the relevant commits. Open the pull request from that branch;
+this keeps unrelated fork features out of the upstream review.
+
+```sh
+git fetch upstream
+git switch -c security/short-description upstream/main
+# Apply and test only the relevant fix.
+git push -u origin security/short-description
+```
+
+The upstream remote is `https://github.com/Randomchair22/Bannerlord-Twitch.git`.
