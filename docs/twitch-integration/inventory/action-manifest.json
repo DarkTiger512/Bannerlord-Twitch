@@ -1,7 +1,6 @@
 {
   "protocolVersion": 1,
-  "manifestVersion": 2,
-  "generatedAt": "2026-09-01T10:29:51.355Z",
+  "generatedAt": "2026-09-15T20:08:31.638Z",
   "actions": [
     {
       "id": "command.objective",
@@ -511,11 +510,11 @@
       }
     },
     {
-      "id": "command.bltbet",
-      "legacyName": "bltbet",
-      "handler": "TournamentBet",
+      "id": "command.predict",
+      "legacyName": "predict",
+      "handler": "TournamentPrediction",
       "category": "Tournament",
-      "description": "Bet your hero's gold on a team in the current viewer tournament.",
+      "description": "Predict the winning team using in-game hero gold. Gold committed may be lost; rewards are shared from the prediction pool.",
       "enabledByDefault": true,
       "hiddenFromHelp": false,
       "permissions": [
@@ -545,7 +544,7 @@
         },
         {
           "id": "amount",
-          "label": "Gold to bet",
+          "label": "Gold committed",
           "type": "integer",
           "required": true
         }

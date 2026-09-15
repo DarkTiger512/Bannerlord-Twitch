@@ -80,7 +80,8 @@
     "path": "BannerlordTwitch/BannerlordTwitch/BLTModule.cs",
     "project": "BannerlordTwitch",
     "kinds": [
-      "twitch-service"
+      "twitch-service",
+      "configuration"
     ],
     "symbols": [
       "BLTModule"
@@ -776,11 +777,23 @@
       "IntegrationProtocol",
       "IntegrationUser",
       "IntegrationActionRequest",
+      "IntegrationCommandRequest",
+      "IntegrationCommandLine",
       "IntegrationActionManifest",
       "IntegrationActionDefinition",
       "IntegrationActionInput",
       "IntegrationActionOption",
       "PairingExchangeResponse"
+    ]
+  },
+  {
+    "path": "BannerlordTwitch/BannerlordTwitch/Twitch/Integration/IntegrationRequestLifecycle.cs",
+    "project": "BannerlordTwitch",
+    "kinds": [
+      "support"
+    ],
+    "symbols": [
+      "IntegrationRequestLifecycle"
     ]
   },
   {
@@ -799,9 +812,14 @@
       "IntegrationRetinueProvider",
       "IntegrationSelectorSnapshot",
       "IntegrationSelectorProvider",
+      "IntegrationViewerSnapshot",
+      "IntegrationRuntimeCommand",
+      "IntegrationViewerStateProvider",
+      "IntegrationIdentityProvider",
       "IntegrationBattleCombatant",
       "IntegrationBattleSnapshot",
       "IntegrationBattleProvider",
+      "IntegrationRuntimeState",
       "ManagedIntegrationClient"
     ]
   },
@@ -2200,7 +2218,7 @@
       "action-handler"
     ],
     "symbols": [
-      "TournamentBet"
+      "TournamentPrediction"
     ]
   },
   {
@@ -3860,13 +3878,15 @@
       "persistence",
       "configuration"
     ],
-    "symbols": []
+    "symbols": [
+      "ManagedServiceDefaults"
+    ]
   },
   {
     "path": "BannerlordTwitch/BLTConfigure/BLTConfigureWindow.xaml",
     "project": "BLTConfigure",
     "kinds": [
-      "configuration"
+      "support"
     ],
     "symbols": []
   },
@@ -3878,11 +3898,10 @@
     ],
     "symbols": [
       "NewActionViewModel",
-      "LogMessage",
       "BLTConfigureWindow",
       "TypeGroupDescription",
-      "ResponseFile",
-      "ResponseFiles"
+      "PairingReceipt",
+      "PairingStatus"
     ]
   },
   {

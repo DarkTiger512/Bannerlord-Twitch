@@ -41,7 +41,7 @@ export interface StreamerSetting { id: string; label: string; type: "boolean" | 
 export interface ActionManifest { protocolVersion: number; manifestVersion?: number; actions: ManifestAction[] }
 
 export interface RuntimeCommand { name: string; handler: string; help: string; helpKey?: string; moderatorOnly: boolean; hideHelp: boolean }
-export interface ViewerState { adopted: boolean; heroName?: string; gold?: number }
+export interface ViewerState { adopted: boolean; heroId?: string; heroName?: string; gold?: number }
 
 export interface ViewerIdentity {
   token: string;
@@ -130,7 +130,7 @@ declare global {
         onAuthorized(callback: (auth: { token: string; channelId: string; userId?: string }) => void): void;
         onContext(callback: (context: { mode?: string }) => void): void;
         actions: { requestIdShare(): void };
-        viewer: { displayName?: string; role?: Role; isLinked?: boolean };
+        viewer: { id?: string | null; role?: Role; isLinked?: boolean };
       };
     };
   }

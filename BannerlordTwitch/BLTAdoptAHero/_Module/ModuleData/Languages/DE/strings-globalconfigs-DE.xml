@@ -344,9 +344,9 @@
         <!-- Prize -->
         <string id="Xu2KD7Kc" text="Preis" original="Prize"/>
         <!-- Enable Betting -->
-        <string id="rne7aMUR" text="Wetten aktivieren" original="Enable Betting"/>
+        <string id="Predict_rne7aMUR" text="Enable Predictions"/>
         <!-- Betting On Final Only -->
-        <string id="njh9b5GB" text="Nur auf das Finale wetten" original="Betting On Final Only"/>
+        <string id="Predict_njh9b5GB" text="Predictions On Final Only"/>
         <!-- Skill Reduction Percent Per Win -->
         <string id="5a40vmYi" text="Fertigkeitsreduktion in Prozent pro Sieg"
             original="Skill Reduction Percent Per Win"/>
@@ -457,10 +457,9 @@
         <!-- Winners prize -->
         <string id="wYzmyUCE" text="Gewinnerpreis" original="Winners prize"/>
         <!-- Enable betting -->
-        <string id="FOQEPZD5" text="Wetten aktivieren" original="Enable betting"/>
+        <string id="Predict_FOQEPZD5" text="Enable predictions"/>
         <!-- Only allow betting on the final betting -->
-        <string id="KGcz71VJ" text="Nur Wetten auf das Finale zulassen"
-            original="Only allow betting on the final betting"/>
+        <string id="Predict_KGcz71VJ" text="Only allow predictions on the final tournament match"/>
         <!-- Skill or skill group to modifier (all skills in a group will be modified) -->
         <string id="twgHWqU6"
             text="Fertigkeit oder Fertigkeitsgruppe zu Modifikator (alle Fertigkeiten in einer Gruppe werden modifiziert)"
@@ -485,6 +484,6 @@
         <!-- Rewards -->
         <string id="FHkvQbcR" text="Belohnung" original="Rewards"/>
         <!-- Betting -->
-        <string id="n1Agm9uJ" text="Wetten" original="Betting"/>
+        <string id="Predict_n1Agm9uJ" text="Predictions"/>
     </strings>
 </base>

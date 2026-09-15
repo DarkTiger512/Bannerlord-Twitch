@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using BannerlordTwitch.Util;
@@ -32,9 +32,9 @@ namespace BLTAdoptAHero
             Clients.Caller.setLabels(new
             {
                 Tournament = "{=PI83uB8j}Tournament".Translate(),
-                BettingIsOpen = "{=WPTU6AGn}Betting is OPEN".Translate(),
-                BettingIsClosed = "{=PLRsZCjL}Betting is CLOSED".Translate(),
-                NotTakingBets = "{=Sv04YKsL}Not taking bets".Translate(),
+                BettingIsOpen = "{=Predict_WPTU6AGn}Predictions are OPEN".Translate(),
+                BettingIsClosed = "{=Predict_PLRsZCjL}Predictions are CLOSED".Translate(),
+                NotTakingBets = "{=Predict_Sv04YKsL}Not taking predictions".Translate(),
             });
             (int entrants, int tournamentSize) = BLTTournamentQueueBehavior.Current?.GetTournamentQueueSize() ?? (0, 0);
             Clients.Caller.updateEntrants(entrants, tournamentSize);

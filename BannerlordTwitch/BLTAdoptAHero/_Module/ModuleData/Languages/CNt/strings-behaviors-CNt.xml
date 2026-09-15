@@ -142,9 +142,9 @@
         <string id="lrOJnThZ" text="結束了" original="was ended"/>
         <!-- BLTTournamentBetMissionBehavior -->
         <!-- Betting is now OPEN for round {RoundIndex} match: {Teams}! -->
-        <string id="wgGkXkyh" text="第 {RoundIndex} match: {Teams} 輪的投注現已開放！" original="Betting is now OPEN for round {RoundIndex} match: {Teams}!"/>
+        <string id="Predict_wgGkXkyh" text="Predictions are now OPEN for round {RoundIndex} match: {Teams}!"/>
         <!-- Betting is now OPEN for final match: {Teams}! -->
-        <string id="9BjHfivM" text="最後一場比賽的投注現已開放：{Teams}！" original="Betting is now OPEN for final match: {Teams}!"/>
+        <string id="Predict_9BjHfivM" text="Predictions are now OPEN for final match: {Teams}!"/>
         <!-- vs -->
         <string id="ixTCiaiv" text="對比" original="vs"/>
         <!-- blue -->
@@ -158,27 +158,27 @@
         <!-- Tournament is not active -->
         <string id="FEZ1Opj1" text="錦標賽不活躍" original="Tournament is not active"/>
         <!-- Betting is disabled -->
-        <string id="uNUyZhDk" text="投注已禁用" original="Betting is disabled"/>
+        <string id="Predict_uNUyZhDk" text="Predictions are disabled"/>
         <!-- Betting is closed -->
-        <string id="APTqGlHh" text="投注已關閉" original="Betting is closed"/>
+        <string id="Predict_APTqGlHh" text="Predictions are closed"/>
         <!-- Betting is only allowed on the final -->
-        <string id="7yFW99H8" text="只允許在決賽上投注" original="Betting is only allowed on the final"/>
+        <string id="Predict_7yFW99H8" text="Predictions are only allowed on the final"/>
         <!-- Betting is not open -->
-        <string id="ATdvJKFI" text="投注未開放" original="Betting is not open"/>
+        <string id="Predict_ATdvJKFI" text="Predictions are not open"/>
         <!-- Team name must be one of {Teams} -->
         <string id="1rUYWox8" text="團隊名稱必須是 {Teams} 之一" original="Team name must be one of {Teams}"/>
         <!-- You can only bet on one team -->
-        <string id="7iveTGQp" text="您只能投註一支球隊" original="You can only bet on one team"/>
+        <string id="Predict_7iveTGQp" text="You can only predict one winning team"/>
         <!-- Betting is now CLOSED: only one team bet on, bets refunded -->
-        <string id="Nm96SVXt" text="投注現已關閉：只投註一支球隊，投注退款" original="Betting is now CLOSED: only one team bet on, bets refunded"/>
+        <string id="Predict_Nm96SVXt" text="Predictions are now CLOSED: only one team selected; gold refunded"/>
         <!-- Betting is now CLOSED: no bets placed -->
-        <string id="GrI9bFCf" text="投注現已結束：沒有投注" original="Betting is now CLOSED: no bets placed"/>
+        <string id="Predict_GrI9bFCf" text="Predictions are now CLOSED: no predictions placed"/>
         <!-- Betting is now CLOSED: {TotalBets} -->
-        <string id="Hj3oYnE0" text="投注現已結束：{TotalBets}" original="Betting is now CLOSED: {TotalBets}"/>
+        <string id="Predict_Hj3oYnE0" text="Predictions are now CLOSED: {TotalBets}"/>
         <!-- REFUNDED {Bet}{GoldIcon} bet -->
-        <string id="u4mPf1p0" text="已退款 {Bet}{GoldIcon} 個賭注" original="REFUNDED {Bet}{GoldIcon} bet"/>
+        <string id="Predict_u4mPf1p0" text="Prediction refund: {Predict}{GoldIcon}"/>
         <!-- WON BET -->
-        <string id="majAmqDm" text="贏了" original="WON BET"/>
+        <string id="Predict_majAmqDm" text="Prediction reward"/>
         <!-- BLTTournamentMissionBehavior -->
         <!-- WINNER! -->
         <string id="jb5vaUCD" text="優勝者！" original="WINNER!"/>

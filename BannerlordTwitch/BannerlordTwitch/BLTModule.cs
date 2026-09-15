@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -101,6 +101,9 @@ namespace BannerlordTwitch
 
         public override void OnGameInitializationFinished(Game game)
         {
+            Settings.GameStarted = game.GameType is Campaign;
+            IntegrationBattleProvider.Touch();
+            Log.Info($"[Integration] Campaign initialization finished: gameStarted={Settings.GameStarted}");
             if (game.GameType is Campaign)
             {
                 object ownerHandle = new();

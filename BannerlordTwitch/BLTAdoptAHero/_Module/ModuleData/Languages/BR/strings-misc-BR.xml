@@ -267,11 +267,11 @@
         <!-- Tournament -->
         <string id="PI83uB8j" text="Torneio" original="Tournament"/>
         <!-- Betting is OPEN -->
-        <string id="WPTU6AGn" text="Aposta está ABERTA" original="Betting is OPEN"/>
+        <string id="Predict_WPTU6AGn" text="Predictions are OPEN"/>
         <!-- Betting is CLOSED -->
-        <string id="PLRsZCjL" text="Aposta está FECHADA" original="Betting is CLOSED"/>
+        <string id="Predict_PLRsZCjL" text="Predictions are CLOSED"/>
         <!-- Not taking bets -->
-        <string id="Sv04YKsL" text="Não aceitando apostas" original="Not taking bets"/>
+        <string id="Predict_Sv04YKsL" text="Not taking predictions"/>
         <!-- GeneratedRewardDef -->
         <!-- Reward Type -->
         <string id="x6pmNHJT" text="Tipo de recompensa" original="Reward Type"/>

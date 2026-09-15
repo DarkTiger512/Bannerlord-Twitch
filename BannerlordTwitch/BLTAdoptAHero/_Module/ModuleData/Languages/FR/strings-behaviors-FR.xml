@@ -142,9 +142,9 @@
         <string id="lrOJnThZ" text="était terminé" original="was ended"/>
         <!-- BLTTournamentBetMissionBehavior -->
         <!-- Betting is now OPEN for round {RoundIndex} match: {Teams}! -->
-        <string id="wgGkXkyh" text="Les paris sont maintenant OUVERTS pour le tour {RoundIndex} match: {Teams}!" original="Betting is now OPEN for round {RoundIndex} match: {Teams}!"/>
+        <string id="Predict_wgGkXkyh" text="Predictions are now OPEN for round {RoundIndex} match: {Teams}!"/>
         <!-- Betting is now OPEN for final match: {Teams}! -->
-        <string id="9BjHfivM" text="Les paris sont maintenant OUVERTS pour le match final: {Teams}!" original="Betting is now OPEN for final match: {Teams}!"/>
+        <string id="Predict_9BjHfivM" text="Predictions are now OPEN for final match: {Teams}!"/>
         <!-- vs -->
         <string id="ixTCiaiv" text="vs" original="vs"/>
         <!-- blue -->
@@ -158,27 +158,27 @@
         <!-- Tournament is not active -->
         <string id="FEZ1Opj1" text="Le tournoi n'est pas actif" original="Tournament is not active"/>
         <!-- Betting is disabled -->
-        <string id="uNUyZhDk" text="Les paris sont désactivés" original="Betting is disabled"/>
+        <string id="Predict_uNUyZhDk" text="Predictions are disabled"/>
         <!-- Betting is closed -->
-        <string id="APTqGlHh" text="Les paris sont fermés" original="Betting is closed"/>
+        <string id="Predict_APTqGlHh" text="Predictions are closed"/>
         <!-- Betting is only allowed on the final -->
-        <string id="7yFW99H8" text="Les paris ne sont autorisés que pour la finale" original="Betting is only allowed on the final"/>
+        <string id="Predict_7yFW99H8" text="Predictions are only allowed on the final"/>
         <!-- Betting is not open -->
-        <string id="ATdvJKFI" text="Les paris ne sont pas ouverts" original="Betting is not open"/>
+        <string id="Predict_ATdvJKFI" text="Predictions are not open"/>
         <!-- Team name must be one of {Teams} -->
         <string id="1rUYWox8" text="Le nom de l'équipe doit être l'une des {Teams}" original="Team name must be one of {Teams}"/>
         <!-- You can only bet on one team -->
-        <string id="7iveTGQp" text="Vous ne pouvez parier que sur une seule équipe" original="You can only bet on one team"/>
+        <string id="Predict_7iveTGQp" text="You can only predict one winning team"/>
         <!-- Betting is now CLOSED: only one team bet on, bets refunded -->
-        <string id="Nm96SVXt" text="Les paris sont maintenant FERMÉS : une seule équipe a parié, les paris sont remboursés" original="Betting is now CLOSED: only one team bet on, bets refunded"/>
+        <string id="Predict_Nm96SVXt" text="Predictions are now CLOSED: only one team selected; gold refunded"/>
         <!-- Betting is now CLOSED: no bets placed -->
-        <string id="GrI9bFCf" text="Les paris sont maintenant FERMÉS : aucun pari placé" original="Betting is now CLOSED: no bets placed"/>
+        <string id="Predict_GrI9bFCf" text="Predictions are now CLOSED: no predictions placed"/>
         <!-- Betting is now CLOSED: {TotalBets} -->
-        <string id="Hj3oYnE0" text="Le pari est maintenant FERMÉ : {TotalBets}" original="Betting is now CLOSED: {TotalBets}"/>
+        <string id="Predict_Hj3oYnE0" text="Predictions are now CLOSED: {TotalBets}"/>
         <!-- REFUNDED {Bet}{GoldIcon} bet -->
-        <string id="u4mPf1p0" text="Pari {Bet}{GoldIcon} REMBOURSÉ" original="REFUNDED {Bet}{GoldIcon} bet"/>
+        <string id="Predict_u4mPf1p0" text="Prediction refund: {Predict}{GoldIcon}"/>
         <!-- WON BET -->
-        <string id="majAmqDm" text="PARI GAGNÉ" original="WON BET"/>
+        <string id="Predict_majAmqDm" text="Prediction reward"/>
         <!-- BLTTournamentMissionBehavior -->
         <!-- WINNER! -->
         <string id="jb5vaUCD" text="GAGNANT!" original="WINNER!"/>

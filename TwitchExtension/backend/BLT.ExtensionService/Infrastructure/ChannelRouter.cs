@@ -11,9 +11,18 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
     private static readonly JsonSerializerOptions WireJson = new(JsonSerializerDefaults.Web);
     private sealed record GameConnection(Guid InstallationId, WebSocket Socket);
     private readonly ConcurrentDictionary<string, GameConnection> games = new(StringComparer.Ordinal);
-    private sealed record ViewerConnection(string UserId, string DisplayName, IReadOnlyList<string> Roles, WebSocket Socket);
+    private sealed record ViewerConnection(string UserId, string DisplayName, IReadOnlyList<string> Roles, WebSocket Socket, bool NativeHeroHud);
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, ViewerConnection>> viewers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<Guid, (string Channel, string UserId)> privateRequests = new();
+    private readonly ConcurrentDictionary<(string Channel, string UserId), string> viewerHeroes = new();
+
+    private void ClearViewerHeroes(string channel)
+    {
+        foreach (var key in viewerHeroes.Keys.Where(key => key.Channel == channel)) viewerHeroes.TryRemove(key, out _);
+    }
+
+    private string ViewerMessage(string channel, string userId, string message, bool nativeHeroHud = false) =>
+        PersonalBattleHud.Prepare(message, viewerHeroes.TryGetValue((channel, userId), out var heroId) ? heroId : null, nativeHeroHud);
 
     public bool IsGameConnected(string channel) => games.TryGetValue(channel, out var game) && game.Socket.State == WebSocketState.Open;
     public DateTimeOffset? LastStateAt(string channel) => stateCache.LastStateAt(channel);
@@ -38,11 +47,16 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
         if (games.TryGetValue(channel, out var previous) && previous.Socket.State == WebSocketState.Open)
             await previous.Socket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Replaced by a new game connection", token);
         stateCache.Clear(channel);
+        ClearViewerHeroes(channel);
         var connection = new GameConnection(installationId, socket);
         games[channel] = connection;
         var configuration = await database.GetConfigurationAsync(channel, token);
         await SendAsync(socket, Envelope("configuration.updated", channel, new { configuration.SchemaVersion, configuration.ExtensionEnabled, configuration.Commands, configuration.Revision, configuration.UpdatedAt }), token);
         await BroadcastViewerAsync(channel, Envelope("connection.status", channel, new { connected = true, gameStarted = false }), token);
+        // A restarted game has no subscriptions; replay each authenticated viewer once.
+        if (viewers.TryGetValue(channel, out var connectedViewers))
+            foreach (var viewer in connectedViewers.Values.DistinctBy(viewer => viewer.UserId))
+                await SendGameAsync(channel, new { v = ProtocolKinds.Version, id = Guid.NewGuid(), kind = "viewer.subscribe", channelId = channel, timestamp = DateTimeOffset.UtcNow, user = new IntegrationUser(viewer.UserId, viewer.DisplayName, viewer.Roles), data = new { } }, token);
         await PumpAsync(socket, async message => await RouteGameMessageAsync(channel, message, token), token);
         if (games.TryRemove(new KeyValuePair<string, GameConnection>(channel, connection)))
         {
@@ -61,12 +75,12 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
         await BroadcastViewerAsync(channel, Envelope("connection.status", channel, new { connected = false, gameStarted = false }), CancellationToken.None);
     }
 
-    public async Task AttachViewerAsync(string channel, TwitchPrincipal principal, WebSocket socket, CancellationToken token)
+    public async Task AttachViewerAsync(string channel, TwitchPrincipal principal, WebSocket socket, CancellationToken token, bool nativeHeroHud = false)
     {
         var id = Guid.NewGuid();
-        viewers.GetOrAdd(channel, _ => new ConcurrentDictionary<Guid, ViewerConnection>())[id] = new(principal.UserId, principal.DisplayName, principal.Roles, socket);
+        viewers.GetOrAdd(channel, _ => new ConcurrentDictionary<Guid, ViewerConnection>())[id] = new(principal.UserId, principal.DisplayName, principal.Roles, socket, nativeHeroHud);
         await SendAsync(socket, Envelope("connection.status", channel, new { connected = IsGameConnected(channel), gameStarted = false }), token);
-        if (stateCache.TryGet(channel, out var state)) await SendAsync(socket, state, token);
+        if (stateCache.TryGet(channel, out var state)) await SendAsync(socket, ViewerMessage(channel, principal.UserId, ViewerStateEnvelope.Prepare(state), nativeHeroHud), token);
         await SendGameAsync(channel, new { v = ProtocolKinds.Version, id = Guid.NewGuid(), kind = "viewer.subscribe", channelId = channel, timestamp = DateTimeOffset.UtcNow, user = new IntegrationUser(principal.UserId, principal.DisplayName, principal.Roles), data = new { } }, token);
         await PumpAsync(socket, _ => Task.CompletedTask, token);
         if (viewers.TryGetValue(channel, out var channelViewers)) channelViewers.TryRemove(id, out _);
@@ -88,12 +102,14 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
     {
         try
         {
+            message = PredictionCompatibility.PublicMessage(message);
             using var document = JsonDocument.Parse(message);
             var root = document.RootElement;
             var kind = root.GetProperty("kind").GetString();
             if (kind is "state.snapshot" or "state.patch")
             {
-                if (!stateCache.TryAccept(channel, message, out _)) return;
+                if (!stateCache.TryAccept(channel, message, out var normalized)) return;
+                message = ViewerStateEnvelope.Prepare(normalized);
             }
             if (kind is "action.accepted" or "action.result" or "action.error" or "inventory.snapshot" or "inventory.error" or "retinue.snapshot" or "retinue.error")
             {
@@ -108,7 +124,19 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
             if (kind == "viewer.state")
             {
                 var targetUserId = root.GetProperty("data").GetProperty("userId").GetString();
-                if (!string.IsNullOrWhiteSpace(targetUserId)) await SendViewerAsync(channel, targetUserId, message, token);
+                if (!string.IsNullOrWhiteSpace(targetUserId))
+                {
+                    var data = root.GetProperty("data");
+                    var heroId = data.TryGetProperty("adopted", out var adopted) && adopted.ValueKind == JsonValueKind.True
+                        && data.TryGetProperty("heroId", out var hero) && hero.ValueKind == JsonValueKind.String ? hero.GetString() : null;
+                    var key = (channel, targetUserId);
+                    viewerHeroes.TryGetValue(key, out var previousHeroId);
+                    if (string.IsNullOrEmpty(heroId)) viewerHeroes.TryRemove(key, out _);
+                    else viewerHeroes[key] = heroId;
+                    await SendViewerAsync(channel, targetUserId, message, token);
+                    if (previousHeroId != heroId && stateCache.TryGet(channel, out var state))
+                        await SendViewerAsync(channel, targetUserId, ViewerStateEnvelope.Prepare(state), token);
+                }
                 return;
             }
         }
@@ -122,7 +150,7 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
         foreach (var pair in sockets.Where(pair => pair.Value.UserId == userId).ToArray())
         {
             if (pair.Value.Socket.State != WebSocketState.Open) { sockets.TryRemove(pair.Key, out _); continue; }
-            try { await SendAsync(pair.Value.Socket, message, token); } catch (WebSocketException) { sockets.TryRemove(pair.Key, out _); }
+            try { await SendAsync(pair.Value.Socket, ViewerMessage(channel, pair.Value.UserId, message, pair.Value.NativeHeroHud), token); } catch (WebSocketException) { sockets.TryRemove(pair.Key, out _); }
         }
     }
 
@@ -132,7 +160,7 @@ public sealed class ChannelRouter(ChannelStateCache stateCache, Database databas
         foreach (var pair in sockets.ToArray())
         {
             if (pair.Value.Socket.State != WebSocketState.Open) { sockets.TryRemove(pair.Key, out _); continue; }
-            try { await SendAsync(pair.Value.Socket, message, token); } catch (WebSocketException) { sockets.TryRemove(pair.Key, out _); }
+            try { await SendAsync(pair.Value.Socket, ViewerMessage(channel, pair.Value.UserId, message, pair.Value.NativeHeroHud), token); } catch (WebSocketException) { sockets.TryRemove(pair.Key, out _); }
         }
     }
 

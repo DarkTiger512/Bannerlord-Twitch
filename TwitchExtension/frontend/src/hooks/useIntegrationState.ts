@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import type { CommandActivity, GameState, InventorySnapshot, RetinueSnapshot, ViewerIdentity } from "../types";
-import { isLiveLocalIntegration } from "../environment";
+import { isLiveLocalIntegration, isLocalHost } from "../environment";
 
 const initialState: GameState = {
   connected: true, gameStarted: true, unavailable: {}, cooldowns: {}, selectors: { cultures: ["Vlandia", "Calradic Empire", "Realm of Thrones"], heroes: [], clans: [], kingdoms: [], settlements: [], skills: [] },
-  commands: [], viewer: { adopted: true, heroName: "FNC_Chair [BLT]", gold: 50000 },
+  commands: [], viewer: { adopted: true, heroId: "rowan", heroName: "FNC_Chair [BLT]", gold: 50000 },
   mission: {
     active: true, kind: "battle", revision: 12, deploymentFinished: true,
     actionAvailability: { "command.summon": null, "command.attack": null, "command.heal": null, "command.power": null, "command.formation": null },
@@ -23,7 +23,7 @@ const initialState: GameState = {
 };
 
 export function useIntegrationState(identity: ViewerIdentity | null) {
-  const [state, setState] = useState<GameState>(() => isLiveLocalIntegration()
+  const [state, setState] = useState<GameState>(() => (!isLocalHost() || isLiveLocalIntegration())
     ? { connected: false, gameStarted: false, unavailable: {}, cooldowns: {}, selectors: { cultures: [], heroes: [], clans: [], kingdoms: [], settlements: [], skills: [] }, commands: [], viewer: { adopted: false }, mission: { active: false, kind: "inactive", revision: 0, deploymentFinished: false, combatants: [], actionAvailability: {} } }
     : new URLSearchParams(window.location.search).get("mission") === "inactive"
     ? { ...initialState, mission: { active: false, kind: "inactive", revision: 0, deploymentFinished: false, combatants: [], actionAvailability: {} } }
@@ -43,13 +43,14 @@ export function useIntegrationState(identity: ViewerIdentity | null) {
     const url = new URL(`/ws/viewer/${encodeURIComponent(identity.channelId)}`, apiBase);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
     url.searchParams.set("token", identity.token);
+    url.searchParams.set("hud", "hero-id-v1");
     const handleMessage = (event: MessageEvent) => {
       let envelope: { v?: number; id?: string; channelId?: string; kind?: string; timestamp?: string; data?: Record<string, any> };
       try { envelope = JSON.parse(String(event.data)); } catch { return; }
       if (envelope.v !== 1 || envelope.channelId !== identity.channelId || !envelope.data) return;
       const data = envelope.data;
       if (envelope.kind === "connection.status") {
-        setState(value => ({ ...value, ...data, mission: data.connected ? value.mission : { active: false, kind: "inactive", revision: value.mission.revision + 1, deploymentFinished: false, combatants: [], actionAvailability: {} } }));
+        setState(value => ({ ...value, ...data, viewer: data.connected && data.gameStarted !== false ? value.viewer : { adopted: false }, mission: data.connected && data.gameStarted !== false ? value.mission : { active: false, kind: "inactive", revision: value.mission.revision + 1, deploymentFinished: false, combatants: [], actionAvailability: {} } }));
       } else if (envelope.kind === "state.snapshot" || envelope.kind === "state.patch") {
         setState(value => {
           const nextMission = data.mission;
@@ -57,7 +58,7 @@ export function useIntegrationState(identity: ViewerIdentity | null) {
           return { ...value, ...data, mission: nextMission ? { ...value.mission, ...nextMission } : value.mission };
         });
       } else if (envelope.kind === "viewer.state") {
-        setState(value => ({ ...value, viewer: { adopted: Boolean(data.adopted), heroName: data.heroName, gold: typeof data.gold === "number" ? data.gold : undefined } }));
+        setState(value => ({ ...value, viewer: { adopted: Boolean(data.adopted), heroId: typeof data.heroId === "string" ? data.heroId : undefined, heroName: data.heroName, gold: typeof data.gold === "number" ? data.gold : undefined } }));
       } else if (envelope.kind === "inventory.snapshot") {
         const rawItems = Array.isArray(data.items) ? data.items : Array.isArray(data.Items) ? data.Items : [];
         const rawSlots = Array.isArray(data.slots) ? data.slots : Array.isArray(data.Slots) ? data.Slots : [];
@@ -98,7 +99,7 @@ export function useIntegrationState(identity: ViewerIdentity | null) {
       socket.addEventListener("message", handleMessage);
       socket.addEventListener("close", () => {
         if (disposed) return;
-        setState(value => ({ ...value, connected: false }));
+        setState(value => ({ ...value, connected: false, gameStarted: false, viewer: { adopted: false }, mission: { active: false, kind: "inactive", revision: value.mission.revision + 1, deploymentFinished: false, combatants: [], actionAvailability: {} } }));
         reconnectTimer = window.setTimeout(connect, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, 30000);
       });

@@ -101,6 +101,7 @@ namespace BannerlordTwitch.Integration
     public sealed class IntegrationViewerSnapshot
     {
         public bool Adopted { get; set; }
+        public string HeroId { get; set; }
         public string HeroName { get; set; }
         public int? Gold { get; set; }
     }
@@ -271,8 +272,9 @@ namespace BannerlordTwitch.Integration
                     await SendAsync("hello", new { modVersion = typeof(ManagedIntegrationClient).Assembly.GetName().Version?.ToString(), protocolVersion = IntegrationProtocol.Version }, lifetime.Token);
                     await SendRawAsync(JsonSerializer.Serialize(new { v = IntegrationProtocol.Version, id = Guid.NewGuid(), kind = "manifest", channelId, timestamp = DateTimeOffset.UtcNow, data = JsonSerializer.Deserialize<JsonElement>(catalog.ManifestJson) }), lifetime.Token);
                     var battle = IntegrationBattleProvider.Current();
-                    await SendAsync("state.snapshot", new { connected = true, gameStarted = Settings.GameStarted, unavailable = new { }, cooldowns = new { }, selectors = IntegrationSelectorProvider.Current(), commands = runtimeCommands, mission = battle }, lifetime.Token);
-                    await Task.WhenAll(ReceiveAsync(lifetime.Token), PublishBattleStateAsync(battle.Revision, Settings.GameStarted, lifetime.Token), PublishViewerStatesAsync(lifetime.Token));
+                    var gameStarted = Settings.GameStarted;
+                    await SendAsync("state.snapshot", new { connected = true, gameStarted, unavailable = new { }, cooldowns = new { }, selectors = IntegrationSelectorProvider.Current(), commands = runtimeCommands, mission = battle }, lifetime.Token);
+                    await Task.WhenAll(ReceiveAsync(lifetime.Token), PublishBattleStateAsync(battle.Revision, gameStarted, lifetime.Token), PublishViewerStatesAsync(lifetime.Token));
                 }
                 catch (OperationCanceledException) { return; }
                 catch (Exception ex) { Log.Error($"[Integration] Connection failed: {ex.Message}"); }
@@ -312,7 +314,7 @@ namespace BannerlordTwitch.Integration
                         var serialized = JsonSerializer.Serialize(snapshot);
                         if (lastViewerStates.TryGetValue(viewer.Id, out var previous) && previous == serialized) continue;
                         lastViewerStates[viewer.Id] = serialized;
-                        _ = SendAsync("viewer.state", new { userId = viewer.Id, snapshot.Adopted, snapshot.HeroName, snapshot.Gold }, lifetime.Token);
+                        _ = SendAsync("viewer.state", new { userId = viewer.Id, snapshot.Adopted, snapshot.HeroId, snapshot.HeroName, snapshot.Gold }, lifetime.Token);
                     }
                 });
             }
@@ -408,6 +410,8 @@ namespace BannerlordTwitch.Integration
                 {
                     var viewer = new IntegrationUser { Id = user.GetProperty("id").GetString(), Name = await ResolveTwitchDisplayNameAsync(user, token), Roles = JsonSerializer.Deserialize<string[]>(user.GetProperty("roles").GetRawText()) };
                     subscribedViewers[viewer.Id] = viewer;
+                    // A reconnected backend needs the identity mapping even if gold/name did not change.
+                    lastViewerStates.TryRemove(viewer.Id, out _);
                     lastViewerStates.TryRemove(viewer.Id, out _);
                     if (!IntegrationRuntimeState.IsSaving)
                         MainThreadSync.Post(() => { if (!IntegrationRuntimeState.IsSaving) IntegrationIdentityProvider.Apply(viewer.Id, viewer.Name); });
@@ -495,12 +499,15 @@ namespace BannerlordTwitch.Integration
             foreach (var preference in commands.EnumerateArray())
             {
                 var actionId = preference.GetProperty("actionId").GetString();
+                if (actionId == "command.bltbet") actionId = "command.predict";
                 var commandName = actionId?.StartsWith("command.", StringComparison.Ordinal) == true ? actionId.Substring(8) : actionId;
                 if (string.IsNullOrWhiteSpace(commandName) || !configuredCommands.TryGetValue(commandName, out var command)) continue;
                 if (preference.TryGetProperty("enabled", out var enabled)) command.Enabled = enabled.GetBoolean();
                 if (!preference.TryGetProperty("settings", out var settings) || settings.ValueKind != JsonValueKind.Object) continue;
                 foreach (var setting in settings.EnumerateObject())
                 {
+                    // Public prediction metadata comes from the corrected module, never stale saved profiles.
+                    if (commandName == "predict" && new[] { "Name", "Help", "Documentation", "Handler" }.Contains(setting.Name, StringComparer.OrdinalIgnoreCase)) continue;
                     object target = command; var propertyName = setting.Name;
                     if (propertyName.StartsWith("HandlerConfig.", StringComparison.Ordinal)) { target = command.HandlerConfig; propertyName = propertyName.Substring(14); }
                     if (target == null) continue;

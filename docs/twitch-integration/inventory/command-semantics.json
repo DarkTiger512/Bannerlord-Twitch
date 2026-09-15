@@ -252,9 +252,9 @@
     "auditBasis": "handler-source"
   },
   {
-    "actionId": "command.bltbet",
-    "legacyName": "bltbet",
-    "handler": "TournamentBet",
+    "actionId": "command.predict",
+    "legacyName": "predict",
+    "handler": "TournamentPrediction",
     "parserSource": "BannerlordTwitch/BLTAdoptAHero/Actions/TournamentBet.cs",
     "legacyPattern": "<entrant> <amount>",
     "parameters": [
@@ -272,7 +272,7 @@
       },
       {
         "id": "amount",
-        "label": "Gold to bet",
+        "label": "Gold committed",
         "type": "integer",
         "position": 1,
         "required": true,

@@ -270,11 +270,11 @@
         <!-- Tournament -->
         <string id="PI83uB8j" text="トーナメント" original="Tournament"/>
         <!-- Betting is OPEN -->
-        <string id="WPTU6AGn" text="賭けはオープンです" original="Betting is OPEN"/>
+        <string id="Predict_WPTU6AGn" text="Predictions are OPEN"/>
         <!-- Betting is CLOSED -->
-        <string id="PLRsZCjL" text="賭けは締め切られました" original="Betting is CLOSED"/>
+        <string id="Predict_PLRsZCjL" text="Predictions are CLOSED"/>
         <!-- Not taking bets -->
-        <string id="Sv04YKsL" text="賭けをしない" original="Not taking bets"/>
+        <string id="Predict_Sv04YKsL" text="Not taking predictions"/>
         <!-- GeneratedRewardDef -->
         <!-- Reward Type -->
         <string id="x6pmNHJT" text="報酬タイプ" original="Reward Type"/>

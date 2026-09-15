@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -36,7 +36,7 @@ namespace BannerlordTwitch
         public bool DisableAutomaticFulfillment { get; set; }
 
         public Command GetCommand(string id) => EnabledCommands.FirstOrDefault(c =>
-            string.Equals(c.Name.ToString(), id, StringComparison.CurrentCultureIgnoreCase));
+            string.Equals(c.Name.ToString(), string.Equals(id, "bltbet", StringComparison.OrdinalIgnoreCase) ? "predict" : id, StringComparison.CurrentCultureIgnoreCase));
 
         public T GetGlobalConfig<T>(string id) => (T)GlobalConfigs.First(c => c.Id == id).Config;
 
@@ -46,7 +46,8 @@ namespace BannerlordTwitch
 
         public static Settings DefaultSettings { get; private set; }
         public static int ActiveProfile { get; set; } = 1;
-        public static bool GameStarted { get; set; } = false;
+        private static volatile bool gameStarted;
+        public static bool GameStarted { get => gameStarted; set => gameStarted = value; }
 
 #if DEBUG
         private static string ProjectRootDir([CallerFilePath]string file = "") => Path.Combine(Path.GetDirectoryName(file) ?? ".", "..");
@@ -188,6 +189,14 @@ namespace BannerlordTwitch
         private static void SettingsPostLoad(Settings settings)
         {
             settings.Commands ??= new();
+            var migratedPrediction = settings.Commands.Any(command => command.Handler == "TournamentBet");
+            foreach (var command in settings.Commands.Where(command => command.Handler == "TournamentBet" || command.Handler == "TournamentPrediction"))
+            {
+                command.Handler = "TournamentPrediction";
+                command.Name = "predict";
+                command.Help = "Predict the winning team";
+                command.Documentation = "Predict the winning team with in-game hero gold. Usage: !predict (team) (gold). Gold committed can be lost; prediction rewards come from the shared pool. If only one team is selected, gold is refunded.";
+            }
             settings.Rewards ??= new();
             settings.GlobalConfigs ??= new();
             settings.SimTesting ??= new();
@@ -197,6 +206,7 @@ namespace BannerlordTwitch
             ActionManager.EnsureGlobalSettings(settings.GlobalConfigs);
 
             SettingsHelpers.CallInDepth<ILoaded>(settings, config => config.OnLoaded(settings));
+            if (migratedPrediction) Save(settings);
         }
 
         private static void SettingsPreSave(Settings settings)

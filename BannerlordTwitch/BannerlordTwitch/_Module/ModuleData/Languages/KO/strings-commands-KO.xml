@@ -74,11 +74,11 @@
         <string id="IFDecKha" text="이름 항목" original="nameitem"/>
         <!-- bltbet -->
         <!-- Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded. -->
-        <string id="thajdk5s" text="가능한 경우 토너먼트 경기에 베팅하려면 이것을 사용하십시오.&lt;br&gt; 사용법은 &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt; 입니다. 예를 들어 &lt;code&gt;!bltbet red 10000&lt;/code&gt; 은 빨간색에 10000골드를 베팅합니다. 상금은 상대 배팅 규모에 따라 전체 팟에서 나누어집니다.&lt;br&gt; 한 팀만 베팅하는 경우 베팅은 환불됩니다." original="Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded."/>
+        <string id="Predict_thajdk5s" text="Predict the winning team using in-game hero gold. Usage: !predict (team) (gold). Gold committed may be lost; prediction rewards come from the shared pool. If only one team is selected, gold is refunded."/>
         <!-- bet on tournament -->
-        <string id="xBgLXaf7" text="토너먼트에 내기" original="bet on tournament"/>
+        <string id="Predict_xBgLXaf7" text="Predict the winning team"/>
         <!-- bltbet -->
-        <string id="haKiwbsR" text="bltbet" original="bltbet"/>
+        <string id="Predict_haKiwbsR" text="predict"/>
         <!-- power -->
         <!-- power -->
         <string id="NUQ5PsjF" text="힘" original="power"/>

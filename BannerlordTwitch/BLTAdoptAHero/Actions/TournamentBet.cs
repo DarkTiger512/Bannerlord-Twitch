@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BannerlordTwitch;
 using BannerlordTwitch.Localization;
 using BannerlordTwitch.Rewards;
@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 namespace BLTAdoptAHero
 {
     [UsedImplicitly]
-    public class TournamentBet : ICommandHandler
+    public class TournamentPrediction : ICommandHandler
     {
         public Type HandlerConfigType => null;
 
@@ -59,7 +59,7 @@ namespace BLTAdoptAHero
 
             (bool success, string failReason)
                 = BLTTournamentBetMissionBehavior.Current?.PlaceBet(adoptedHero, team, gold.Value)
-                  ?? (false, "{=3AQKsF9f}Betting not active".Translate());
+                  ?? (false, "{=Predict_3AQKsF9f}Predictions not active".Translate());
 
             if (!success)
             {
@@ -67,7 +67,7 @@ namespace BLTAdoptAHero
             }
             else
             {
-                ActionManager.SendReply(context, "{=9tlhaGyH}Bet {GoldAmount}{GoldIcon} on {Team}"
+                ActionManager.SendReply(context, "{=Predict_9tlhaGyH}Prediction recorded for {Team}. Gold committed: {GoldAmount}{GoldIcon}"
                     .Translate(("GoldAmount", gold), ("GoldIcon", Naming.Gold), ("Team", team)));
             }
         }

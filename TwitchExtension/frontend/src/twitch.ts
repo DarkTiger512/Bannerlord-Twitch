@@ -18,10 +18,10 @@ export function authorizeViewer(): Promise<ViewerIdentity> {
       resolve({
         token: auth.token,
         channelId: auth.channelId,
-        userId: auth.userId ?? null,
-        displayName: viewer?.displayName ?? "Viewer",
+        userId: viewer?.id ?? null,
+        displayName: "Viewer",
         roles: [role],
-        linked: Boolean(auth.userId && viewer?.isLinked),
+        linked: Boolean(viewer?.id && viewer?.isLinked),
         locale: new URLSearchParams(window.location.search).get("locale") ?? navigator.language,
       });
     });

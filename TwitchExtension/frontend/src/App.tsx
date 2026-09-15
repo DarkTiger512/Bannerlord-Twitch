@@ -124,7 +124,7 @@ export function App() {
   const battleActions = manifest.actions.filter(action => Object.hasOwn(state.mission.actionAvailability, action.id) && !redundantBattleActions.has(action.id));
   const battleActive = state.mission.active && (state.mission.kind === "battle" || state.mission.kind === "tournament");
 
-  if (!state.gameStarted) return null;
+  // The shell remains available while waiting for a campaign or connection.
 
   return <main className={open ? "overlay-shell open" : "overlay-shell collapsed"}>
     {!open ? <button className="floating-overlay-toggle" onClick={() => setOpen(true)} aria-label={t("app.open")} title={t("app.open")}><img src={bltLogo} alt="" /><span>BLT</span></button> : null}
@@ -134,7 +134,7 @@ export function App() {
       <div className={`overlay-content ${battleActive ? "battle-active" : ""}`}>
         <div className="workspace-stack">
           <div className="workspace-main">
-            {battleActive ? <BattleWorkspace mission={state.mission} actions={battleActions} identity={identity} cooldowns={state.cooldowns} selectors={state.selectors} busy={busy} error={error} onRequestIdentity={requestIdentity} onSubmit={handleActionSubmit} /> : workspace === "inventory" ? <InventoryView inventory={state.inventory} loading={inventoryLoading} error={state.inventoryError} linked={identity.linked} initialFilter={inventoryFilter} onBack={() => setWorkspace("home")} onRefresh={loadInventory} onEquip={equipInventoryItem} onRequestIdentity={requestIdentity} /> : workspace === "retinue" ? <RetinueView retinue={state.retinue} loading={retinueLoading} error={state.retinueError} linked={identity.linked} busy={busy} onBack={() => setWorkspace("home")} onRefresh={loadRetinue} onManage={manageRetinue} onRequestIdentity={requestIdentity} /> : <CommandWorkspace actions={manifest.actions} commands={state.commands} identity={identity} state={state} busy={busy} onExecute={handleCommand} onInventory={openInventory} onRetinue={openRetinue} />}
+            {battleActive ? <BattleWorkspace heroId={state.viewer.heroId} mission={state.mission} actions={battleActions} identity={identity} cooldowns={state.cooldowns} selectors={state.selectors} busy={busy} error={error} onRequestIdentity={requestIdentity} onSubmit={handleActionSubmit} /> : workspace === "inventory" ? <InventoryView inventory={state.inventory} loading={inventoryLoading} error={state.inventoryError} linked={identity.linked} initialFilter={inventoryFilter} onBack={() => setWorkspace("home")} onRefresh={loadInventory} onEquip={equipInventoryItem} onRequestIdentity={requestIdentity} /> : workspace === "retinue" ? <RetinueView retinue={state.retinue} loading={retinueLoading} error={state.retinueError} linked={identity.linked} busy={busy} onBack={() => setWorkspace("home")} onRefresh={loadRetinue} onManage={manageRetinue} onRequestIdentity={requestIdentity} /> : <CommandWorkspace actions={manifest.actions} commands={state.commands} identity={identity} state={state} busy={busy} onExecute={handleCommand} onInventory={openInventory} onRetinue={openRetinue} />}
           </div>
           <CommandFeedView entries={state.commandActivity} expanded={feedExpanded} onToggle={() => setFeedExpanded(value => !value)} onClear={state.clearCommandActivity} />
         </div>

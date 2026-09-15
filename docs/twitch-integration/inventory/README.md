@@ -8,8 +8,8 @@ Generated from tracked source and the default v4 YAML configuration. Re-run with
 |---|---:|
 | Commands | 61 |
 | Rewards | 15 |
-| Settings | 1375 |
-| Source components | 343 |
+| Settings | 1405 |
+| Source components | 344 |
 
 ## Action categories
 
@@ -35,7 +35,7 @@ Generated from tracked source and the default v4 YAML configuration. Re-run with
 | twitch-service | 10 |
 | configuration | 141 |
 | test | 17 |
-| support | 135 |
+| support | 137 |
 | harmony-patch | 15 |
 | behavior | 40 |
 | overlay-hub | 6 |

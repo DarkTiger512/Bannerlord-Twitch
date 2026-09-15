@@ -270,11 +270,11 @@
         <!-- Tournament -->
         <string id="PI83uB8j" text="토너먼트" original="Tournament"/>
         <!-- Betting is OPEN -->
-        <string id="WPTU6AGn" text="베팅이 열려 있습니다" original="Betting is OPEN"/>
+        <string id="Predict_WPTU6AGn" text="Predictions are OPEN"/>
         <!-- Betting is CLOSED -->
-        <string id="PLRsZCjL" text="베팅이 종료되었습니다" original="Betting is CLOSED"/>
+        <string id="Predict_PLRsZCjL" text="Predictions are CLOSED"/>
         <!-- Not taking bets -->
-        <string id="Sv04YKsL" text="내기를 하지 않음" original="Not taking bets"/>
+        <string id="Predict_Sv04YKsL" text="Not taking predictions"/>
         <!-- GeneratedRewardDef -->
         <!-- Reward Type -->
         <string id="x6pmNHJT" text="보상 유형" original="Reward Type"/>

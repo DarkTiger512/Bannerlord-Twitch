@@ -36,6 +36,16 @@ public sealed class Database(NpgsqlDataSource dataSource)
         """;
         await using var command = dataSource.CreateCommand(sql);
         await command.ExecuteNonQueryAsync(token);
+        await MigratePredictionConfigurationsAsync(token);
+    }
+
+    private async Task MigratePredictionConfigurationsAsync(CancellationToken token)
+    {
+        var pending = new List<(string Channel, ChannelConfiguration Configuration)>();
+        await using (var query = dataSource.CreateCommand("SELECT channel_id,document::text FROM channel_configurations WHERE document::text LIKE '%command.bltbet%'"))
+        await using (var reader = await query.ExecuteReaderAsync(token))
+            while (await reader.ReadAsync(token)) pending.Add((reader.GetString(0), JsonSerializer.Deserialize<ChannelConfiguration>(reader.GetString(1))!));
+        foreach (var item in pending) await SaveConfigurationAsync(item.Channel, item.Configuration, token);
     }
 
     public async Task SavePairingCodeAsync(string code, string channel, DateTimeOffset expiresAt, CancellationToken token)
@@ -100,7 +110,7 @@ public sealed class Database(NpgsqlDataSource dataSource)
     {
         var normalized = Normalize(configuration); var updated = normalized with { SchemaVersion = 2, Revision = configuration.Revision + 1, UpdatedAt = DateTimeOffset.UtcNow }; var json = JsonSerializer.Serialize(updated);
         await using var connection = await dataSource.OpenConnectionAsync(token); await using var transaction = await connection.BeginTransactionAsync(token);
-        await using var save = new NpgsqlCommand("INSERT INTO channel_configurations(channel_id,document,revision,updated_at) SELECT $1,$2::jsonb,$3,$4 WHERE $5=0 ON CONFLICT(channel_id) DO UPDATE SET document=$2::jsonb,revision=$3,updated_at=$4 WHERE channel_configurations.revision=$5 RETURNING revision", connection, transaction);
+        await using var save = new NpgsqlCommand("INSERT INTO channel_configurations(channel_id,document,revision,updated_at) SELECT $1,$2::jsonb,$3,$4 WHERE $5=0 OR EXISTS (SELECT 1 FROM channel_configurations WHERE channel_id=$1) ON CONFLICT(channel_id) DO UPDATE SET document=$2::jsonb,revision=$3,updated_at=$4 WHERE channel_configurations.revision=$5 RETURNING revision", connection, transaction);
         save.Parameters.AddWithValue(channel); save.Parameters.AddWithValue(json); save.Parameters.AddWithValue(updated.Revision); save.Parameters.AddWithValue(updated.UpdatedAt); save.Parameters.AddWithValue(configuration.Revision);
         if (await save.ExecuteScalarAsync(token) is not long) { await transaction.RollbackAsync(token); return null; }
         await ApplyPairingDecisionsAsync(connection, transaction, channel, decisions, token);
@@ -159,7 +169,7 @@ public sealed class Database(NpgsqlDataSource dataSource)
         var json = JsonSerializer.Serialize(updated);
         await using var command = dataSource.CreateCommand("""
           INSERT INTO channel_configurations(channel_id,document,revision,updated_at)
-          SELECT $1,$2::jsonb,$3,$4 WHERE $5=0
+          SELECT $1,$2::jsonb,$3,$4 WHERE $5=0 OR EXISTS (SELECT 1 FROM channel_configurations WHERE channel_id=$1)
           ON CONFLICT(channel_id) DO UPDATE SET document=$2::jsonb,revision=$3,updated_at=$4
           WHERE channel_configurations.revision=$5 RETURNING revision
           """);
@@ -181,7 +191,7 @@ public sealed class Database(NpgsqlDataSource dataSource)
     {
         var configuration = await GetConfigurationAsync(channel, token);
         var profile = configuration.Profiles!.First(item => item.ProfileId == configuration.ActiveProfile);
-        var preference = profile.Commands.FirstOrDefault(item => string.Equals(item.ActionId, actionId, StringComparison.Ordinal));
+        var preference = profile.Commands.FirstOrDefault(item => string.Equals(item.ActionId, PredictionCompatibility.ActionId(actionId), StringComparison.Ordinal));
         return profile.ExtensionEnabled && (preference?.Enabled ?? true);
     }
 
@@ -190,6 +200,7 @@ public sealed class Database(NpgsqlDataSource dataSource)
         var active = configuration.ActiveProfile is >= 1 and <= 3 ? configuration.ActiveProfile : 1;
         var profiles = configuration.Profiles?.ToList() ?? [];
         for (var id = 1; id <= 3; id++) if (profiles.All(profile => profile.ProfileId != id)) profiles.Add(new(id, id == active ? configuration.ExtensionEnabled : true, id == active ? configuration.Commands : []));
+        profiles = profiles.Select(profile => profile with { Commands = PredictionCompatibility.Commands(profile.Commands) }).ToList();
         var selected = profiles.First(profile => profile.ProfileId == active);
         return configuration with { SchemaVersion = 2, ActiveProfile = active, Profiles = profiles.OrderBy(profile => profile.ProfileId).ToArray(), ExtensionEnabled = selected.ExtensionEnabled, Commands = selected.Commands };
     }

@@ -29,7 +29,7 @@ namespace BannerlordTwitch.Integration
             return new IntegrationActionCatalog(json, manifest);
         }
 
-        public bool TryGet(string actionId, out IntegrationActionDefinition action) => actions.TryGetValue(actionId, out action);
+        public bool TryGet(string actionId, out IntegrationActionDefinition action) => actions.TryGetValue(actionId == "command.bltbet" ? "command.predict" : actionId, out action);
 
         public string BuildLegacyArguments(IntegrationActionDefinition action, IReadOnlyDictionary<string, JsonElement> values)
         {
