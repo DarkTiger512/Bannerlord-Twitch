@@ -65,3 +65,7 @@ The regression harness compiles the actual dispatch method with engine stubs. Th
 The installed and packaged BLTAdoptAHero.dll SHA-256 is `f71296d476831f4f6fbad47b1d8a58184ddcdb7f683c29d445855e95f0d771db`. The previous DLL and archives are backed up in `summon-fix-20260919`. The save and connector fixes remain included. No Twitch frontend upload or backend deployment was needed.
 
 Saving was reported working. The latest game log shows successful return to the menu, campaign reload, and complete managed cleanup on exit, without the earlier managed exit exception. This is evidence from one retest, not a guarantee against every exit crash. Real summon/attack deployment and HUD/roster verification remain pending with the corrected module; investigate response display further if it still fails to complete.
+
+## Submission status
+
+Version 0.0.8 was submitted on September 19, 2026. Twitch confirmed In Review. See [submission record](SUBMISSION-20260919.md). The submitted source is c5c29481d1bb523ff6205474b0fb6315f24e2570; subsequent documentation commits do not change the uploaded ZIP. Full gameplay checks are not claimed complete.
