@@ -55,3 +55,13 @@ The connector now starts the request deadline before name lookup or main-thread 
 The new BLTIntegration.Tests harness compiles the real connector/request-lifecycle source with game-service stubs. It passed wire-format action/command dispatch, early request tracking, stale request termination, post-disposal queued callback suppression, late replies, and 100 concurrent completion/expiry/disposal races. Release module build passed. The installed BannerlordTwitch.dll hash is `2d8f8b4f4e1fbc14dc0fc27881e20cc0774694f9dceaa6b2145956ebe0b55414`; the previous DLL is backed up in `integration-fix-20260919`.
 
 These checks do not establish the original cause of stalled in-game execution or prove the exit crash eliminated. A traced real-game retest is in progress. No frontend or backend deployment was required for these changes, and the save fix remains installed.
+
+## War Sails land-battle summon correction — 2026-09-19
+
+The traced retest reached SummonHero after successful adoption but never completed its callback. War Sails was enabled. The handler selected its naval branch based on DLC presence, then silently did nothing when the mission was a land battle. Both Summon and Attack use this handler. The condition now requires both the DLC and an actual naval battle, allowing land battles and locations to reach their existing spawn paths. Missing mission/location contexts are also null-guarded.
+
+The regression harness compiles the actual dispatch method with engine stubs. The previous source failed for DLC enabled + land battle; the corrected source passed DLC on/off, both player/enemy sides, land/location/naval routing, mission-tick deferral, exactly one completion callback, no-mission rejection, and missing campaign location. This validates routing, not engine spawning. The existing module policy suite and Release build also passed. Logs are in `summon-fix-20260919`.
+
+The installed and packaged BLTAdoptAHero.dll SHA-256 is `f71296d476831f4f6fbad47b1d8a58184ddcdb7f683c29d445855e95f0d771db`. The previous DLL and archives are backed up in `summon-fix-20260919`. The save and connector fixes remain included. No Twitch frontend upload or backend deployment was needed.
+
+Saving was reported working. The latest game log shows successful return to the menu, campaign reload, and complete managed cleanup on exit, without the earlier managed exit exception. This is evidence from one retest, not a guarantee against every exit crash. Real summon/attack deployment and HUD/roster verification remain pending with the corrected module; investigate response display further if it still fails to complete.

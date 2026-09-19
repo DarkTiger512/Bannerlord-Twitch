@@ -282,7 +282,7 @@ namespace BLTAdoptAHero
                 || Mission.Current.Mode is MissionMode.Barter or MissionMode.Conversation or
                     MissionMode.Duel or MissionMode.Replay or MissionMode.CutScene or MissionMode.Stealth)
             {
-                if (Mission.Current.Mode is MissionMode.Stealth && MissionHelpers.InHideOutMission())
+                if (Mission.Current?.Mode is MissionMode.Stealth && MissionHelpers.InHideOutMission())
                 {
 
                 }
@@ -323,15 +323,15 @@ namespace BLTAdoptAHero
                 return;
             }
 
-            if (CampaignHelpers.NavalDLC())
+            // Having War Sails enabled does not make every mission a naval battle.
+            if (CampaignHelpers.NavalDLC() && Mission.Current.IsNavalBattle)
             {
-                if (Mission.Current.IsNavalBattle)
-                    BLTSummonBehavior.Current.DoNextTick(() =>
-                    {
-                        NavalSummonHero.SummonInNavalBattle(adoptedHero, settings, context, onSuccess, onFailure);
-                    });
+                BLTSummonBehavior.Current.DoNextTick(() =>
+                {
+                    NavalSummonHero.SummonInNavalBattle(adoptedHero, settings, context, onSuccess, onFailure);
+                });
             }
-            else if (CampaignMission.Current.Location != null)
+            else if (CampaignMission.Current?.Location != null)
             {
                 SummonInLocation(adoptedHero, settings, context, onSuccess, onFailure);
             }
