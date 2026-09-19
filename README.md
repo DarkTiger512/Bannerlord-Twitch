@@ -8,6 +8,8 @@ BLT is maintained in two variants: **Classic** (`main`, chat and existing overla
 
 See [release variants, installation and draft validation](docs/RELEASE-VARIANTS.md) before choosing a package or switching variants.
 
+Twitch Extension **0.0.8** was submitted for review on September 19, 2026. See the [submitted source, checksums and review status](docs/TWITCH-REVIEW-0.0.8.md); the review build is maintained separately from newer development features.
+
 # Bannerlord Twitch (BLT)
 This is a modification for [Mount & Blade II: Bannerlord](https://www.taleworlds.com/en/Games/Bannerlord) that adds Twitch integration to the game. This allows events in a Twitch stream to trigger actions in game, for instance redemption of Channel Point Rewards, or specific chat messages.
 
