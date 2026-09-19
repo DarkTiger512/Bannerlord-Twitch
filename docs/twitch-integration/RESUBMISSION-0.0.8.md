@@ -37,3 +37,11 @@ Protocol remains version 1 and authentication remains Twitch JWT based. The fron
 3. Only after those checks, explicitly authorize resubmission and any reviewer correspondence.
 
 The reviewer note is a draft. Approval is not guaranteed by the terminology change.
+## Save-crash regression corrected — 2026-09-19
+
+The real rehearsal failed on save. Inspection found that the reviewed baseline retained the known null stream-objective bug: SyncData dereferenced `active` when there was no active objective. The previously committed fix `03dba015b8e0625b661c8d0d5c4450d905295af2` was backported onto the candidate branch (`de1790c`). The game watchdog recorded a crash, but the crash dump/report was cancelled, so this diagnosis is based on the confirmed known defect in the installed binary's matching source, not a new stack trace.
+
+The corrected module built successfully. The policy suite, including null-objective and legacy-collection preservation regression assertions, passed using the installed .NET 9 SDK for the isolated test harness. The rebuilt BLTAdoptAHero DLL was installed and hash-verified:
+`1f9d6c9d8465f821c0e67ee402ca5c3e6342bca0af4053e2735d374cad8285f5`.
+
+The replaced DLL is in `save-fix-20260919/before-BLTAdoptAHero.dll`; it contains the save bug and is retained only for diagnosis. Saved campaigns and configuration were not changed by this correction. The module and source ZIPs/checksums were refreshed; the frontend ZIP and backend were not changed. Real save/reload retesting is still required before declaring the rehearsal passed.
