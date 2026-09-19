@@ -567,8 +567,9 @@ namespace BannerlordTwitch
             MainThreadSync.Post(() =>
             {
                 if (IntegrationRuntimeState.IsSaving) { _ = integrationClient?.SendActionErrorAsync(request.RequestId, "Wait for the campaign save to finish before using a command."); return; }
-                if (request == null || integrationClient == null)
+                if (request == null || integrationClient == null || !integrationClient.IsRequestPending(request.RequestId))
                     return;
+                Log.Info($"[Integration] Executing request {request.RequestId}");
                 IntegrationIdentityProvider.Apply(request.User.Id, request.User.Name);
                 if (!integrationClient.TryResolve(request, out var action, out var args, out var error))
                 {
@@ -614,7 +615,8 @@ namespace BannerlordTwitch
             MainThreadSync.Post(() =>
             {
                 if (IntegrationRuntimeState.IsSaving) { _ = integrationClient?.SendActionErrorAsync(request.RequestId, "Wait for the campaign save to finish before using a command."); return; }
-                if (request == null || integrationClient == null) return;
+                if (request == null || integrationClient == null || !integrationClient.IsRequestPending(request.RequestId)) return;
+                Log.Info($"[Integration] Executing request {request.RequestId}");
                 IntegrationIdentityProvider.Apply(request.User.Id, request.User.Name);
                 if (!IntegrationCommandLine.TryParse(request.CommandLine, out var parsed)) { _ = integrationClient.SendActionErrorAsync(request.RequestId, "Enter a command."); return; }
                 var commandName = parsed.Name;

@@ -45,3 +45,13 @@ The corrected module built successfully. The policy suite, including null-object
 `1f9d6c9d8465f821c0e67ee402ca5c3e6342bca0af4053e2735d374cad8285f5`.
 
 The replaced DLL is in `save-fix-20260919/before-BLTAdoptAHero.dll`; it contains the save bug and is retained only for diagnosis. Saved campaigns and configuration were not changed by this correction. The module and source ZIPs/checksums were refreshed; the frontend ZIP and backend were not changed. Real save/reload retesting is still required before declaring the rehearsal passed.
+
+## Request/shutdown investigation — 2026-09-19
+
+Saving was confirmed working by the user. The next rehearsal found summon/attack requests stuck at “Waiting for Bannerlord…” with no hero deployment, and a managed exception on exit. The backend accepted the requests. The game crash report was cancelled, leaving no new managed stack trace.
+
+The connector now starts the request deadline before name lookup or main-thread queuing, bounds Twitch name lookup to five seconds, explicitly terminates stale requests, and prevents execution after a request expires. Request receipt, execution and completion are traced without credentials. Queued integration callbacks check connector lifetime before accessing the game. Cancellation tokens are captured before disposal, and request completion/expiry/disposal are synchronized.
+
+The new BLTIntegration.Tests harness compiles the real connector/request-lifecycle source with game-service stubs. It passed wire-format action/command dispatch, early request tracking, stale request termination, post-disposal queued callback suppression, late replies, and 100 concurrent completion/expiry/disposal races. Release module build passed. The installed BannerlordTwitch.dll hash is `2d8f8b4f4e1fbc14dc0fc27881e20cc0774694f9dceaa6b2145956ebe0b55414`; the previous DLL is backed up in `integration-fix-20260919`.
+
+These checks do not establish the original cause of stalled in-game execution or prove the exit crash eliminated. A traced real-game retest is in progress. No frontend or backend deployment was required for these changes, and the save fix remains installed.
