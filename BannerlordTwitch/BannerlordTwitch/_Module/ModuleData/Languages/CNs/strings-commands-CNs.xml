@@ -74,11 +74,11 @@
         <string id="IFDecKha" text="名称项" original="nameitem"/>
         <!-- bltbet -->
         <!-- Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded. -->
-        <string id="thajdk5s" text="如果可用，使用它来投注锦标赛比赛。&lt;br&gt;用法是&lt;code&gt;!bltbet (team) (gold)&lt;/code&gt; ，例如&lt;code&gt;!bltbet red 10000&lt;/code&gt;在红色上下注 10000 金币。根据相对下注大小，从整个底池中分配奖金。&lt;br&gt;如果只投注一支球队，投注将被退还。" original="Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded."/>
+        <string id="Predict_thajdk5s" text="Predict the winning team using in-game hero gold. Usage: !predict (team) (gold). Gold committed may be lost; prediction rewards come from the shared pool. If only one team is selected, gold is refunded."/>
         <!-- bet on tournament -->
-        <string id="xBgLXaf7" text="投注锦标赛" original="bet on tournament"/>
+        <string id="Predict_xBgLXaf7" text="Predict the winning team"/>
         <!-- bltbet -->
-        <string id="haKiwbsR" text="打赌" original="bltbet"/>
+        <string id="Predict_haKiwbsR" text="predict"/>
         <!-- power -->
         <!-- power -->
         <string id="NUQ5PsjF" text="力量" original="power"/>

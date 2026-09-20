@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
@@ -68,11 +68,11 @@ namespace BLTAdoptAHero
             {
                 var teams = TournamentHelpers.TeamNames.Take(tournamentBehavior.CurrentMatch.Teams.Count());
                 string msg = tournamentBehavior.CurrentRoundIndex < 3
-                    ? "{=wgGkXkyh}Betting is now OPEN for round {RoundIndex} match: {Teams}!"
+                    ? "{=Predict_wgGkXkyh}Predictions are now OPEN for round {RoundIndex} match: {Teams}!"
                         .Translate(
                             ("RoundIndex", tournamentBehavior.CurrentRoundIndex + 1),
                             ("Teams", string.Join(" " + "{=ixTCiaiv}vs".Translate() + " ", teams)))
-                    : "{=9BjHfivM}Betting is now OPEN for final match: {Teams}!"
+                    : "{=Predict_9BjHfivM}Predictions are now OPEN for final match: {Teams}!"
                         .Translate(
                             ("Teams", string.Join(" " + "{=ixTCiaiv}vs".Translate() + " ", teams)))
                         ;
@@ -98,22 +98,22 @@ namespace BLTAdoptAHero
 
             if (!BLTAdoptAHeroModule.TournamentConfig.EnableBetting)
             {
-                return (false, "{=uNUyZhDk}Betting is disabled".Translate());
+                return (false, "{=Predict_uNUyZhDk}Predictions are disabled".Translate());
             }
 
             if (CurrentBettingState == BettingState.closed)
             {
-                return (false, "{=APTqGlHh}Betting is closed".Translate());
+                return (false, "{=Predict_APTqGlHh}Predictions are closed".Translate());
             }
 
             if (tournamentBehavior.CurrentRoundIndex != 3 && BLTAdoptAHeroModule.TournamentConfig.BettingOnFinalOnly)
             {
-                return (false, "{=7yFW99H8}Betting is only allowed on the final".Translate());
+                return (false, "{=Predict_7yFW99H8}Predictions are only allowed on the final".Translate());
             }
 
             if (CurrentBettingState != BettingState.open)
             {
-                return (false, "{=ATdvJKFI}Betting is not open".Translate());
+                return (false, "{=Predict_ATdvJKFI}Predictions are not open".Translate());
             }
 
             int teamsCount = tournamentBehavior.CurrentMatch.Teams.Count();
@@ -129,7 +129,7 @@ namespace BLTAdoptAHero
             {
                 if (existingBet.team != teamIdx)
                 {
-                    return (false, "{=7iveTGQp}You can only bet on one team".Translate());
+                    return (false, "{=Predict_7iveTGQp}You can only predict one winning team".Translate());
                 }
             }
 
@@ -173,16 +173,16 @@ namespace BLTAdoptAHero
                     activeBets = null;
                     CurrentBettingState = BettingState.disabled;
                     Log.LogFeedMessage(
-                        "{=Nm96SVXt}Betting is now CLOSED: only one team bet on, bets refunded".Translate());
+                        "{=Predict_Nm96SVXt}Predictions are now CLOSED: only one team selected; gold refunded".Translate());
                     ActionManager.SendChat(
-                        "{=Nm96SVXt}Betting is now CLOSED: only one team bet on, bets refunded".Translate());
+                        "{=Predict_Nm96SVXt}Predictions are now CLOSED: only one team selected; gold refunded".Translate());
                 }
                 else if (!groupedBets.Any())
                 {
                     activeBets = null;
                     CurrentBettingState = BettingState.disabled;
-                    Log.LogFeedMessage("{=GrI9bFCf}Betting is now CLOSED: no bets placed".Translate());
-                    ActionManager.SendChat("{=GrI9bFCf}Betting is now CLOSED: no bets placed".Translate());
+                    Log.LogFeedMessage("{=Predict_GrI9bFCf}Predictions are now CLOSED: no predictions placed".Translate());
+                    ActionManager.SendChat("{=Predict_GrI9bFCf}Predictions are now CLOSED: no predictions placed".Translate());
                 }
                 else
                 {
@@ -193,7 +193,7 @@ namespace BLTAdoptAHero
                             .Select(g => $"{g.Key} {g.Select(x => x.bet).Sum()}{Naming.Gold}")
                             .ToList()
                         ;
-                    string msg = "{=Hj3oYnE0}Betting is now CLOSED: {TotalBets}"
+                    string msg = "{=Predict_Hj3oYnE0}Predictions are now CLOSED: {TotalBets}"
                         .Translate(("TotalBets", string.Join(", ", betTotals)));
                     Log.LogFeedMessage(msg);
                     ActionManager.SendChat(msg);
@@ -214,8 +214,8 @@ namespace BLTAdoptAHero
                 foreach (var (hero, bet) in activeBets)
                 {
                     Log.LogFeedResponse(hero.FirstName.ToString(),
-                        "{=u4mPf1p0}REFUNDED {Bet}{GoldIcon} bet"
-                            .Translate(("Bet", bet.bet), ("GoldIcon", Naming.Gold)));
+                        "{=Predict_u4mPf1p0}Prediction refund: {Predict}{GoldIcon}"
+                            .Translate(("Predict", bet.bet), ("GoldIcon", Naming.Gold)));
                     BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, bet.bet);
                 }
 
@@ -244,7 +244,7 @@ namespace BLTAdoptAHero
                     int winnings = (int)(totalBet * bet / winningTotalBet);
                     int newGold = BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, winnings);
                     Log.LogFeedResponse(hero.FirstName.ToString(),
-                        "{=majAmqDm}WON BET".Translate() +
+                        "{=Predict_majAmqDm}Prediction reward".Translate() +
                         $" {Naming.Inc}{winnings}{Naming.Gold}{Naming.To}{newGold}{Naming.Gold}");
                 }
 

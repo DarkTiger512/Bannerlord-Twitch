@@ -771,9 +771,9 @@
         <!-- Invalid gold argument -->
         <string id="GiU7feEu" text="Недействительный аргумент золота" original="Invalid gold argument"/>
         <!-- Betting not active -->
-        <string id="3AQKsF9f" text="Ставки не активны" original="Betting not active"/>
+        <string id="Predict_3AQKsF9f" text="Predictions not active"/>
         <!-- Bet {GoldAmount}{GoldIcon} on {Team} -->
-        <string id="9tlhaGyH" text="Ставка {GoldAmount}{GoldIcon} на {Team}" original="Bet {GoldAmount}{GoldIcon} on {Team}"/>
+        <string id="Predict_9tlhaGyH" text="Prediction recorded for {Team}. Gold committed: {GoldAmount}{GoldIcon}"/>
         <!-- (team) (gold) -->
         <string id="8XQwqd4f" text="(команда) (золото)" original="(team) (gold)"/>
         <!-- UsePower -->

@@ -1,6 +1,6 @@
 [
   {
-    "sourceLine": 4985,
+    "sourceLine": 4947,
     "settings": {},
     "Documentation": "Adopt a randomly selected Hero, filtered by Culture.  Enter \"list\" to get a list of cultures",
     "Enabled": true,
@@ -46,7 +46,7 @@
     "  Title": "Adopt a Hero by Culture"
   },
   {
-    "sourceLine": 5042,
+    "sourceLine": 5004,
     "settings": {},
     "Documentation": "Adopt a randomly selected Hero, filtered by Faction.  Enter \"list\" to get a list of factions",
     "Enabled": false,
@@ -92,7 +92,7 @@
     "  Title": "Adopt a Hero by Faction"
   },
   {
-    "sourceLine": 5084,
+    "sourceLine": 5046,
     "settings": {},
     "Documentation": "Adopt a randomly selected Hero. Almost all other actions require an adopted hero.",
     "Enabled": true,
@@ -138,7 +138,7 @@
     "  Title": "Adopt a Random Hero"
   },
   {
-    "sourceLine": 5141,
+    "sourceLine": 5103,
     "settings": {},
     "Documentation": "{=flQofEFu}Use this when the streamer enters a battle, to spawn your adopted hero on the enemy side (along with your retinue).",
     "Enabled": true,
@@ -174,7 +174,7 @@
     "  Title": "{=IrF1VaBD}Attack"
   },
   {
-    "sourceLine": 5173,
+    "sourceLine": 5135,
     "settings": {},
     "Documentation": null,
     "Enabled": false,
@@ -218,7 +218,7 @@
     "  Title": "{=2ciF79zR}Burn Player"
   },
   {
-    "sourceLine": 5217,
+    "sourceLine": 5179,
     "settings": {},
     "Documentation": "{=Hbk74nei}Adds 100,000 gold to your adopted hero.",
     "Enabled": true,
@@ -242,7 +242,7 @@
     "  Title": "Daily Gold"
   },
   {
-    "sourceLine": 5237,
+    "sourceLine": 5199,
     "settings": {},
     "Documentation": "{=ZfhTuaRR}Add 50,000 XP to your adopted hero. The skill it is applied to will be randomly choosen, but influenced by your class and existing skills and equipment.",
     "Enabled": true,
@@ -270,7 +270,7 @@
     "  Title": "Daily XP"
   },
   {
-    "sourceLine": 5261,
+    "sourceLine": 5223,
     "settings": {},
     "Documentation": "{=CSmE7Y50}Transfer 10,000 gold to the streamers character, from your hero.",
     "Enabled": false,
@@ -296,7 +296,7 @@
     "  Title": "{=9DoHhKeh}Give Player Gold"
   },
   {
-    "sourceLine": 5283,
+    "sourceLine": 5245,
     "settings": {},
     "Documentation": "{=pFwSBHnR}Heals your hero over time. Only works in battle, when your hero is summoned.",
     "Enabled": true,
@@ -336,7 +336,7 @@
     "  Title": "{=likTlNpu}Heal Hero"
   },
   {
-    "sourceLine": 5319,
+    "sourceLine": 5281,
     "settings": {},
     "Documentation": "{=zLxgvsYd}Heals the streamers character in battle, over time. Doesn't work on the campaign map.",
     "Enabled": true,
@@ -378,7 +378,7 @@
     "  Title": "{=MSpPJJhZ}Heal Streamer"
   },
   {
-    "sourceLine": 5357,
+    "sourceLine": 5319,
     "settings": {},
     "Documentation": "{=SXzjFdG1}Use this if you no longer wish to play with your current hero. They will be marked as (retired), and you will then be able to adopt a new one. Inheritence rules apply the same to retirement as they do to death. You MUST enter yes at the prompt (exactly as written, in lower case) for the retirement to complete.",
     "Enabled": true,
@@ -402,7 +402,7 @@
     "  Title": "{=AZMDg7St}Retire My Hero"
   },
   {
-    "sourceLine": 5377,
+    "sourceLine": 5339,
     "settings": {},
     "Documentation": "{=5L3LWrUx}Sends a message in the game. If you have a hero then it will also show them next to the message.",
     "Enabled": true,
@@ -426,7 +426,7 @@
     "  Title": "{=FFvfbTgo}Send Message In Game"
   },
   {
-    "sourceLine": 5397,
+    "sourceLine": 5359,
     "settings": {},
     "Documentation": "{=nI4dr4uZ}Use this when the streamer enters a battle, to spawn your adopted hero on the streamers side (along with your retinue).",
     "Enabled": true,
@@ -462,7 +462,7 @@
     "  Title": "{=dpnWybop}Summon"
   },
   {
-    "sourceLine": 5429,
+    "sourceLine": 5391,
     "settings": {},
     "Documentation": "{=KaE947T9}Join the tournament queue with your adopted hero. You can see the queue in the overlay. Each tournament can have up to 16 heroes in it, once it is full further heroes will remain in the queue for the next tournament.",
     "Enabled": true,
@@ -486,7 +486,7 @@
     "  Title": "{=IBrMU0VF}Tournament"
   },
   {
-    "sourceLine": 5449,
+    "sourceLine": 5411,
     "settings": {},
     "Documentation": "{=LO6Q2DCb}Activate your class power on your hero, if you have one. The power will last for a limited period of time, indicated on the overlay.",
     "Enabled": true,

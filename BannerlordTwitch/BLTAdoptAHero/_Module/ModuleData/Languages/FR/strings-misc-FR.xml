@@ -270,11 +270,11 @@
         <!-- Tournament -->
         <string id="PI83uB8j" text="Tournoi" original="Tournament"/>
         <!-- Betting is OPEN -->
-        <string id="WPTU6AGn" text="Les paris sont OUVERTS" original="Betting is OPEN"/>
+        <string id="Predict_WPTU6AGn" text="Predictions are OPEN"/>
         <!-- Betting is CLOSED -->
-        <string id="PLRsZCjL" text="Les paris sont FERMÉS" original="Betting is CLOSED"/>
+        <string id="Predict_PLRsZCjL" text="Predictions are CLOSED"/>
         <!-- Not taking bets -->
-        <string id="Sv04YKsL" text="Ne pas prendre de paris" original="Not taking bets"/>
+        <string id="Predict_Sv04YKsL" text="Not taking predictions"/>
         <!-- GeneratedRewardDef -->
         <!-- Reward Type -->
         <string id="x6pmNHJT" text="Type de récompense" original="Reward Type"/>

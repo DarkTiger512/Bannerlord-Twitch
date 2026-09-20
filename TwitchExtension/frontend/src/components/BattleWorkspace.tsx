@@ -9,6 +9,7 @@ interface Props {
   mission: GameState["mission"];
   viewer?: GameState["viewer"];
   connected?: boolean;
+  heroId?: string;
   actions: ManifestAction[];
   identity: ViewerIdentity;
   cooldowns: Record<string, number>;
@@ -47,17 +48,17 @@ function HeroHud({ hero, tournament }: { hero: MissionCombatant; tournament: boo
   </article>;
 }
 
-export function BattleWorkspace({ mission, viewer, connected, actions, identity, cooldowns, busy, onRequestIdentity, onSubmit }: Props) {
+export function BattleWorkspace({ mission, heroId, viewer, connected, actions, identity, cooldowns, busy, onRequestIdentity, onSubmit }: Props) {
   const { t } = useI18n();
-  const ownIndex = mission.combatants.findIndex(hero => hero.name.localeCompare(identity.displayName, undefined, { sensitivity: "accent" }) === 0);
+  const ownIndex = heroId ? mission.combatants.findIndex(hero => hero.id === heroId) : -1;
   const ownHero = ownIndex >= 0 ? mission.combatants[ownIndex] : undefined;
-  const groups = useMemo(() => mission.combatants.reduce((result, hero, index) => {
-    if (index === ownIndex) return result;
+  const groups = useMemo(() => mission.combatants.reduce((result, hero) => {
+
     const key = sideKey(hero, mission.kind === "tournament") === "team" ? t("battle.team", { number: hero.tournamentTeam + 1 }) : hero.isPlayerSide ? t("battle.streamerSide") : t("battle.opposingSide");
     const group = result.get(key);
     if (group) group.push(hero); else result.set(key, [hero]);
     return result;
-  }, new Map<string, MissionCombatant[]>()), [mission.combatants, mission.kind, ownIndex, t]);
+  }, new Map<string, MissionCombatant[]>()), [mission.combatants, mission.kind, t]);
 
   return <section className="battle-workspace" aria-label={t("battle.live")}>
     <div className="battle-stage">
@@ -67,7 +68,7 @@ export function BattleWorkspace({ mission, viewer, connected, actions, identity,
         <BattleCommandStrip viewer={viewer} connected={connected} actions={actions} identity={identity} mission={mission} cooldowns={cooldowns} busy={busy} onRequestIdentity={onRequestIdentity} onSubmit={onSubmit} />
       </section>
       <section className="minimal-battle-roster" aria-label={t("battle.roster")}>
-        <h2>{t("battle.roster")} <span>{mission.combatants.length - (ownHero ? 1 : 0)}</span></h2>
+        <h2>{t("battle.roster")} <span>{mission.combatants.length}</span></h2>
         <div className="minimal-team-groups">{Array.from(groups, ([name, heroes]) => <div className="minimal-team-group" key={name}><h3>{name}</h3><div style={{ "--roster-columns": Math.min(heroes.length, 8) } as CSSProperties}>{heroes.map(hero => <RosterTile key={hero.id} hero={hero} tournament={mission.kind === "tournament"} />)}</div></div>)}</div>
       </section>
     </div>

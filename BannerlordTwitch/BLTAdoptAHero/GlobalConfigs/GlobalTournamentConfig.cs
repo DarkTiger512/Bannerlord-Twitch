@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -23,7 +23,7 @@ namespace BLTAdoptAHero
      CategoryOrder("Round Type", 4),
      CategoryOrder("Round Rewards", 5),
      CategoryOrder("Rewards", 6),
-     CategoryOrder("Betting", 7),
+     CategoryOrder("Predictions", 7),
      CategoryOrder("Prize", 8),
      CategoryOrder("Prize Tier", 9),
      CategoryOrder("Custom Prize", 10),
@@ -387,15 +387,15 @@ namespace BLTAdoptAHero
         #endregion
 
         #region Betting
-        [LocDisplayName("{=rne7aMUR}Enable Betting"),
-         LocCategory("Betting", "{=n1Agm9uJ}Betting"),
-         LocDescription("{=FOQEPZD5}Enable betting"),
+        [LocDisplayName("{=Predict_rne7aMUR}Enable Predictions"),
+         LocCategory("Predictions", "{=Predict_n1Agm9uJ}Predictions"),
+         LocDescription("{=Predict_FOQEPZD5}Enable predictions"),
          PropertyOrder(1), UsedImplicitly, Document]
         public bool EnableBetting { get; set; } = true;
 
-        [LocDisplayName("{=njh9b5GB}Betting On Final Only"),
-         LocCategory("Betting", "{=n1Agm9uJ}Betting"),
-         LocDescription("{=KGcz71VJ}Only allow betting on the final betting"),
+        [LocDisplayName("{=Predict_njh9b5GB}Predictions On Final Only"),
+         LocCategory("Predictions", "{=Predict_n1Agm9uJ}Predictions"),
+         LocDescription("{=Predict_KGcz71VJ}Only allow predictions on the final tournament match"),
          PropertyOrder(2), UsedImplicitly, Document]
         public bool BettingOnFinalOnly { get; set; }
         #endregion

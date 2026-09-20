@@ -250,9 +250,9 @@
         <!-- Prize -->
         <string id="Xu2KD7Kc" text="Приз" original="Prize"/>
         <!-- Enable Betting -->
-        <string id="rne7aMUR" text="Включить ставки" original="Enable Betting"/>
+        <string id="Predict_rne7aMUR" text="Enable Predictions"/>
         <!-- Betting On Final Only -->
-        <string id="njh9b5GB" text="Ставки только на финал" original="Betting On Final Only"/>
+        <string id="Predict_njh9b5GB" text="Predictions On Final Only"/>
         <!-- Skill Reduction Percent Per Win -->
         <string id="5a40vmYi" text="Процент снижения навыков за победу" original="Skill Reduction Percent Per Win"/>
         <!-- Floor Percent -->
@@ -322,9 +322,9 @@
         <!-- Winners prize -->
         <string id="wYzmyUCE" text="Приз победителей" original="Winners prize"/>
         <!-- Enable betting -->
-        <string id="FOQEPZD5" text="Разрешить ставки" original="Enable betting"/>
+        <string id="Predict_FOQEPZD5" text="Enable predictions"/>
         <!-- Only allow betting on the final betting -->
-        <string id="KGcz71VJ" text="Разрешить делать ставки только на окончательные ставки" original="Only allow betting on the final betting"/>
+        <string id="Predict_KGcz71VJ" text="Only allow predictions on the final tournament match"/>
         <!-- Skill or skill group to modifier (all skills in a group will be modified) -->
         <string id="twgHWqU6" text="Навык или группа навыков для модификатора (все навыки в группе будут изменены)" original="Skill or skill group to modifier (all skills in a group will be modified)"/>
         <!-- Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified. -->
@@ -340,6 +340,6 @@
         <!-- Rewards -->
         <string id="FHkvQbcR" text="Награды" original="Rewards"/>
         <!-- Betting -->
-        <string id="n1Agm9uJ" text="Делать ставки" original="Betting"/>
+        <string id="Predict_n1Agm9uJ" text="Predictions"/>
     </strings>
 </base>

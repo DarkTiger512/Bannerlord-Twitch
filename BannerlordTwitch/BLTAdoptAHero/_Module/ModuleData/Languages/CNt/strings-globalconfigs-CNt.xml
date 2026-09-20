@@ -250,9 +250,9 @@
         <!-- Prize -->
         <string id="Xu2KD7Kc" text="獎" original="Prize"/>
         <!-- Enable Betting -->
-        <string id="rne7aMUR" text="啟用投注" original="Enable Betting"/>
+        <string id="Predict_rne7aMUR" text="Enable Predictions"/>
         <!-- Betting On Final Only -->
-        <string id="njh9b5GB" text="只投注決賽" original="Betting On Final Only"/>
+        <string id="Predict_njh9b5GB" text="Predictions On Final Only"/>
         <!-- Skill Reduction Percent Per Win -->
         <string id="5a40vmYi" text="每次勝利的技能減少百分比" original="Skill Reduction Percent Per Win"/>
         <!-- Floor Percent -->
@@ -322,9 +322,9 @@
         <!-- Winners prize -->
         <string id="wYzmyUCE" text="優勝者獎" original="Winners prize"/>
         <!-- Enable betting -->
-        <string id="FOQEPZD5" text="啟用投注" original="Enable betting"/>
+        <string id="Predict_FOQEPZD5" text="Enable predictions"/>
         <!-- Only allow betting on the final betting -->
-        <string id="KGcz71VJ" text="只允許對最終投注進行投注" original="Only allow betting on the final betting"/>
+        <string id="Predict_KGcz71VJ" text="Only allow predictions on the final tournament match"/>
         <!-- Skill or skill group to modifier (all skills in a group will be modified) -->
         <string id="twgHWqU6" text="技能或技能組修改（組內所有技能都會修改）" original="Skill or skill group to modifier (all skills in a group will be modified)"/>
         <!-- Reduction to the skill per win (in %). See https://www.desmos.com/calculator/ajydvitcer for visualization of how skill will be modified. -->
@@ -340,6 +340,6 @@
         <!-- Rewards -->
         <string id="FHkvQbcR" text="獎勵" original="Rewards"/>
         <!-- Betting -->
-        <string id="n1Agm9uJ" text="投注" original="Betting"/>
+        <string id="Predict_n1Agm9uJ" text="Predictions"/>
     </strings>
 </base>

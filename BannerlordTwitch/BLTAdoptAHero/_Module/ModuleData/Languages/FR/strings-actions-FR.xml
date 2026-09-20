@@ -754,9 +754,9 @@
         <!-- Invalid gold argument -->
         <string id="GiU7feEu" text="Argument d'or non valide" original="Invalid gold argument"/>
         <!-- Betting not active -->
-        <string id="3AQKsF9f" text="Les paris ne sont pas ouverts" original="Betting not active"/>
+        <string id="Predict_3AQKsF9f" text="Predictions not active"/>
         <!-- Bet {GoldAmount}{GoldIcon} on {Team} -->
-        <string id="9tlhaGyH" text="Pari {GoldAmount}{GoldIcon} sur {Team}" original="Bet {GoldAmount}{GoldIcon} on {Team}"/>
+        <string id="Predict_9tlhaGyH" text="Prediction recorded for {Team}. Gold committed: {GoldAmount}{GoldIcon}"/>
         <!-- (team) (gold) -->
         <string id="8XQwqd4f" text="(équipe) (or)" original="(team) (gold)"/>
         <!-- UsePower -->

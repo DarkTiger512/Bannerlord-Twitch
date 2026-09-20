@@ -505,14 +505,6 @@
     ]
   },
   {
-    "path": "BannerlordTwitch/BannerlordTwitch/Properties/AssemblyInfo.cs",
-    "project": "BannerlordTwitch",
-    "kinds": [
-      "support"
-    ],
-    "symbols": []
-  },
-  {
     "path": "BannerlordTwitch/BannerlordTwitch/SaveSystem/DictionaryToArrayConverter.cs",
     "project": "BannerlordTwitch",
     "kinds": [
@@ -2243,7 +2235,7 @@
       "action-handler"
     ],
     "symbols": [
-      "TournamentBet"
+      "TournamentPrediction"
     ]
   },
   {
@@ -3529,14 +3521,6 @@
     ]
   },
   {
-    "path": "BannerlordTwitch/BLTAdoptAHero/Properties/AssemblyInfo.cs",
-    "project": "BLTAdoptAHero",
-    "kinds": [
-      "support"
-    ],
-    "symbols": []
-  },
-  {
     "path": "BannerlordTwitch/BLTAdoptAHero/Rewards/GeneratedRewardDef.cs",
     "project": "BLTAdoptAHero",
     "kinds": [
@@ -3983,14 +3967,6 @@
     ]
   },
   {
-    "path": "BannerlordTwitch/BLTBuffet/Properties/AssemblyInfo.cs",
-    "project": "BLTBuffet",
-    "kinds": [
-      "support"
-    ],
-    "symbols": []
-  },
-  {
     "path": "BannerlordTwitch/BLTBuffet/Util/Patches.cs",
     "project": "BLTBuffet",
     "kinds": [
@@ -4054,14 +4030,6 @@
     "symbols": [
       "GlobalOverlayConfig"
     ]
-  },
-  {
-    "path": "BannerlordTwitch/BLTConfigure/Properties/AssemblyInfo.cs",
-    "project": "BLTConfigure",
-    "kinds": [
-      "support"
-    ],
-    "symbols": []
   },
   {
     "path": "BannerlordTwitch/BLTConfigure/UI/CollectionEditorPage.xaml",
@@ -4216,6 +4184,37 @@
     ],
     "symbols": [
       "TwitchAuthHelper"
+    ]
+  },
+  {
+    "path": "BannerlordTwitch/BLTIntegration.Tests/BLTIntegration.Tests.csproj",
+    "project": "BLTIntegration.Tests",
+    "kinds": [
+      "support"
+    ],
+    "symbols": []
+  },
+  {
+    "path": "BannerlordTwitch/BLTIntegration.Tests/Program.cs",
+    "project": "BLTIntegration.Tests",
+    "kinds": [
+      "configuration"
+    ],
+    "symbols": []
+  },
+  {
+    "path": "BannerlordTwitch/BLTIntegration.Tests/Stubs.cs",
+    "project": "BLTIntegration.Tests",
+    "kinds": [
+      "configuration"
+    ],
+    "symbols": [
+      "AuthSettings",
+      "Command",
+      "Settings",
+      "MainThreadSync",
+      "Log",
+      "IntegrationActionCatalog"
     ]
   }
 ]

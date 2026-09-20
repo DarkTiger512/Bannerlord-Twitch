@@ -1,0 +1,102 @@
+// Engine stubs isolate dispatch and callback completion. They do not simulate spawning.
+class Program
+{
+    static void Check(bool condition, string name)
+    {
+        if (!condition) throw new Exception(name);
+    }
+    static int Main()
+    {
+        try { Run(); return 0; }
+        catch (Exception error) { Console.Error.WriteLine(error.Message); return 1; }
+    }
+    static void Run()
+    {
+        foreach (bool dlc in new[] { false, true })
+        foreach (bool playerSide in new[] { false, true })
+        foreach (string place in new[] { "battle", "location", "naval" })
+        {
+            CampaignHelpers.Enabled = dlc;
+            Mission.Current = new() { IsNavalBattle = place == "naval" };
+            CampaignMission.Current = new() { Location = place == "location" ? new object() : null };
+            var settings = new Settings { OnPlayerSide = playerSide };
+            var replies = new List<string>();
+            new SummonHero().ExecuteInternal(new(), new(), settings, replies.Add, error => throw new Exception(error));
+            Check(replies.Count == (place == "location" ? 1 : 0), "Battle spawning must wait for the mission tick");
+            BLTSummonBehavior.Current.Tick();
+            string expected = dlc && place == "naval" ? "naval" : place == "location" ? "location" : "battle";
+            Check(replies.SequenceEqual(new[] { expected }), $"Missing/wrong summon dispatch: DLC={dlc}, playerSide={playerSide}, mission={place}");
+        }
+        Mission.Current = null;
+        int failures = 0;
+        new SummonHero().ExecuteInternal(new(), new(), new Settings(), _ => throw new Exception("No mission succeeded"), _ => failures++);
+        Check(failures == 1, "No mission must return one failure, without throwing");
+        Mission.Current = new();
+        CampaignMission.Current = null;
+        var fallback = new List<string>();
+        new SummonHero().ExecuteInternal(new(), new(), new Settings(), fallback.Add, _ => throw new Exception("Null campaign mission failed"));
+        BLTSummonBehavior.Current.Tick();
+        Check(fallback.SequenceEqual(new[] { "battle" }), "A battle without a campaign location must dispatch");
+        Console.WriteLine("PASS actual summon dispatch: DLC on/off, summon/attack sides, land/location/naval routing, mission-tick deferral, one terminal callback, no-mission rejection, null campaign location.");
+    }
+}
+class SummonHero
+{
+    /* ACTUAL_DISPATCH_METHOD */
+    static void SummonInLocation(Hero h, Settings s, ReplyContext c, Action<string> ok, Action<string> fail) => ok("location");
+    static void SummonInBattle(Hero h, Settings s, ReplyContext c, Action<string> ok, Action<string> fail) => ok("battle");
+}
+class Hero { }
+class ReplyContext { }
+class Settings
+{
+    public int GoldCost;
+    public bool AllowFieldBattle = true, AllowVillageBattle = true, AllowSiegeBattle = true, AllowFriendlyMission = true, AllowHideOut = true, OnPlayerSide;
+}
+class BLTAdoptAHeroCampaignBehavior
+{
+    public static BLTAdoptAHeroCampaignBehavior Current = new();
+    public int GetHeroGold(Hero hero) => 1000;
+}
+static class Naming { public static string NotEnoughGold(int cost, int available) => "Insufficient gold"; }
+static class Localization { public static string Translate(this string text) => text; }
+enum MissionMode { Battle, Barter, Conversation, Duel, Replay, CutScene, Stealth }
+class Mission
+{
+    public enum State { Continuing }
+    public static Mission Current;
+    public MissionMode Mode = MissionMode.Battle;
+    public State CurrentState = State.Continuing;
+    public bool IsLoadingFinished = true, IsMissionEnding, IsNavalBattle;
+    public MissionResult MissionResult;
+    public T GetMissionBehavior<T>() where T : class => null;
+}
+class MissionResult { public bool BattleResolved; }
+class TournamentFightMissionController { }
+class CampaignMission { public static CampaignMission Current; public object Location; }
+static class CampaignHelpers { public static bool Enabled; public static bool NavalDLC() => Enabled; }
+static class MissionHelpers
+{
+    public static bool InArenaPracticeMission() => false;
+    public static bool InTournament() => false;
+    public static bool InConversationMission() => false;
+    public static bool InLordsHallBattleMission() => false;
+    public static bool InFieldBattleMission() => true;
+    public static bool InVillageEncounter() => false;
+    public static bool InSiegeMission() => false;
+    public static bool InFriendlyMission() => false;
+    public static bool InHideOutMission() => false;
+    public static bool InTrainingFieldMission() => false;
+    public static bool InArenaPracticeVisitingArea() => false;
+}
+class BLTSummonBehavior
+{
+    public static BLTSummonBehavior Current = new();
+    readonly Queue<Action> queue = new();
+    public void DoNextTick(Action action) => queue.Enqueue(action);
+    public void Tick() { int count = queue.Count; while (count-- > 0) queue.Dequeue()(); }
+}
+static class NavalSummonHero
+{
+    public static void SummonInNavalBattle(Hero h, Settings s, ReplyContext c, Action<string> ok, Action<string> fail) => ok("naval");
+}

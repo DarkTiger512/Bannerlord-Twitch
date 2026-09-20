@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
     <tags>
         <tag language="English" />
@@ -1196,9 +1196,9 @@
         <!-- Invalid gold argument -->
         <string id="GiU7feEu" text="Invalid gold argument"/>
         <!-- Betting not active -->
-        <string id="3AQKsF9f" text="Betting not active"/>
+        <string id="Predict_3AQKsF9f" text="Predictions not active"/>
         <!-- Bet {GoldAmount}{GoldIcon} on {Team} -->
-        <string id="9tlhaGyH" text="Bet {GoldAmount}{GoldIcon} on {Team}"/>
+        <string id="Predict_9tlhaGyH" text="Prediction recorded for {Team}. Gold committed: {GoldAmount}{GoldIcon}"/>
         <!-- (team) (gold) -->
         <string id="8XQwqd4f" text="(team) (gold)"/>
         

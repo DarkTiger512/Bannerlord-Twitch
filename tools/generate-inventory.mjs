@@ -71,7 +71,7 @@ function categoryFor(command) {
   if (name === "prestige") return "Progression";
   const haystack = `${command.Name ?? ""} ${command.Handler ?? ""} ${command.Documentation ?? ""}`.toLowerCase();
   const categories = [
-    ["Tournament", /tournament|arena|bet/],
+    ["Tournament", /tournament|arena|predict/],
     ["Battle", /battle|mission|summon|ammo|duel|guard|formation/],
     ["Kingdom", /kingdom|clan|vassal|fief|diplom|party|army|capital/],
     ["Equipment", /equip|item|smith|retinue|upgrade/],
@@ -106,7 +106,7 @@ const actionDescriptions = {
   attack: "Summon your hero and retinue on the enemy side of the current battle.",
   auction: "Auction one of your custom items with a reserve price.",
   bid: "Bid gold on the active custom-item auction.",
-  bltbet: "Bet your hero's gold on a team in the current viewer tournament.",
+  predict: "Predict the winning team using in-game hero gold. Gold committed may be lost; rewards are shared from the prediction pool.",
   buymount: "Buy a randomly tiered mount for a mounted hero class.",
   clan: "Create, join, leave, inspect, or manage a viewer clan.",
   class: "Choose your hero's class and update equipment requirements.",
@@ -165,7 +165,7 @@ function actionInput(command) {
     objective: [choice("operation", "Objective operation", ["list", "start", "status", "stop"]), when(textInput("objective", "Objective type and goal options", false), "operation", ["start"])],
     adoptbyclan: [textInput("clan", "Clan")], adoptbyculture: [dynamicChoice("culture", "Culture", "cultures")], adoptbyfaction: [textInput("faction", "Faction")], adoptbyname: [textInput("hero", "Hero name")],
     attack: [textInput("shout", "Optional battle shout", false)], auction: [numberInput("item", "Custom item number"), numberInput("reserve", "Reserve price")], bid: [numberInput("amount", "Bid amount")],
-    bltbet: [numberInput("entrant", "Team number"), numberInput("amount", "Gold to bet")], buymount: [dynamicChoice("culture", "Item culture", "cultures", false)],
+    predict: [numberInput("entrant", "Team number"), numberInput("amount", "Gold committed")], buymount: [dynamicChoice("culture", "Item culture", "cultures", false)],
     clan: [choice("operation", "Clan operation", ["join", "create", "lead", "rename", "stats", "party", "fiefs", "leave", "buy title", "banner", "ship", "home"], false), when(textInput("target", "Clan name, banner code, ship, or home settlement", false), "operation", ["join", "create", "rename", "banner", "ship", "home"])],
     class: [textInput("class", "Hero class")], customitems: [textInput("filter", "Item filter", false)], discarditem: [numberInput("item", "Custom item number")],
     hero: [choice("operation", "Hero action", ["gender", "looks", "marry", "race", "culture"]), when(textInput("value", "Gender, appearance, spouse, race, or culture"), "operation", ["gender", "looks", "marry", "race", "culture"])],

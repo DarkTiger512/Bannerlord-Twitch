@@ -142,9 +142,9 @@
         <string id="lrOJnThZ" text="終了しました" original="was ended"/>
         <!-- BLTTournamentBetMissionBehavior -->
         <!-- Betting is now OPEN for round {RoundIndex} match: {Teams}! -->
-        <string id="wgGkXkyh" text="ラウンド{RoundIndex} match: {Teams}の賭けが開始されました！" original="Betting is now OPEN for round {RoundIndex} match: {Teams}!"/>
+        <string id="Predict_wgGkXkyh" text="Predictions are now OPEN for round {RoundIndex} match: {Teams}!"/>
         <!-- Betting is now OPEN for final match: {Teams}! -->
-        <string id="9BjHfivM" text="ファイナルマッチの賭けが開始されました：{Teams}！" original="Betting is now OPEN for final match: {Teams}!"/>
+        <string id="Predict_9BjHfivM" text="Predictions are now OPEN for final match: {Teams}!"/>
         <!-- vs -->
         <string id="ixTCiaiv" text="vs" original="vs"/>
         <!-- blue -->
@@ -158,27 +158,27 @@
         <!-- Tournament is not active -->
         <string id="FEZ1Opj1" text="トーナメントはアクティブではありません" original="Tournament is not active"/>
         <!-- Betting is disabled -->
-        <string id="uNUyZhDk" text="賭けは無効です" original="Betting is disabled"/>
+        <string id="Predict_uNUyZhDk" text="Predictions are disabled"/>
         <!-- Betting is closed -->
-        <string id="APTqGlHh" text="賭けは締め切られました" original="Betting is closed"/>
+        <string id="Predict_APTqGlHh" text="Predictions are closed"/>
         <!-- Betting is only allowed on the final -->
-        <string id="7yFW99H8" text="賭けは決勝でのみ許可されます" original="Betting is only allowed on the final"/>
+        <string id="Predict_7yFW99H8" text="Predictions are only allowed on the final"/>
         <!-- Betting is not open -->
-        <string id="ATdvJKFI" text="賭けは開かれていません" original="Betting is not open"/>
+        <string id="Predict_ATdvJKFI" text="Predictions are not open"/>
         <!-- Team name must be one of {Teams} -->
         <string id="1rUYWox8" text="チーム名は{Teams}のいずれかである必要があります" original="Team name must be one of {Teams}"/>
         <!-- You can only bet on one team -->
-        <string id="7iveTGQp" text="1つのチームにのみ賭けることができます" original="You can only bet on one team"/>
+        <string id="Predict_7iveTGQp" text="You can only predict one winning team"/>
         <!-- Betting is now CLOSED: only one team bet on, bets refunded -->
-        <string id="Nm96SVXt" text="賭けは終了しました：1つのチームのみが賭け、賭けは返金されます" original="Betting is now CLOSED: only one team bet on, bets refunded"/>
+        <string id="Predict_Nm96SVXt" text="Predictions are now CLOSED: only one team selected; gold refunded"/>
         <!-- Betting is now CLOSED: no bets placed -->
-        <string id="GrI9bFCf" text="賭けは終了しました：賭けは行われません" original="Betting is now CLOSED: no bets placed"/>
+        <string id="Predict_GrI9bFCf" text="Predictions are now CLOSED: no predictions placed"/>
         <!-- Betting is now CLOSED: {TotalBets} -->
-        <string id="Hj3oYnE0" text="賭けは終了しました：{TotalBets}" original="Betting is now CLOSED: {TotalBets}"/>
+        <string id="Predict_Hj3oYnE0" text="Predictions are now CLOSED: {TotalBets}"/>
         <!-- REFUNDED {Bet}{GoldIcon} bet -->
-        <string id="u4mPf1p0" text="払い戻し済みの{Bet}{GoldIcon}ベット" original="REFUNDED {Bet}{GoldIcon} bet"/>
+        <string id="Predict_u4mPf1p0" text="Prediction refund: {Predict}{GoldIcon}"/>
         <!-- WON BET -->
-        <string id="majAmqDm" text="勝ちました" original="WON BET"/>
+        <string id="Predict_majAmqDm" text="Prediction reward"/>
         <!-- BLTTournamentMissionBehavior -->
         <!-- WINNER! -->
         <string id="jb5vaUCD" text="勝者！" original="WINNER!"/>

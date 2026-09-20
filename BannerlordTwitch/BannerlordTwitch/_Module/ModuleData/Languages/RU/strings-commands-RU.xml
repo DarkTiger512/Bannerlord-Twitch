@@ -74,11 +74,11 @@
         <string id="IFDecKha" text="назватьпредмет" original="nameitem"/>
         <!-- bltbet -->
         <!-- Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded. -->
-        <string id="thajdk5s" text="Используйте это, чтобы делать ставки на турнирные матчи, если они доступны.&lt;br&gt; &lt;code&gt;!ставка (team) (gold)&lt;/code&gt; , например &lt;code&gt;!ставка red 10000&lt;/code&gt; чтобы поставить 10000 золота на красное. Выигрыши делятся из всего банка в зависимости от относительного размера ставки.&lt;br&gt; Если ставка сделана только на одну команду, ставки будут возвращены." original="Use this to bet on tournament matches, when available.&lt;br&gt;Usage is &lt;code&gt;!bltbet (team) (gold)&lt;/code&gt;, for example &lt;code&gt;!bltbet red 10000&lt;/code&gt; to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.&lt;br&gt;If only one team is bet upon, the bets will be refunded."/>
+        <string id="Predict_thajdk5s" text="Predict the winning team using in-game hero gold. Usage: !predict (team) (gold). Gold committed may be lost; prediction rewards come from the shared pool. If only one team is selected, gold is refunded."/>
         <!-- bet on tournament -->
-        <string id="xBgLXaf7" text="ставка на турнир" original="bet on tournament"/>
+        <string id="Predict_xBgLXaf7" text="Predict the winning team"/>
         <!-- bltbet -->
-        <string id="haKiwbsR" text="ставка" original="bltbet"/>
+        <string id="Predict_haKiwbsR" text="predict"/>
         <!-- power -->
         <!-- power -->
         <string id="NUQ5PsjF" text="способность" original="power"/>

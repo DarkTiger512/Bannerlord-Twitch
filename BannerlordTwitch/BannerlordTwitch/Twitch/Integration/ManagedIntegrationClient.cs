@@ -101,6 +101,7 @@ namespace BannerlordTwitch.Integration
     public sealed class IntegrationViewerSnapshot
     {
         public bool Adopted { get; set; }
+        public string HeroId { get; set; }
         public string HeroName { get; set; }
         public int? Gold { get; set; }
         public IntegrationPrestigeSnapshot Prestige { get; set; }
@@ -256,8 +257,9 @@ namespace BannerlordTwitch.Integration
         private readonly IntegrationActionCatalog catalog;
         private readonly HttpClient http = new();
         private readonly CancellationTokenSource lifetime = new();
+        private readonly CancellationToken lifetimeToken;
         private ClientWebSocket socket;
-        private bool disposed;
+        private volatile bool disposed;
         private readonly ConcurrentDictionary<Guid, byte> receivedRequests = new();
         private readonly IntegrationRequestLifecycle requestLifecycle = new();
         private readonly ConcurrentDictionary<string, IntegrationUser> subscribedViewers = new(StringComparer.Ordinal);
@@ -277,6 +279,7 @@ namespace BannerlordTwitch.Integration
 
         public ManagedIntegrationClient(AuthSettings auth, string channelId, IEnumerable<Command> commands)
         {
+            lifetimeToken = lifetime.Token;
             this.auth = auth;
             this.channelId = channelId;
             catalog = IntegrationActionCatalog.Load();
@@ -291,6 +294,14 @@ namespace BannerlordTwitch.Integration
             _ = RunAsync();
         }
 
+        private void PostIfActive(Action action)
+        {
+            if (disposed) return;
+            MainThreadSync.Post(() => { if (!disposed) action(); });
+        }
+
+        public bool IsRequestPending(Guid requestId) => !disposed && requestLifecycle.IsPending(requestId);
+
         private async Task RunAsync()
         {
             var delay = TimeSpan.FromSeconds(2);
@@ -303,19 +314,20 @@ namespace BannerlordTwitch.Integration
                     socket = new ClientWebSocket();
                     socket.Options.SetRequestHeader("Authorization", $"Bearer {auth.IntegrationCredential}");
                     socket.Options.AddSubProtocol("blt.integration.v1");
-                    await socket.ConnectAsync(GameSocketUri(), lifetime.Token);
+                    await socket.ConnectAsync(GameSocketUri(), lifetimeToken);
                     delay = TimeSpan.FromSeconds(2);
                     Log.LogFeedSystem("[Integration] Connected to managed Twitch Extension service");
-                    await SendAsync("hello", new { modVersion = typeof(ManagedIntegrationClient).Assembly.GetName().Version?.ToString(), protocolVersion = IntegrationProtocol.Version }, lifetime.Token);
-                    await SendRawAsync(JsonSerializer.Serialize(new { v = IntegrationProtocol.Version, id = Guid.NewGuid(), kind = "manifest", channelId, timestamp = DateTimeOffset.UtcNow, data = JsonSerializer.Deserialize<JsonElement>(catalog.ManifestJson) }), lifetime.Token);
+                    await SendAsync("hello", new { modVersion = typeof(ManagedIntegrationClient).Assembly.GetName().Version?.ToString(), protocolVersion = IntegrationProtocol.Version }, lifetimeToken);
+                    await SendRawAsync(JsonSerializer.Serialize(new { v = IntegrationProtocol.Version, id = Guid.NewGuid(), kind = "manifest", channelId, timestamp = DateTimeOffset.UtcNow, data = JsonSerializer.Deserialize<JsonElement>(catalog.ManifestJson) }), lifetimeToken);
                     var battle = IntegrationBattleProvider.Current();
-                    await SendAsync("state.snapshot", new { connected = true, gameStarted = Settings.GameStarted, unavailable = new { }, cooldowns = new { }, selectors = IntegrationSelectorProvider.Current(), commands = runtimeCommands, mission = battle }, lifetime.Token);
-                    await Task.WhenAll(ReceiveAsync(lifetime.Token), PublishBattleStateAsync(battle.Revision, Settings.GameStarted, lifetime.Token), PublishViewerStatesAsync(lifetime.Token));
+                    var gameStarted = Settings.GameStarted;
+                    await SendAsync("state.snapshot", new { connected = true, gameStarted, unavailable = new { }, cooldowns = new { }, selectors = IntegrationSelectorProvider.Current(), commands = runtimeCommands, mission = battle }, lifetimeToken);
+                    await Task.WhenAll(ReceiveAsync(lifetimeToken), PublishBattleStateAsync(battle.Revision, gameStarted, lifetimeToken), PublishViewerStatesAsync(lifetimeToken));
                 }
                 catch (OperationCanceledException) { return; }
-                catch (Exception ex) { Log.Error($"[Integration] Connection failed: {ex.Message}"); }
+                catch (Exception ex) { if (disposed) return; Log.Error($"[Integration] Connection failed: {ex.Message}"); }
                 if (disposed) return;
-                try { await Task.Delay(delay, lifetime.Token); } catch (OperationCanceledException) { return; }
+                try { await Task.Delay(delay, lifetimeToken); } catch (OperationCanceledException) { return; }
                 delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 60));
             }
         }
@@ -340,7 +352,7 @@ namespace BannerlordTwitch.Integration
             {
                 await Task.Delay(500, token);
                 if (IntegrationRuntimeState.IsSaving) continue;
-                MainThreadSync.Post(() =>
+                PostIfActive(() =>
                 {
                     if (IntegrationRuntimeState.IsSaving) return;
                     foreach (var viewer in subscribedViewers.Values)
@@ -350,7 +362,7 @@ namespace BannerlordTwitch.Integration
                         var serialized = JsonSerializer.Serialize(snapshot);
                         if (lastViewerStates.TryGetValue(viewer.Id, out var previous) && previous == serialized) continue;
                         lastViewerStates[viewer.Id] = serialized;
-                        _ = SendAsync("viewer.state", new { userId = viewer.Id, snapshot.Adopted, snapshot.HeroName, snapshot.Gold, snapshot.Prestige, snapshot.BattleBalance }, lifetime.Token);
+                        _ = SendAsync("viewer.state", new { userId = viewer.Id, snapshot.Adopted, snapshot.HeroId, snapshot.HeroName, snapshot.Gold, snapshot.Prestige, snapshot.BattleBalance }, lifetimeToken);
                     }
                 });
             }
@@ -401,7 +413,9 @@ namespace BannerlordTwitch.Integration
                 using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.twitch.tv/helix/users?id={Uri.EscapeDataString(userId)}");
                 request.Headers.TryAddWithoutValidation("Client-Id", auth.ClientID);
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", auth.AccessToken);
-                using var response = await http.SendAsync(request, token);
+                using var lookupTimeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                lookupTimeout.CancelAfter(TimeSpan.FromSeconds(5));
+                using var response = await http.SendAsync(request, lookupTimeout.Token);
                 response.EnsureSuccessStatusCode();
                 using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 var users = document.RootElement.GetProperty("data");
@@ -438,17 +452,26 @@ namespace BannerlordTwitch.Integration
                 if (kind == "configuration.updated")
                 {
                     var configuration = data.Clone();
-                    MainThreadSync.Post(() => ApplyConfiguration(configuration));
+                    PostIfActive(() => ApplyConfiguration(configuration));
                     return;
+                }
+                if (kind == "command.request" || kind == "action.request")
+                {
+                    requestIdForError = root.GetProperty("id").GetGuid();
+                    Log.Info($"[Integration] Received {kind} {requestIdForError}");
+                    // Start the deadline before identity lookup or main-thread queuing.
+                    await SendActionAcceptedAsync(requestIdForError.Value);
                 }
                 var user = root.GetProperty("user");
                 if (kind == "viewer.subscribe")
                 {
                     var viewer = new IntegrationUser { Id = user.GetProperty("id").GetString(), Name = await ResolveTwitchDisplayNameAsync(user, token), Roles = JsonSerializer.Deserialize<string[]>(user.GetProperty("roles").GetRawText()) };
                     subscribedViewers[viewer.Id] = viewer;
+                    // A reconnected backend needs the identity mapping even if gold/name did not change.
+                    lastViewerStates.TryRemove(viewer.Id, out _);
                     lastViewerStates.TryRemove(viewer.Id, out _);
                     if (!IntegrationRuntimeState.IsSaving)
-                        MainThreadSync.Post(() => { if (!IntegrationRuntimeState.IsSaving) IntegrationIdentityProvider.Apply(viewer.Id, viewer.Name); });
+                        PostIfActive(() => { if (!IntegrationRuntimeState.IsSaving) IntegrationIdentityProvider.Apply(viewer.Id, viewer.Name); });
                     return;
                 }
                 if (kind == "viewer.unsubscribe")
@@ -464,14 +487,14 @@ namespace BannerlordTwitch.Integration
                     if (IntegrationRuntimeState.IsSaving) { await SendAsync("inventory.error", new { error = "Inventory is temporarily unavailable while the campaign is saving." }, token, requestId); return; }
                     var userId = user.GetProperty("id").GetString();
                     var userName = await ResolveTwitchDisplayNameAsync(user, token);
-                    MainThreadSync.Post(() =>
+                    PostIfActive(() =>
                     {
-                        if (IntegrationRuntimeState.IsSaving) { _ = SendAsync("inventory.error", new { error = "Inventory is temporarily unavailable while the campaign is saving." }, lifetime.Token, requestId); return; }
+                        if (IntegrationRuntimeState.IsSaving) { _ = SendAsync("inventory.error", new { error = "Inventory is temporarily unavailable while the campaign is saving." }, lifetimeToken, requestId); return; }
                         IntegrationIdentityProvider.Apply(userId, userName);
                         var inventory = IntegrationInventoryProvider.For(userName);
                         _ = string.IsNullOrEmpty(inventory.Error)
-                            ? SendAsync("inventory.snapshot", inventory, lifetime.Token, requestId)
-                            : SendAsync("inventory.error", new { error = inventory.Error }, lifetime.Token, requestId);
+                            ? SendAsync("inventory.snapshot", inventory, lifetimeToken, requestId)
+                            : SendAsync("inventory.error", new { error = inventory.Error }, lifetimeToken, requestId);
                     });
                     return;
                 }
@@ -481,14 +504,14 @@ namespace BannerlordTwitch.Integration
                     if (IntegrationRuntimeState.IsSaving) { await SendAsync("retinue.error", new { error = "Retinue is temporarily unavailable while the campaign is saving." }, token, requestId); return; }
                     var userId = user.GetProperty("id").GetString();
                     var userName = await ResolveTwitchDisplayNameAsync(user, token);
-                    MainThreadSync.Post(() =>
+                    PostIfActive(() =>
                     {
-                        if (IntegrationRuntimeState.IsSaving) { _ = SendAsync("retinue.error", new { error = "Retinue is temporarily unavailable while the campaign is saving." }, lifetime.Token, requestId); return; }
+                        if (IntegrationRuntimeState.IsSaving) { _ = SendAsync("retinue.error", new { error = "Retinue is temporarily unavailable while the campaign is saving." }, lifetimeToken, requestId); return; }
                         IntegrationIdentityProvider.Apply(userId, userName);
                         var retinue = IntegrationRetinueProvider.For(userName);
                         _ = string.IsNullOrEmpty(retinue.Error)
-                            ? SendAsync("retinue.snapshot", retinue, lifetime.Token, requestId)
-                            : SendAsync("retinue.error", new { error = retinue.Error }, lifetime.Token, requestId);
+                            ? SendAsync("retinue.snapshot", retinue, lifetimeToken, requestId)
+                            : SendAsync("retinue.error", new { error = retinue.Error }, lifetimeToken, requestId);
                     });
                     return;
                 }
@@ -502,7 +525,8 @@ namespace BannerlordTwitch.Integration
                         User = new IntegrationUser { Id = user.GetProperty("id").GetString(), Name = await ResolveTwitchDisplayNameAsync(user, token), Roles = JsonSerializer.Deserialize<string[]>(user.GetProperty("roles").GetRawText()) }
                     };
                     if (!string.Equals(commandRequest.ChannelId, channelId, StringComparison.Ordinal)) return;
-                    if (Math.Abs((DateTimeOffset.UtcNow - commandRequest.Timestamp).TotalSeconds) > 30 || !receivedRequests.TryAdd(commandRequest.RequestId, 0)) return;
+                    if (Math.Abs((DateTimeOffset.UtcNow - commandRequest.Timestamp).TotalSeconds) > 30) { await SendActionErrorAsync(commandRequest.RequestId, "The command expired before Bannerlord could execute it. Please retry."); return; }
+                    if (!receivedRequests.TryAdd(commandRequest.RequestId, 0) || !IsRequestPending(commandRequest.RequestId)) return;
                     CommandRequested?.Invoke(commandRequest);
                     return;
                 }
@@ -515,8 +539,8 @@ namespace BannerlordTwitch.Integration
                     User = new IntegrationUser { Id = user.GetProperty("id").GetString(), Name = await ResolveTwitchDisplayNameAsync(user, token), Roles = JsonSerializer.Deserialize<string[]>(user.GetProperty("roles").GetRawText()) }
                 };
                 if (!string.Equals(actionRequest.ChannelId, channelId, StringComparison.Ordinal)) return;
-                if (Math.Abs((DateTimeOffset.UtcNow - actionRequest.Timestamp).TotalSeconds) > 30) return;
-                if (!receivedRequests.TryAdd(actionRequest.RequestId, 0)) return;
+                if (Math.Abs((DateTimeOffset.UtcNow - actionRequest.Timestamp).TotalSeconds) > 30) { await SendActionErrorAsync(actionRequest.RequestId, "The action expired before Bannerlord could execute it. Please retry."); return; }
+                if (!receivedRequests.TryAdd(actionRequest.RequestId, 0) || !IsRequestPending(actionRequest.RequestId)) return;
                 ActionRequested?.Invoke(actionRequest);
             }
             catch (Exception ex)
@@ -533,12 +557,15 @@ namespace BannerlordTwitch.Integration
             foreach (var preference in commands.EnumerateArray())
             {
                 var actionId = preference.GetProperty("actionId").GetString();
+                if (actionId == "command.bltbet") actionId = "command.predict";
                 var commandName = actionId?.StartsWith("command.", StringComparison.Ordinal) == true ? actionId.Substring(8) : actionId;
                 if (string.IsNullOrWhiteSpace(commandName) || !configuredCommands.TryGetValue(commandName, out var command)) continue;
                 if (preference.TryGetProperty("enabled", out var enabled)) command.Enabled = enabled.GetBoolean();
                 if (!preference.TryGetProperty("settings", out var settings) || settings.ValueKind != JsonValueKind.Object) continue;
                 foreach (var setting in settings.EnumerateObject())
                 {
+                    // Public prediction metadata comes from the corrected module, never stale saved profiles.
+                    if (commandName == "predict" && new[] { "Name", "Help", "Documentation", "Handler" }.Contains(setting.Name, StringComparer.OrdinalIgnoreCase)) continue;
                     object target = command; var propertyName = setting.Name;
                     if (propertyName.StartsWith("HandlerConfig.", StringComparison.Ordinal)) { target = command.HandlerConfig; propertyName = propertyName.Substring(14); }
                     if (target == null) continue;
@@ -575,7 +602,7 @@ namespace BannerlordTwitch.Integration
         {
             if (requestLifecycle.TryAccept(requestId, out var timeoutToken))
                 _ = ExpireRequestAsync(requestId, timeoutToken);
-            return SendAsync("action.accepted", new { requestId }, lifetime.Token, requestId);
+            return SendAsync("action.accepted", new { requestId }, lifetimeToken, requestId);
         }
 
         public Task SendActionResultAsync(Guid requestId, string[] messages) =>
@@ -586,8 +613,9 @@ namespace BannerlordTwitch.Integration
 
         private async Task SendTerminalAsync(string kind, Guid requestId, object data)
         {
-            if (!requestLifecycle.TryComplete(requestId)) return;
-            await SendAsync(kind, data, lifetime.Token, requestId);
+            if (disposed || !requestLifecycle.TryComplete(requestId)) return;
+            Log.Info($"[Integration] Completed {requestId}: {kind}");
+            await SendAsync(kind, data, lifetimeToken, requestId);
             _ = ForgetTerminalAsync(requestId);
         }
 
@@ -596,13 +624,13 @@ namespace BannerlordTwitch.Integration
             try { await Task.Delay(TimeSpan.FromSeconds(30), token); }
             catch (OperationCanceledException) { return; }
             if (!requestLifecycle.TryExpire(requestId)) return;
-            await SendAsync("action.error", new { requestId, error = "Bannerlord did not return a result within 30 seconds." }, lifetime.Token, requestId);
+            await SendAsync("action.error", new { requestId, error = "Bannerlord did not return a result within 30 seconds." }, lifetimeToken, requestId);
             _ = ForgetTerminalAsync(requestId);
         }
 
         private async Task ForgetTerminalAsync(Guid requestId)
         {
-            try { await Task.Delay(TimeSpan.FromMinutes(5), lifetime.Token); }
+            try { await Task.Delay(TimeSpan.FromMinutes(5), lifetimeToken); }
             catch (OperationCanceledException) { return; }
             requestLifecycle.Forget(requestId);
         }
@@ -612,7 +640,7 @@ namespace BannerlordTwitch.Integration
 
         private async Task SendRawAsync(string json, CancellationToken token)
         {
-            if (socket?.State != WebSocketState.Open) return;
+            if (disposed || token.IsCancellationRequested || socket?.State != WebSocketState.Open) return;
             var bytes = Encoding.UTF8.GetBytes(json);
             await sendLock.WaitAsync(token);
             try { if (socket?.State == WebSocketState.Open) await socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, token); }

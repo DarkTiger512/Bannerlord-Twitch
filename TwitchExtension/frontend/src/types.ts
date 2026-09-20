@@ -46,7 +46,7 @@ export interface PrestigeSnapshot {
   count: number; maximum: number; runKills: number; requiredKills: number; requiredGold: number;
   eligible: boolean; blockingReason?: string; resetSummary: string; perks: PrestigePerk[];
 }
-export interface ViewerState { adopted: boolean; heroName?: string; gold?: number; prestige?: PrestigeSnapshot; battleBalance?: { missionId: string; lockedBonus: number } }
+export interface ViewerState { adopted: boolean; heroId?: string; heroName?: string; gold?: number; prestige?: PrestigeSnapshot; battleBalance?: { missionId: string; lockedBonus: number } }
 
 export interface ViewerIdentity {
   token: string;
@@ -137,7 +137,7 @@ declare global {
         onAuthorized(callback: (auth: { token: string; channelId: string; userId?: string }) => void): void;
         onContext(callback: (context: { mode?: string }) => void): void;
         actions: { requestIdShare(): void };
-        viewer: { displayName?: string; role?: Role; isLinked?: boolean };
+        viewer: { id?: string | null; role?: Role; isLinked?: boolean };
       };
     };
   }

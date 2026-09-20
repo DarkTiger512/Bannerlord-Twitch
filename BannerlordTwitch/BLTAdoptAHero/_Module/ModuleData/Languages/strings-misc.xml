@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
     <tags>
         <tag language="English" />
@@ -293,11 +293,11 @@
         <!-- Tournament -->
         <string id="PI83uB8j" text="Tournament"/>
         <!-- Betting is OPEN -->
-        <string id="WPTU6AGn" text="Betting is OPEN"/>
+        <string id="Predict_WPTU6AGn" text="Predictions are OPEN"/>
         <!-- Betting is CLOSED -->
-        <string id="PLRsZCjL" text="Betting is CLOSED"/>
+        <string id="Predict_PLRsZCjL" text="Predictions are CLOSED"/>
         <!-- Not taking bets -->
-        <string id="Sv04YKsL" text="Not taking bets"/>
+        <string id="Predict_Sv04YKsL" text="Not taking predictions"/>
                 
         <!-- GeneratedRewardDef -->
         <!-- Reward Type -->

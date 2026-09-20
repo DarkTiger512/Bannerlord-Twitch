@@ -754,9 +754,9 @@
         <!-- Invalid gold argument -->
         <string id="GiU7feEu" text="잘못된 금 인수" original="Invalid gold argument"/>
         <!-- Betting not active -->
-        <string id="3AQKsF9f" text="베팅이 활성화되지 않음" original="Betting not active"/>
+        <string id="Predict_3AQKsF9f" text="Predictions not active"/>
         <!-- Bet {GoldAmount}{GoldIcon} on {Team} -->
-        <string id="9tlhaGyH" text="{GoldAmount}{GoldIcon} on {Team} 베팅" original="Bet {GoldAmount}{GoldIcon} on {Team}"/>
+        <string id="Predict_9tlhaGyH" text="Prediction recorded for {Team}. Gold committed: {GoldAmount}{GoldIcon}"/>
         <!-- (team) (gold) -->
         <string id="8XQwqd4f" text="(팀) (금)" original="(team) (gold)"/>
         <!-- UsePower -->

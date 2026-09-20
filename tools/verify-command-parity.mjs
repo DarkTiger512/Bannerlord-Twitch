@@ -14,8 +14,9 @@ export const integrationRef = option("--integration-ref", "BLT/twitch-integratio
 export const readSource = (ref, file) => execFileSync("git", ["show", `${ref}:${file}`], { encoding: "utf8" }).replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
 const main = parseCommands(readProfile(classicRef));
 const integration = parseCommands(readProfile(integrationRef));
+const canonicalName = name => cleanName(name) === "bltbet" ? "predict" : cleanName(name);
 const compared = command => ({
-  name: cleanName(command.Name), handler: command.Handler, enabled: command.Enabled,
+  name: canonicalName(command.Name), handler: command.Handler === "TournamentBet" ? "TournamentPrediction" : command.Handler, enabled: command.Enabled,
   moderatorOnly: command.ModeratorOnly, hideHelp: command.HideHelp,
   handlerConfig: command.HandlerConfig ?? {}
 });
@@ -25,7 +26,7 @@ assert.deepEqual(integration.map(compared), main.map(compared),
   "Integration command names, handlers, permissions, enabled/help state, or handler configuration diverged from main");
 
 const matrix = readSource(integrationRef, "docs/twitch-integration/readiness/COMMAND-PARITY.md");
-const rows = [...matrix.matchAll(/^\| `!([^`]+)` \| `([^`]+)` \|/gm)];
+const rows = [...matrix.matchAll(/^\| (?:`command\.[^`]+` \| )?`!([^`]+)` \| `([^`]+)` \|/gm)];
 assert.equal(rows.length, main.length, "The live parity matrix must contain exactly one row per main command");
-assert.deepEqual(rows.map(row => row[1]), main.map(command => cleanName(command.Name)), "The live parity matrix must follow the active main profile order");
+assert.deepEqual(rows.map(row => row[1]), main.map(command => canonicalName(command.Name)), "The live parity matrix must follow the active main profile order");
 console.log(`Command parity verified: ${main.length} commands match ${classicRef} and ${integrationRef}, including the live-test matrix.`);

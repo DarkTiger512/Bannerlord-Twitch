@@ -228,7 +228,7 @@ app.Map("/ws/viewer/{channel}", async (string channel, HttpContext context, Twit
     var tokenValue = context.Request.Query["token"].ToString();
     if (!validator.TryValidate($"Bearer {tokenValue}", channel, out var principal, out _)) { context.Response.StatusCode = 401; return; }
     using var socket = await context.WebSockets.AcceptWebSocketAsync("blt.viewer.v1");
-    await router.AttachViewerAsync(channel, principal!, socket, token);
+    await router.AttachViewerAsync(channel, principal!, socket, token, context.Request.Query["hud"] == "hero-id-v1");
 });
 
 app.Run();
