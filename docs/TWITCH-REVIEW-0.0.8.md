@@ -4,12 +4,12 @@ Twitch confirmed **In Review** on September 19, 2026. Version 0.0.8 is active as
 
 ## Exact submitted source
 
-- Branch: `codex/twitch-resubmission-008`
+- Branch: `BLT/twitch-integration`
 - Source commit: `c5c29481d1bb523ff6205474b0fb6315f24e2570`
 - Review baseline: `a44ffb3171207649e7ce716041573584ac9a38da`
 - Module version: 5.4.0; Bannerlord version: 1.4.8; Twitch protocol: 1.
 
-Subsequent documentation commits on the review branch record submission status without changing the uploaded ZIP. Neither Classic main nor the newer `BLT/twitch-integration` development branch is an exact substitute for the submitted source. Prestige, battle-balance development and unfinished enchantment work were not folded into the review build.
+The submitted commit is preserved in the history of `BLT/twitch-integration`. Later integration commits combine the review fixes with newer development; check out the exact commit above to reproduce the submission. Neither current branch tip is an exact substitute for that snapshot. Prestige, battle-balance development and unfinished enchantment work were not folded into the review build.
 
 ## Included corrections
 
