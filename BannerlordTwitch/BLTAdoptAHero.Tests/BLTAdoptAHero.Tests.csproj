@@ -6,6 +6,10 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net6.0\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Compile Include="..\BLTAdoptAHero\Util\EnchantmentPolicy.cs" Link="EnchantmentPolicy.cs" />
     <Compile Include="..\BLTAdoptAHero\Util\BattleBalancePolicy.cs" Link="BattleBalancePolicy.cs" />
     <Compile Include="..\BLTAdoptAHero\Util\PrestigePolicy.cs" Link="PrestigePolicy.cs" />
     <Compile Include="..\BLTAdoptAHero\Util\CycleSafeGraph.cs" Link="CycleSafeGraph.cs" />

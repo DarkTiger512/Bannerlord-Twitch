@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.ObjectSystem;
+using BLTAdoptAHero.Util;
 
 namespace BLTAdoptAHero
 {
@@ -42,6 +43,8 @@ namespace BLTAdoptAHero
             public float MountHitPoints { get; set; }
             [UsedImplicitly]
             public string CustomName { get; set; }
+
+            public List<EnchantmentEntry> Enchantments { get; set; } = new();
 
             public void Apply(ItemModifier toModifier)
             {
@@ -153,6 +156,45 @@ namespace BLTAdoptAHero
             });
 
         public bool IsRegistered(ItemModifier modifier) => modifier != null && customItemModifiers.ContainsKey(modifier);
+
+        public int GetEnchantmentLevel(ItemModifier modifier) =>
+            customItemModifiers.TryGetValue(modifier, out var data) ? data.Enchantments?.Count ?? 0 : 0;
+
+        public (EnchantmentEntry change, bool success, int level) Enchant(ItemModifier modifier,
+            EnchantmentStat stat, int gain, int failurePercent, int roll, Hero hero, int cost)
+        {
+            if (!customItemModifiers.TryGetValue(modifier, out var data))
+                throw new InvalidOperationException("The item is not a registered custom item.");
+            var history = data.Enchantments;
+            var next = EnchantmentPolicy.Roll(history, stat, gain, failurePercent, roll, out var change, out var success);
+            int damage = data.Damage, speed = data.Speed, missileSpeed = data.MissileSpeed;
+            int delta = success ? change.Gain : -change.Gain;
+            int newDamage = checked(damage + (change.Stat == EnchantmentStat.Damage ? delta : 0));
+            int newSpeed = checked(speed + (change.Stat == EnchantmentStat.Speed ? delta : 0));
+            int newMissileSpeed = checked(missileSpeed + (change.Stat == EnchantmentStat.MissileSpeed ? delta : 0));
+            BLTAdoptAHeroCampaignBehavior.Current.CommitEnchantmentPurchase(hero, cost,
+                () =>
+                {
+                    modifier.SetDamageModifier(newDamage);
+                    modifier.SetSpeedModifier(newSpeed);
+                    modifier.SetMissileSpeedModifier(newMissileSpeed);
+                    data.Damage = newDamage;
+                    data.Speed = newSpeed;
+                    data.MissileSpeed = newMissileSpeed;
+                    data.Enchantments = next;
+                },
+                () =>
+                {
+                    data.Damage = damage;
+                    data.Speed = speed;
+                    data.MissileSpeed = missileSpeed;
+                    data.Enchantments = history;
+                    modifier.SetDamageModifier(damage);
+                    modifier.SetSpeedModifier(speed);
+                    modifier.SetMissileSpeedModifier(missileSpeed);
+                });
+            return (change, success, next.Count);
+        }
 
         public bool ItemCanBeNamed(ItemModifier itemModifier) => itemModifier != null && customItemModifiers.ContainsKey(itemModifier);
 

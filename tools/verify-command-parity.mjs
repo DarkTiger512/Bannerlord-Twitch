@@ -20,7 +20,7 @@ const compared = command => ({
   handlerConfig: command.HandlerConfig ?? {}
 });
 
-assert.equal(main.length, 63, "main must contain the authoritative profile including prestige and balance");
+assert.equal(main.length, 64, "main must contain the authoritative profile including prestige, balance, and enchantment");
 assert.deepEqual(integration.map(compared), main.map(compared),
   "Integration command names, handlers, permissions, enabled/help state, or handler configuration diverged from main");
 

@@ -1,6 +1,6 @@
 # Classic and Twitch Extension draft releases
 
-Both variants support campaign prestige, permanent perks, and voluntary smaller-side joining bonuses. They use the same gameplay rules and the same 63-command profile, including `!prestige`, `!prestige perks`, `!prestige choose <perk>`, `!prestige confirm <perk>`, `!balance` and `!battle`.
+Both variants support campaign prestige, permanent perks, and voluntary smaller-side joining bonuses. The prior paired baseline has 63 commands, including `!prestige`, `!balance` and `!battle`. Main now adds `!enchant` as command 64; this main-only feature has not been ported to integration. Shared release parity remains blocked until that port is explicitly requested and verified. See [Enchantment](ENCHANTMENT.md).
 
 | Download variant | Source branch | Streamer setup | Viewer interface |
 |---|---|---|---|

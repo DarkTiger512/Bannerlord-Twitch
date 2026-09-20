@@ -1,6 +1,7 @@
 using BLTAdoptAHero.Util;
 
 PrestigeTests.Run();
+EnchantmentTests.Run();
 BattleBalanceTests.Run();
 
 static void Assert(bool condition, string message)

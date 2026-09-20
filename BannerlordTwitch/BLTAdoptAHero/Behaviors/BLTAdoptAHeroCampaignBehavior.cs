@@ -640,6 +640,18 @@ namespace BLTAdoptAHero
 
         public void SetHeroGold(Hero hero, int gold) => GetHeroData(hero).Gold = gold;
 
+        public void CommitEnchantmentPurchase(Hero hero, int cost, Action apply, Action restoreItem)
+        {
+            var data = GetHeroData(hero);
+            if (cost < 0 || data.Gold < cost) throw new InvalidOperationException("Insufficient gold or invalid cost.");
+            var gold = data.Gold;
+            var spent = data.SpentGold;
+            int updatedSpent = checked(spent + cost);
+            BLTAdoptAHero.Util.EnchantmentPolicy.Commit(apply,
+                () => { data.Gold = gold - cost; data.SpentGold = updatedSpent; }, restoreItem,
+                () => { data.Gold = gold; data.SpentGold = spent; });
+        }
+
         public int ChangeHeroGold(Hero hero, int change, bool isSpending = false)
         {
             var hd = GetHeroData(hero);
@@ -1051,6 +1063,9 @@ namespace BLTAdoptAHero
         private Auction currentAuction;
 
         public bool AuctionInProgress => currentAuction != null;
+
+        public bool IsItemBeingAuctioned(EquipmentElement item) =>
+            currentAuction != null && currentAuction.item.IsEqualTo(item);
 
         public async void StartItemAuction(EquipmentElement item, Hero itemOwner,
             int reservePrice, int durationInSeconds, int reminderInterval, Action<string> output)

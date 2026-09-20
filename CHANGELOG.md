@@ -2,6 +2,11 @@
 
 ## Unreleased — consolidation effort
 
+- Added `!enchant` to Classic/main: spend your hero's gold to upgrade owned custom weapons up to +5. Choose damage, weapon speed, or projectile speed for eligible ranged weapons.
+- Preview before spending: `!enchant` lists eligible weapons, `!enchant <number>` shows the next cost and success chance, and `!enchant <number> damage|speed|missilespeed` purchases an attempt. Lists and previews are free.
+- The first upgrade is guaranteed. Later attempts can fail, removing the most recent enchantment while still costing gold; the weapon's original custom bonuses are protected. Default costs rise from 100,000 to 500,000 gold, with failure chances of 0%, 15%, 20%, 25%, and 30%.
+- Enchantment history follows the weapon through saves, renaming, trading, and inheritance. Streamers can configure gold costs, stat gains, and failure chances. Purchases are blocked during missions, imprisonment, and active auctions; invalid requests and failed application do not charge gold.
+- This feature is main-only; Twitch integration support and in-game acceptance testing remain pending. See [Enchantment](docs/ENCHANTMENT.md) for setup and validation steps.
 - Consolidated BLTRefreshed development into DarkTiger512/Bannerlord-Twitch while preserving both project histories.
 - Retained upstream siege-state and adopted-hero minimum-age fixes.
 - Hardened interactive overlay rendering and restricted the local command relay and overlay privileges. These source changes are not part of the existing 5.5.0 binaries.

@@ -30,7 +30,7 @@ export function parseCommands(yaml) {
       nested = null;
       continue;
     }
-    const property = line.match(/^  ([^:]+):\s*(.*)$/);
+    const property = line.match(/^  (\S[^:]*):\s*(.*)$/);
     if (property && current) {
       nested = property[1] === "HandlerConfig" && property[2].trim() === "" ? "HandlerConfig" : null;
       current[property[1]] = nested ? {} : scalar(property[2]);

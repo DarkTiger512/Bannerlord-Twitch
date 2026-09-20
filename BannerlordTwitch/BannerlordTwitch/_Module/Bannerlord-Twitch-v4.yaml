@@ -859,6 +859,30 @@ Commands:
   RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
+- Documentation: Reforge a custom weapon up to +5. Use !enchant for weapons and !enchant <number> for configured costs and risks.
+  Enabled: true
+  Handler: EnchantWeapon
+  HandlerConfig:
+    DamageGain: 5
+    SpeedGain: 2
+    MissileSpeedGain: 5
+    Level1GoldCost: 100000
+    Level2GoldCost: 200000
+    Level3GoldCost: 300000
+    Level4GoldCost: 400000
+    Level5GoldCost: 500000
+    Level2FailurePercent: 15
+    Level3FailurePercent: 20
+    Level4FailurePercent: 25
+    Level5FailurePercent: 30
+  Help: ''
+  HideHelp: false
+  ID: c733588e-ddbf-4fb0-bc32-2452180780c7
+  ModeratorOnly: false
+  Name: enchant
+  RespondInExtension: false
+  RespondInOverlay: false
+  RespondInTwitch: true
 - Documentation: '{=JiMaaypq}Shows your heroes general information, including clan, gold, location, HP, skills, attributes and retinue.'
   Enabled: true
   Handler: HeroInfoCommand
