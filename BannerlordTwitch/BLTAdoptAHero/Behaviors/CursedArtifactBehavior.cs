@@ -23,6 +23,7 @@ namespace BLTAdoptAHero.Behaviors
         private List<CurseHistoryEntry> history = new();
         private readonly CursedBattleParticipation participation = new();
         private Mission playedMission;
+        private bool missionResolved;
         private double lastTriggerDay = -100000;
 
         public CurseRecord Active => active?.Status is CurseLifecycle.Active or CurseLifecycle.CompletedPendingReward ? active : null;
@@ -40,6 +41,7 @@ namespace BLTAdoptAHero.Behaviors
             {
                 participation.Clear();
                 playedMission = null;
+                missionResolved = false;
                 TryGrantPendingReward();
             });
         }
@@ -69,6 +71,7 @@ namespace BLTAdoptAHero.Behaviors
             var battle = MobileParty.MainParty?.MapEvent;
             if (!IsCursed(hero) || agent.Team?.IsValid != true || battle == null || !QualifyingType(battle.EventType)
                 || MissionHelpers.InTournament() || MissionHelpers.InArenaPracticeMission() || MissionHelpers.InTrainingFieldMission()) return;
+            if (playedMission != Mission.Current) missionResolved = false;
             playedMission = Mission.Current;
             participation.Mark(battle, (int)agent.Team.Side);
         }
@@ -77,11 +80,10 @@ namespace BLTAdoptAHero.Behaviors
         {
             if (playedMission != mission) return;
             // An unresolved sortie must not earn a win from a later auto-resolve of the same map event.
-            if (mission.MissionResult?.BattleResolved != true || mission.MissionResult.BattleState == BattleState.DefenderPullBack)
-            {
-                participation.Clear();
-                playedMission = null;
-            }
+            missionResolved = mission.MissionResult?.BattleResolved == true
+                && mission.MissionResult.BattleState != BattleState.DefenderPullBack;
+            if (!missionResolved) participation.Clear();
+            playedMission = null;
         }
 
         private void OnDailyTick()
@@ -113,8 +115,8 @@ namespace BLTAdoptAHero.Behaviors
             try
             {
                 if (Active?.Status != CurseLifecycle.Active || !QualifyingType(mapEvent.EventType)) return;
-                bool resolved = playedMission?.MissionResult?.BattleResolved == true
-                    && playedMission.MissionResult.BattleState != BattleState.DefenderPullBack;
+                bool resolved = missionResolved || (playedMission?.MissionResult?.BattleResolved == true
+                    && playedMission.MissionResult.BattleState != BattleState.DefenderPullBack);
                 if (!participation.Complete(active, mapEvent, (int)(mapEvent.Winner?.MissionSide ?? BattleSideEnum.None),
                     resolved, BLTAdoptAHeroModule.EventConfig.CursedArtifactRequiredWins))
                 { Diagnostic("rejected unresolved battle, loss, or duplicate callback"); return; }
@@ -123,7 +125,7 @@ namespace BLTAdoptAHero.Behaviors
                         ("RequiredWins", CursedArtifactPolicy.ClampRequiredWins(BLTAdoptAHeroModule.EventConfig.CursedArtifactRequiredWins))));
                 if (active.Status == CurseLifecycle.CompletedPendingReward) TryGrantPendingReward();
             }
-            finally { participation.Clear(); playedMission = null; }
+            finally { participation.Clear(); playedMission = null; missionResolved = false; }
         }
 
         private static bool QualifyingType(MapEvent.BattleTypes type) => type is MapEvent.BattleTypes.FieldBattle
@@ -196,6 +198,7 @@ namespace BLTAdoptAHero.Behaviors
             active = null;
             participation.Clear();
             playedMission = null;
+            missionResolved = false;
         }
 
         private void AddHistory(CurseRecord record, string reason) => history.Add(new CurseHistoryEntry
