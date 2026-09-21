@@ -34,12 +34,13 @@ namespace BLTAdoptAHero.Util
 
         private static readonly Dictionary<CharacterObject, TroopInfo> Index = new();
         private static bool isBuilt;
+        private static readonly Dictionary<CultureObject, HashSet<CharacterObject>> CultureTrees = new();
 
-        public static void Reset() { Index.Clear(); isBuilt = false; }
+        public static void Reset() { Index.Clear(); CultureTrees.Clear(); isBuilt = false; }
 
         public static void BuildIndex()
         {
-            Index.Clear();
+            Index.Clear(); CultureTrees.Clear();
             foreach (var troop in CharacterObject.All.Where(t => t != null && !t.IsHero))
             {
                 var terminals = CycleSafeGraph.FindTerminals(troop,
@@ -71,7 +72,7 @@ namespace BLTAdoptAHero.Util
         {
             var role = InterpretRole(heroClass);
             WarnUnknown(heroClass, role);
-            var selection = SmartTroopPolicy.Select(candidates,
+            var selection = SmartTroopPolicy.Select(PreferRecruitmentTrees(candidates, hero?.Culture, role),
                 t => t.Culture == hero?.Culture,
                 t => IsCompatiblePath(t, role),
                 t => t.StringId,
@@ -98,13 +99,47 @@ namespace BLTAdoptAHero.Util
             EnsureBuilt();
             var role = InterpretRole(heroClass);
             WarnUnknown(heroClass, role);
-            var selection = SmartTroopPolicy.SelectClosestTier(Index.Keys.Where(IsCombatTroop), troop?.Tier ?? 0,
+            var selection = SmartTroopPolicy.SelectClosestTier(PreferRecruitmentTrees(Index.Keys.Where(IsCombatTroop), preferredCulture, role), troop?.Tier ?? 0,
                 t => t.Culture == preferredCulture,
                 t => IsCompatiblePath(t, role),
                 t => t.Tier,
                 t => CompatibleScore(t, role),
                 t => t.StringId);
             return ToResult(role, selection);
+        }
+
+        // Culture alone does not identify a normal recruitment tree: quest and special troops
+        // can share it. Prefer explicit culture recruitment trees before unanchored mod trees.
+        private static IEnumerable<CharacterObject> PreferRecruitmentTrees(IEnumerable<CharacterObject> candidates,
+            CultureObject preferredCulture, SmartTroopPolicy.SmartTroopRole role)
+        {
+            var compatible = candidates.Where(t => t != null && IsCompatiblePath(t, role)).Distinct().ToList();
+            var own = compatible.Where(t => t.Culture == preferredCulture).ToList();
+            var pool = own.Any() ? own : compatible;
+            var regular = pool.Where(IsInCultureRecruitmentTree).ToList();
+            return regular.Any() ? regular : pool;
+        }
+
+        private static bool IsInCultureRecruitmentTree(CharacterObject troop)
+        {
+            var culture = troop.Culture;
+            if (culture == null) return false;
+            if (!CultureTrees.TryGetValue(culture, out var members))
+            {
+                members = new HashSet<CharacterObject>();
+                var pending = new Stack<CharacterObject>(new[] { culture.BasicTroop, culture.EliteBasicTroop,
+                    culture.MeleeMilitiaTroop, culture.RangedMilitiaTroop,
+                    culture.MeleeEliteMilitiaTroop, culture.RangedEliteMilitiaTroop }.Where(t => t != null));
+                while (pending.Count > 0)
+                {
+                    var next = pending.Pop();
+                    if (!members.Add(next)) continue;
+                    foreach (var child in GetTroopInfo(next)?.UpgradeTargets ?? Array.Empty<CharacterObject>())
+                        pending.Push(child);
+                }
+                CultureTrees[culture] = members;
+            }
+            return members.Contains(troop);
         }
 
         private static bool IsCombatTroop(CharacterObject troop) => troop != null && !troop.IsHero

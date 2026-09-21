@@ -38,6 +38,9 @@ static class Tests
         var behavior = new BLTAdoptAHeroCampaignBehavior(hero);
         var commands = new Commands();
         var settings = new CommandSettings();
+        // Special troops share the hero culture and outrank ordinary troops by tier and ID.
+        var special = Troop("0_conspiracy_infantry",a,FormationClass.Infantry,7);
+        var specialBow = Troop("0_conspiracy_archer",a,FormationClass.Ranged,7);
         TroopTreeIndex.Reset();
         TroopTreeIndex.BuildIndex();
         foreach(bool secondary in new[] { false,true })
@@ -74,7 +77,15 @@ static class Tests
         TroopTreeIndex.BuildIndex();
         var roots = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false);
         Check(roots.Contains(orphanRoot), "Unanchored overhaul military tree was omitted.");
-        Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==orphanRoot, "Compatible own-culture overhaul tree should be selected.");
+        Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==root, "Regular own-culture recruits must outrank special and unanchored troops.");
+        Check(TroopTreeIndex.SelectClosestReplacement(aBow,infantry,a).SelectedTroop==aInf,
+            "Class conversion must prefer regular infantry over special troops.");
+        CharacterObject.All.Remove(special);
+        CharacterObject.All.Remove(specialBow);
+        root.UpgradeTargets = new[] { aBow };
+        TroopTreeIndex.BuildIndex();
+        Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==orphanRoot,
+            "Additional overhaul trees remain available when regular trees lack the role.");
         // Simulate loading another mod roster / campaign: the new index must replace old destinations.
         root.UpgradeTargets = new[] { aBow };
         CharacterObject.All.Remove(aInf);
