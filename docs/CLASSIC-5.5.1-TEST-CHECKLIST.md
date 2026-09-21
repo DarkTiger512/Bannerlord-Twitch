@@ -46,8 +46,8 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 
 ## Ordinary retinue recruitment boundary
 
-- [ ] Ordinary retinue never recruits unassigned special trees, even when those trees share the hero culture or start at tier 4-5. Only enabled cultural recruitment roots and their upgrades are eligible.
-- [ ] Disable a troop category and change class: conversion must not pick units from the excluded category. Repeat with class guidance disabled.
+- [ ] Class-guided ordinary retinue never recruits unassigned special trees, even when those trees share the hero culture or start at tier 4-5. Only enabled cultural recruitment roots and their upgrades are eligible.
+- [ ] Disable a troop category and change class: conversion must not pick units from the excluded category. With class guidance disabled, verify that existing special troops remain unchanged and can upgrade normally.
 - [ ] Load a save containing special ordinary-retinue troops. On the next retinue command or class change, they become eligible troops without charging for the replacement or resetting paid upgrade counters. Save/reload and confirm the replacements persist.
 - [ ] With no eligible replacement, the unit stays in its slot without upgrading; the reply explains why. Clearing the slot still works.
 - [ ] Elite retinue retains its configured troop access and costs. Test an elite purchase without changing the ordinary retinue.

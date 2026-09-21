@@ -117,8 +117,32 @@ static class Tests
         settings.Retinue.HireByHeroClass=false;
         oldEntry.TroopType=orphanInf;
         repaired=behavior.UpgradeRetinue(hero,settings.Retinue,0);
-        Check(oldEntry.TroopType==aBow && oldEntry.Level==4 && behavior.Gold==beforeGold,
-            "Unguided replacement must use eligible closest tier and deterministic ID.");
+        Check(!repaired.success && oldEntry.TroopType==orphanInf && oldEntry.Level==4 && behavior.Gold==beforeGold,
+            "Disabled guidance must leave special troops and paid counters unchanged.");
+        Retinue.CurrentSettings.HireByHeroClass=false;
+        behavior.SetClass(hero,archer);
+        Check(oldEntry.TroopType==orphanInf, "Class change reconciled ordinary troops with guidance disabled.");
+        // Existing units upgrade normally even outside currently enabled recruitment categories.
+        oldEntry.TroopType=orphanRoot;
+        settings.Retinue.UseBasicTroops=false; settings.Retinue.UseEliteTroops=true;
+        settings.Retinue.MaxRetinueSize=1;
+        repaired=behavior.UpgradeRetinue(hero,settings.Retinue,1);
+        Check(repaired.success && oldEntry.TroopType==orphanInf && oldEntry.Level==5 && behavior.Gold==beforeGold-10,
+            "Disabled guidance restricted legacy upgrades or changed their cost.");
+        settings.Retinue.UseBasicTroops=true; settings.Retinue.UseEliteTroops=false;
+        var unguidedRoots=TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false,
+            TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
+        Check(unguidedRoots.Contains(orphanRoot), "Unguided recruitment lost unassigned trees.");
+        behavior.Data.Retinue.Clear();
+        orphanRoot.StringId="0_special_recruit";
+        commands.ExecuteRetinue(new ReplyContext {UserName="viewer",Args="1"},settings,_=>{},e=>throw new Exception(e));
+        Check(behavior.Data.Retinue.Single().TroopType==orphanRoot,
+            "Actual unguided command must retain the previous recruitment pool.");
+        behavior.Data.Retinue.Clear(); behavior.Data.Retinue.Add(oldEntry);
+        settings.Retinue.MaxRetinueSize=3;
+        Retinue.CurrentSettings.HireByHeroClass=true;
+        behavior.Data.ClassID=infantry.ID;
+        beforeGold=behavior.Gold;
         settings.Retinue.HireByHeroClass=true;
         // No candidate: retain the special unit but never upgrade or charge for it.
         settings.Retinue.UseBasicTroops=false;

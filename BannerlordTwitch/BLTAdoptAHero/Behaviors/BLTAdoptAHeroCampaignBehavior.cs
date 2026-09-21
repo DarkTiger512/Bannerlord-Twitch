@@ -1246,7 +1246,8 @@ namespace BLTAdoptAHero
             return TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
                 settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
                 settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
-                TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly);
+                settings.HireByHeroClass ? TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly
+                    : TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
         }
 
         private (bool changed, List<string> messages) ReconcileOrdinaryRetinue(Hero hero,
@@ -1254,6 +1255,7 @@ namespace BLTAdoptAHero
         {
             bool changed = false;
             var messages = new List<string>();
+            if (!settings.HireByHeroClass) return (false, messages);
             foreach (var entry in GetHeroData(hero).Retinue)
             {
                 var old = entry.TroopType;
@@ -1478,7 +1480,7 @@ namespace BLTAdoptAHero
 
             if (!availableTroops.Any())
             {
-                return (reconciliation.changed, Naming.JoinList(reconciliation.messages.Concat(new[] { "No eligible cultural recruitment trees; check retinue settings." })));
+                return (reconciliation.changed, Naming.JoinList(reconciliation.messages.Concat(new[] { "No valid troop types could be found; check retinue settings." })));
             }
 
             var heroRetinue = GetHeroData(hero).Retinue;
@@ -1531,7 +1533,7 @@ namespace BLTAdoptAHero
                     // upgrade the lowest tier unit
                     var retinueToUpgrade = heroRetinue
                         .OrderBy(h => h.TroopType.Tier)
-                        .FirstOrDefault(t => eligible.Contains(t.TroopType) && t.TroopType.UpgradeTargets?.Any(eligible.Contains) == true &&
+                        .FirstOrDefault(t => (!settings.HireByHeroClass || eligible.Contains(t.TroopType)) && t.TroopType.UpgradeTargets?.Any() == true &&
                             (!settings.HireByHeroClass || TroopTreeIndex.SelectCompatibleUpgrade(t.TroopType, GetClass(hero), eligible).SelectedTroop != null));
 
                     if (retinueToUpgrade != null)
@@ -1539,7 +1541,7 @@ namespace BLTAdoptAHero
                         var oldTroopType = retinueToUpgrade.TroopType;
                         var upgradedTroopType = settings.HireByHeroClass
                             ? TroopTreeIndex.SelectCompatibleUpgrade(oldTroopType, GetClass(hero), eligible).SelectedTroop
-                            : oldTroopType.UpgradeTargets.Where(eligible.Contains).SelectRandom();
+                            : oldTroopType.UpgradeTargets.SelectRandom();
                         if (upgradedTroopType == null)
                         {
                             results.Add("{=BLTNoCompatibleUpgrade}No class-compatible upgrade path remains.".Translate());

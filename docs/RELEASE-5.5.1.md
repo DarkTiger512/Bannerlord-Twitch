@@ -32,7 +32,7 @@ See [the manual checklist](CLASSIC-5.5.1-TEST-CHECKLIST.md). Automated and compi
 
 ## Ordinary retinue recruitment boundary
 
-Ordinary retinue now uses only explicitly configured cultural recruitment trees and their upgrades. Unassigned special trees are excluded from hiring, upgrading, and class conversion, including with class guidance disabled. Previously acquired ineligible units are replaced on the next retinue command or class change without a replacement charge or resetting paid upgrade counters. If no eligible replacement exists, they remain without upgrades and can still be cleared. Elite retinue access and pricing are unchanged. Configuration generation remains 2; this correction does not require another profile reset.
+When Hire By Hero Class is enabled, ordinary retinue uses only explicitly configured cultural recruitment trees and their upgrades. Unassigned special trees are excluded from hiring, upgrading, and class conversion, only while class guidance is enabled. With guidance disabled, existing troops remain unchanged and the previous recruitment and upgrade rules apply. Previously acquired ineligible units are replaced on the next retinue command or class change without a replacement charge or resetting paid upgrade counters. If no eligible replacement exists, they remain without upgrades and can still be cleared. Elite retinue access and pricing are unchanged. Configuration generation remains 2; this correction does not require another profile reset.
 
 ## Curse reward lookup correction
 
