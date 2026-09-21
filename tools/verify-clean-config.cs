@@ -110,6 +110,13 @@ internal static class VerifyCleanConfig
             serviceProperty.GetSetMethod(true).Invoke(null, new[] { service });
             try
             {
+                var secondary = commands.Single(c => (string)Property(c, "Handler") == "Retinue2");
+                var secondaryConfig = Property(Property(secondary, "HandlerConfig"), "Retinue2");
+                var guidance = assemblies[1].GetType("BLTAdoptAHero.Retinue2", true).GetProperty("ClassGuidanceEnabled", BindingFlags.Static | BindingFlags.NonPublic);
+                secondaryConfig.GetType().GetProperty("HireByHeroClass").SetValue(secondaryConfig, false);
+                Check(!(bool)guidance.GetValue(null), "Secondary class changes ignore disabled guidance.");
+                secondaryConfig.GetType().GetProperty("HireByHeroClass").SetValue(secondaryConfig, true);
+                Check((bool)guidance.GetValue(null), "Secondary guidance does not re-enable.");
                 Check(ReferenceEquals(currentRetinue.GetValue(null), primaryConfig), "Retinue alias displaced primary settings.");
                 commandList.Remove(primary);
                 Check(ReferenceEquals(currentRetinue.GetValue(null), Property(Property(retinueAlias, "HandlerConfig"), "Retinue")), "Retinue alias fallback failed.");

@@ -1235,19 +1235,25 @@ namespace BLTAdoptAHero
         private void ConvertClassGuidedRetinues(Hero hero, HeroClassDef heroClass, HeroData data)
         {
             var settings = Retinue.CurrentSettings;
-            var eligible = TroopTreeIndex.ReachableTroops(OrdinaryRetinueRoots(settings));
-            ReconcileOrdinaryRetinue(hero, heroClass, settings, eligible);
-            if (heroClass != null && data.Retinue2ClassGuided)
+            if (settings.HireByHeroClass)
+            {
+                var eligible = TroopTreeIndex.ReachableTroops(OrdinaryRetinueRoots(settings));
+                ReconcileOrdinaryRetinue(hero, heroClass, settings, eligible);
+            }
+            if (heroClass != null && data.Retinue2ClassGuided && Retinue2.ClassGuidanceEnabled)
                 ConvertIncompatible(data.Retinue2, hero, heroClass, r => r.TroopType, (r, t) => r.TroopType = t, "Retinue2");
         }
 
         private static IReadOnlyList<CharacterObject> OrdinaryRetinueRoots(RetinueSettings settings)
         {
+            if (!settings.HireByHeroClass)
+                return TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,
+                    settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                    settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
             return TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
                 settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
                 settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
-                settings.HireByHeroClass ? TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly
-                    : TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
+                TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly);
         }
 
         private (bool changed, List<string> messages) ReconcileOrdinaryRetinue(Hero hero,
@@ -1475,7 +1481,7 @@ namespace BLTAdoptAHero
             var heroDataForGuidance = GetHeroData(hero);
             heroDataForGuidance.RetinueClassGuided = settings.HireByHeroClass;
             var availableTroops = OrdinaryRetinueRoots(settings);
-            var eligible = TroopTreeIndex.ReachableTroops(availableTroops);
+            var eligible = settings.HireByHeroClass ? TroopTreeIndex.ReachableTroops(availableTroops) : null;
             var reconciliation = ReconcileOrdinaryRetinue(hero, GetClass(hero), settings, eligible);
 
             if (!availableTroops.Any())
@@ -1782,10 +1788,14 @@ namespace BLTAdoptAHero
             if (settings.HireByHeroClass && GetClass(hero) != null)
                 ConvertIncompatible(heroDataForGuidance.Retinue2, hero, GetClass(hero), r => r.TroopType, (r, t) => r.TroopType = t, "Retinue2");
 
-            var availableTroops = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
-                settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
-                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
-                TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
+            var availableTroops = settings.HireByHeroClass
+                ? TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
+                    settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                    settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
+                    TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees)
+                : TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,
+                    settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                    settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
 
             if (!availableTroops.Any())
             {

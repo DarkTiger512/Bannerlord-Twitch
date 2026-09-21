@@ -178,6 +178,26 @@ namespace BLTAdoptAHero.Util
                 .OrderBy(t => t.StringId, StringComparer.Ordinal).ToList();
         }
 
+        // Unguided recruitment preserves the upstream cultural-root and first-branch
+        // depth rules. It deliberately does not consult the expanded troop index.
+        public static IReadOnlyList<CharacterObject> LegacyRecruitmentRoots(IEnumerable<CultureObject> cultures,
+            bool basic, bool elite, bool militia, bool eliteMilitia, bool bandits)
+        {
+            var roots = new List<CharacterObject>();
+            foreach (var culture in cultures.Where(c => c != null && (bandits || c.IsMainCulture)))
+            {
+                if (basic) roots.Add(culture.BasicTroop);
+                if (elite) roots.Add(culture.EliteBasicTroop);
+                if (militia) { roots.Add(culture.MeleeMilitiaTroop); roots.Add(culture.RangedMilitiaTroop); }
+                if (eliteMilitia) { roots.Add(culture.MeleeEliteMilitiaTroop); roots.Add(culture.RangedEliteMilitiaTroop); }
+            }
+            return roots.Where(t => t != null && !t.IsHero &&
+                (t.UpgradeTargets?.FirstOrDefault()?.UpgradeTargets?.Any() == true ||
+                 (militia || eliteMilitia) && t.Culture != null &&
+                 (t == t.Culture.MeleeMilitiaTroop || t == t.Culture.RangedMilitiaTroop ||
+                  t == t.Culture.MeleeEliteMilitiaTroop || t == t.Culture.RangedEliteMilitiaTroop))).ToList();
+        }
+
         public static HashSet<CharacterObject> ReachableTroops(IEnumerable<CharacterObject> roots)
         {
             var result = new HashSet<CharacterObject>();

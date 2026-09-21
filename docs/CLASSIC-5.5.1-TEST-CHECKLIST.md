@@ -68,3 +68,5 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 - [ ] A clean configuration has Show Campaign Map Overlay disabled. Enable it under General Config > Campaign Map to test.
 - [ ] Generate many activity entries: the map stays fixed at the top-left above the feed. Check both a wide and narrow browser-source size.
 - [ ] The map hides during missions and when disabled, then returns when enabled on the campaign map.
+
+- [ ] Turn Hire By Hero Class off for each retinue command: only the legacy configured cultural roots are offered, unassigned/non-main overhaul trees are not automatically added, upgrades remain random, and class changes leave existing troops unchanged. Enable it again and verify class-guided behavior returns.

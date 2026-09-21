@@ -114,6 +114,10 @@ static class Tests
         behavior.SetClass(hero,infantry);
         Check(oldEntry.TroopType==aInf && oldEntry.Level==4 && behavior.Gold==beforeGold,
             "Class change must reconcile special troops even without a role change.");
+        // Legacy roots must have the upstream first-branch upgrade depth.
+        var legacyMid=Troop("legacy_mid",a,FormationClass.Infantry,2,aInf);
+        var legacyRoot=Troop("legacy_root",a,FormationClass.Infantry,1,legacyMid);
+        a.IsMainCulture=true; a.BasicTroop=a.EliteBasicTroop=legacyRoot;
         settings.Retinue.HireByHeroClass=false;
         oldEntry.TroopType=orphanInf;
         repaired=behavior.UpgradeRetinue(hero,settings.Retinue,0);
@@ -130,15 +134,40 @@ static class Tests
         Check(repaired.success && oldEntry.TroopType==orphanInf && oldEntry.Level==5 && behavior.Gold==beforeGold-10,
             "Disabled guidance restricted legacy upgrades or changed their cost.");
         settings.Retinue.UseBasicTroops=true; settings.Retinue.UseEliteTroops=false;
-        var unguidedRoots=TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false,
-            TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
-        Check(unguidedRoots.Contains(orphanRoot), "Unguided recruitment lost unassigned trees.");
+        var unguidedRoots=TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false);
+        Check(unguidedRoots.SequenceEqual(new[]{legacyRoot}), "Legacy recruitment must omit unassigned and non-main culture roots.");
         behavior.Data.Retinue.Clear();
         orphanRoot.StringId="0_special_recruit";
         commands.ExecuteRetinue(new ReplyContext {UserName="viewer",Args="1"},settings,_=>{},e=>throw new Exception(e));
-        Check(behavior.Data.Retinue.Single().TroopType==orphanRoot,
+        Check(behavior.Data.Retinue.Single().TroopType==legacyRoot,
             "Actual unguided command must retain the previous recruitment pool.");
         behavior.Data.Retinue.Clear(); behavior.Data.Retinue.Add(oldEntry);
+        settings.Retinue2.HireByHeroClass=false;
+        behavior.Data.Retinue2.Clear();
+        commands.ExecuteRetinue2(new ReplyContext {UserName="viewer",Args="1"},settings,_=>{},e=>throw new Exception(e));
+        Check(behavior.Data.Retinue2.Single().TroopType==legacyRoot,"Secondary unguided command must also use legacy roots.");
+        Retinue2.ClassGuidanceEnabled=false;
+        behavior.Data.Retinue2ClassGuided=true; // Last invocation used guidance, but config was subsequently switched off.
+        behavior.Data.Retinue2[0].TroopType=orphanInf;
+        behavior.SetClass(hero,archer);
+        Check(behavior.Data.Retinue2[0].TroopType==orphanInf,"Disabled secondary guidance still converted on class change.");
+        Retinue2.ClassGuidanceEnabled=true;
+        behavior.Data.Retinue2.Clear(); settings.Retinue2.HireByHeroClass=true;
+        // Test historical depth rule, militia exception and non-main culture opt-in.
+        a.BasicTroop=root;
+        Check(!TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false).Any(),
+            "Legacy first-branch depth filter changed.");
+        a.MeleeMilitiaTroop=aInf;
+        Check(TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,false,false,true,false,false).Contains(aInf),
+            "Legacy militia exception missing.");
+        a.MeleeMilitiaTroop=null; a.IsMainCulture=false; a.BasicTroop=legacyRoot;
+        Check(!TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false).Any(),
+            "Legacy culture filter admits non-main cultures.");
+        Check(TroopTreeIndex.LegacyRecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,true).Contains(legacyRoot),
+            "Legacy IncludeBanditUnits opt-in must retain its culture behavior.");
+        a.BasicTroop=root; a.EliteBasicTroop=excludedElite;
+        CharacterObject.All.Remove(legacyRoot); CharacterObject.All.Remove(legacyMid);
+        TroopTreeIndex.BuildIndex();
         settings.Retinue.MaxRetinueSize=3;
         Retinue.CurrentSettings.HireByHeroClass=true;
         behavior.Data.ClassID=infantry.ID;
@@ -246,6 +275,7 @@ namespace BLTAdoptAHero
     public static class Naming { public const string Gold="g",To="->",Dec="-"; public static string NotEnoughGold(int a,int b)=>"not enough"; public static string JoinList(IEnumerable<string> v)=>string.Join(";",v); }
     public class ReplyContext { public string UserName,Args; public string ArgsErrorMessage(string value)=>value; }
     public static class AdoptAHero { public const string NoHeroMessage="No hero"; }
+    public static class Retinue2 { public static bool ClassGuidanceEnabled=true; }
     public static class Retinue { public static BLTAdoptAHeroCampaignBehavior.RetinueSettings CurrentSettings=new(); }
     public class CommandSettings { public BLTAdoptAHeroCampaignBehavior.RetinueSettings Retinue=new(); public BLTAdoptAHeroCampaignBehavior.Retinue2Settings Retinue2=new(); public bool AllByDefault=true; }
     public class Commands { /* COMMAND METHODS */ }

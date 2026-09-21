@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using BannerlordTwitch;
 using BannerlordTwitch.Localization;
@@ -17,6 +17,10 @@ namespace BLTAdoptAHero
      UsedImplicitly]
     public class Retinue2 : ActionHandlerBase
     {
+        internal static bool ClassGuidanceEnabled =>
+            (ActionManager.GetCommandConfig(nameof(Retinue2), new Guid("9788a897-d48b-4428-ba57-7d4dd34b8bd5")) as Settings)
+                ?.Retinue2?.HireByHeroClass ?? true;
+
         private class Settings : IDocumentable
         {
             [LocDisplayName("{=tLSFX9Xc}Secondary Retinue"),

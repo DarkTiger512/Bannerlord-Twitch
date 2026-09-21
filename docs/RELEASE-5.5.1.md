@@ -41,3 +41,5 @@ Completed curses resolve heroes through the campaign roster before the object re
 ## Campaign map overlay
 
 The campaign map is anchored to the viewport above the activity feed, so incoming log entries cannot push it off-screen. It is disabled in new/default configurations. Existing explicit profile settings are preserved; enable or disable it under General Config > Campaign Map > Show Campaign Map Overlay.
+
+With Hire By Hero Class disabled, both retinue commands use the upstream cultural-root recruitment pool, main-culture filter (unless Include Bandit Units is enabled), first-branch upgrade-depth rule and militia exception. Expanded loaded-tree discovery and class conversion are reserved for enabled guidance. Null-safety, correctly scoped category switches and gold-overflow checks remain.
