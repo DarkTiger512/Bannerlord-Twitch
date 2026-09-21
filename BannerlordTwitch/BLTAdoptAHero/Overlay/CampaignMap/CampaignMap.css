@@ -1,15 +1,16 @@
 #campaign-map-container {
     --map-width: 42vw; --map-max-height: 38vh; --map-opacity: .9;
-    position: relative; align-self: flex-end; width: var(--map-width); max-height: var(--map-max-height); margin-bottom: .55em;
+    position: fixed; top: .5em; left: .5em; width: var(--map-width);
+    box-sizing: border-box; max-width: calc(100vw - 1em); max-height: min(var(--map-max-height), calc(100vh - 1em));
     z-index: 9999; display: flex; flex-direction: column; overflow: hidden; pointer-events: none;
     color: #eee7d6; background: rgba(8, 13, 18, var(--map-opacity));
     border: 1px solid rgba(180, 194, 202, .42); border-radius: 5px; box-shadow: 0 4px 18px rgba(0, 0, 0, .62);
 }
 #campaign-map-container.hidden { display: none; }
-#campaign-map-container.corner-TopLeft,
-#campaign-map-container.corner-BottomLeft { align-self: flex-start; }
-#campaign-map-container.corner-TopRight,
-#campaign-map-container.corner-BottomRight { align-self: flex-end; }
+#campaign-map-container.corner-TopLeft { top: .5em; bottom: auto; left: .5em; right: auto; }
+#campaign-map-container.corner-TopRight { top: .5em; bottom: auto; left: auto; right: .5em; }
+#campaign-map-container.corner-BottomLeft { top: auto; bottom: .5em; left: .5em; right: auto; }
+#campaign-map-container.corner-BottomRight { top: auto; bottom: .5em; left: auto; right: .5em; }
 #map-header { display: flex; justify-content: space-between; padding: 4px 9px; flex: 0 0 auto; font-size: .85em;
     font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #d9c589;
     background: rgba(0, 0, 0, .34); border-bottom: 1px solid rgba(180, 194, 202, .22); }

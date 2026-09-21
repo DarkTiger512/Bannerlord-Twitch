@@ -62,3 +62,9 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 - [ ] Run a tournament prediction and resolve/refund the pool normally.
 - [ ] Try markup-like item/clan names and inspect overlay rendering; no executable markup or broken UI.
 - [ ] Play several battles, enter/leave settlements, and save/reload without crashes. Record failures with the command/event, expected result, actual result, and relevant log excerpt.
+
+## Campaign map placement
+
+- [ ] A clean configuration has Show Campaign Map Overlay disabled. Enable it under General Config > Campaign Map to test.
+- [ ] Generate many activity entries: the map stays fixed at the top-left above the feed. Check both a wide and narrow browser-source size.
+- [ ] The map hides during missions and when disabled, then returns when enabled on the campaign map.

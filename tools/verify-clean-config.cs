@@ -127,6 +127,9 @@ internal static class VerifyCleanConfig
             object events = convert.Invoke(null, new[] { Property(eventConfig, "Config"), eventType });
             Check((int)Property(events, "CursedArtifactRequiredWins") == 5 && (bool)Property(events, "StreamObjectivesEnabled"), "Event defaults missing.");
             Type commonType = assemblies[1].GetType("BLTAdoptAHero.GlobalCommonConfig", true);
+            var commonGlobal = globals.Single(c => (string)Property(c, "Id") == "Adopt A Hero - General Config");
+            var common = convert.Invoke(null, new[] { Property(commonGlobal, "Config"), commonType });
+            Check(!(bool)Property(common, "ShowCampaignMapOverlay") && !(bool)Property(Activator.CreateInstance(commonType), "ShowCampaignMapOverlay"), "Campaign map must default off in YAML and code.");
             Check(commonType.GetProperty("Prestige") == null && commonType.GetProperty("RandomEventsEnabled") == null, "Settings remain in Common Config.");
             Check(core.GetType("BannerlordTwitch.ActionBase", true).GetProperty("RespondInExtension") == null, "Obsolete response option remains.");
             // Persist a customization and load it twice through the production selector/serializer.

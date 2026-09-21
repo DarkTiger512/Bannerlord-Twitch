@@ -1,6 +1,8 @@
 $(document).ready(function () {
     const ns = 'http://www.w3.org/2000/svg';
     const container = document.getElementById('campaign-map-container');
+    // Keep the viewport-anchored map outside the growing activity stack.
+    document.body.appendChild(container);
     const svg = document.getElementById('campaign-map-svg');
     const landLayer = document.getElementById('land-layer');
     const coastlineLayer = document.getElementById('coastline-layer');
@@ -19,9 +21,10 @@ $(document).ready(function () {
         geography = data; revision = data.Revision; renderGeography();
     };
     hub.client.updateMapState = function (data) {
-        if (!data || !data.Visible) { container.classList.add('hidden'); return; }
+        if (!data || !data.Visible) { container.classList.add('hidden'); container.setAttribute('aria-hidden', 'true'); return; }
         if (!geography || data.GeographyRevision !== revision) { hub.server.refresh(0); return; }
         container.classList.remove('hidden');
+        container.setAttribute('aria-hidden', 'false');
         ownership = new Map((data.Ownership || []).map(item => [item.Id, item.KingdomId]));
         currentHeroes = data.Heroes || [];
         renderSettlements(currentHeroes); renderHeroes(currentHeroes);
@@ -58,7 +61,7 @@ $(document).ready(function () {
         container.style.setProperty('--map-max-height', `${settings.MaxHeightPercent || 38}vh`);
         container.style.setProperty('--map-opacity', Math.max(0, Math.min(1, settings.BackgroundOpacity ?? .9)));
         ['TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'].forEach(c => container.classList.remove(`corner-${c}`));
-        container.classList.add(`corner-${settings.Corner || 'TopRight'}`);
+        container.classList.add(`corner-${settings.Corner || 'TopLeft'}`);
     }
     function renderSettlements(heroes) {
         if (!geography) return;

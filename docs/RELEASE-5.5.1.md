@@ -37,3 +37,7 @@ Ordinary retinue now uses only explicitly configured cultural recruitment trees 
 ## Curse reward lookup correction
 
 Completed curses resolve heroes through the campaign roster before the object registry. A missing hero lookup now leaves the earned reward pending instead of discarding five completed wins. The latest legacy completion that failed specifically because the hero could not be resolved is recovered on load or daily tick when that same hero is alive; genuine deaths are not recovered. Failure announcements now include the viewer and reason.
+
+## Campaign map overlay
+
+The campaign map is anchored to the viewport above the activity feed, so incoming log entries cannot push it off-screen. It is disabled in new/default configurations. Existing explicit profile settings are preserved; enable or disable it under General Config > Campaign Map > Show Campaign Map Overlay.

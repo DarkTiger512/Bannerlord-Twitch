@@ -99,7 +99,7 @@ namespace BLTAdoptAHero
         [LocDisplayName("{=BLTAdoptAHero_ShowCampaignMap}Show Campaign Map Overlay"),
          LocDescription("{=BLTAdoptAHero_ShowCampaignMap_Desc}Enable or disable the campaign map overlay that shows in the top portion of the overlay. The map automatically hides during missions."),
          LocCategory("Campaign Map", "Campaign Map"), PropertyOrder(1)]
-        public bool ShowCampaignMapOverlay { get; set; } = true;
+        public bool ShowCampaignMapOverlay { get; set; } = false;
 
         [LocDisplayName("Map Width Percent"), LocDescription("Map panel width as a percentage of the overlay."),
          LocCategory("Campaign Map", "Campaign Map"), PropertyOrder(3), Range(15, 100)]

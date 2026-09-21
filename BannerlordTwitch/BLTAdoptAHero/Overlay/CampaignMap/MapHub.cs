@@ -187,8 +187,7 @@ namespace BLTAdoptAHero.UI
             var config = GlobalCommonConfig.Get();
             return new MapSettingsData
             {
-                // The campaign map participates in the combined overlay's left-hand
-                // activity stack. Ignore stale TopRight values written by preview builds.
+                // Anchor the map above the activity feed, independent of its growing layout.
                 Corner = CampaignMapPanelCorner.TopLeft.ToString(), WidthPercent = Clamp(config.MapWidthPercent, 15, 100),
                 MaxHeightPercent = Clamp(config.MapMaxHeightPercent, 15, 100), BackgroundOpacity = Clamp(config.MapBackgroundOpacity, 0, 1),
                 TownRadius = Clamp(config.MapTownRadius, .25f, 8), CastleLength = Clamp(config.MapCastleLength, .25f, 8),
