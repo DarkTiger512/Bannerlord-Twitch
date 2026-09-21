@@ -24,6 +24,9 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 - [ ] At five wins, penalties stop and exactly one Cursed Legacy is delivered, with an overlay cleanse announcement. Having other custom weapons does not block it.
 - [ ] Save/reload after completion: no duplicate reward or additional win. If delivery fails, a pending notification appears and a later campaign day/load retries it.
 
+- [ ] Load a save containing the erroneous 5/5 lookup failure while the same cursed hero is alive. Confirm recovery and one weapon reward without replaying five battles; save/reload again and confirm no duplicate.
+- [ ] Complete a new curse on a dynamically created adopted hero: the fifth win delivers the reward. A temporarily missing hero remains pending; a confirmed death reports the viewer and reason.
+
 ## Immortal and other events
 
 - [ ] With daily chance 100, the Immortal does not trigger below or exactly at 20% player HP. The manual `blt.trigger_immortal_event` command also refuses.

@@ -1,0 +1,77 @@
+using BLTAdoptAHero.Util;
+using System.Text.Json;
+class TestBehavior
+{
+    public CurseRecord active;
+    public List<CurseHistoryEntry> history=new();
+    public CurseRecord Active=>active?.Status is CurseLifecycle.Active or CurseLifecycle.CompletedPendingReward ? active : null;
+    public CursedBattleParticipation participation=new();
+    object playedMission; bool missionResolved;
+    void AddHistory(CurseRecord r,string reason)=>history.Add(new(){HeroId=r.HeroId,Owner=r.Owner,Status=r.Status,Wins=r.QualifyingWins,Reason=reason});
+    public void Deliver()=>TryGrantPendingReward();
+    public void Restore()=>RestoreLookupFailure();
+    /* METHODS */
+}
+static class Tests
+{
+    static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+    static CurseRecord Won()
+    {
+        var record=new CurseRecord{HeroId="runtime_hero",Owner="viewer"};
+        for(int i=0;i<5;i++) CursedArtifactPolicy.RecordVictory(record,"battle"+i,5);
+        return record;
+    }
+    static void Main()
+    {
+        var hero=new Hero{StringId="runtime_hero"}; CampaignHelpers.AllHeroes.Add(hero);
+        var behavior=new TestBehavior{active=Won()};
+        behavior.Deliver(); behavior.Deliver();
+        Check(behavior.active==null && RewardHelpers.Assignments==1 && behavior.history.Single().Status==CurseLifecycle.Completed,
+            "5/5 runtime hero absent from object manager must receive exactly one reward.");
+        Check(Log.Messages.Count(m=>m.Contains("BLTCurseCompleted"))==1,"Expected one completion announcement.");
+        CampaignHelpers.AllHeroes.Clear();
+        behavior.active=Won(); behavior.Deliver(); behavior.Deliver();
+        Check(behavior.active.Status==CurseLifecycle.CompletedPendingReward && behavior.active.QualifyingWins==5,
+            "Missing hero must retain earned progress, not fail.");
+        Check(Log.Messages.Count(m=>m.Contains("BLTCurseRewardPending"))==1,"Pending notification must not repeat.");
+        behavior.active=JsonSerializer.Deserialize<CurseRecord>(JsonSerializer.Serialize(behavior.active));
+        CampaignHelpers.AllHeroes.Add(hero);
+        RewardHelpers.Throw=true; behavior.Deliver();
+        Check(behavior.active.Status==CurseLifecycle.CompletedPendingReward,"Reward exception must remain retryable.");
+        RewardHelpers.Throw=false; behavior.Deliver(); behavior.Deliver();
+        Check(behavior.active==null && RewardHelpers.Assignments==2,"Reload/retry duplicated or lost reward.");
+        var legacy=new TestBehavior();
+        legacy.history.Add(new(){HeroId=hero.StringId,Owner="viewer",Wins=5,Status=CurseLifecycle.Failed,Reason="the cursed hero is no longer available"});
+        legacy.Restore();
+        Check(legacy.active?.QualifyingWins==5,"Legacy lookup failure was not restored.");
+        legacy.Deliver(); legacy.Restore(); legacy.Deliver();
+        Check(legacy.active==null && RewardHelpers.Assignments==3,"Legacy recovery duplicated or lost reward.");
+        hero.IsDead=true;
+        var dead=new TestBehavior{active=Won()}; dead.Deliver();
+        Check(dead.active==null && dead.history.Single().Reason=="the cursed hero died","Confirmed death must be distinguished from lookup failure.");
+        dead.Restore(); Check(dead.active==null,"Real death was incorrectly recovered.");
+        Console.WriteLine("PASS production curse reward: fifth win/runtime hero lookup, missing-hero pending, save/reload, exception retry, one reward/announcement, legacy recovery and confirmed death.");
+    }
+}
+class Hero{public string StringId; public bool IsDead; public object GetClass()=>null;}
+static class CampaignHelpers{public static List<Hero> AllHeroes=new();}
+class MBObjectManager{public static MBObjectManager Instance=new(); public T GetObject<T>(string id) where T:class=>null;}
+class ItemObject{public string StringId="weapon";}
+class ItemModifier{public string StringId="modifier";}
+enum EquipmentIndex{Weapon}
+class RandomItemModifierDef{public float Power;public RangeInt WeaponDamage,WeaponSpeed,WeaponMissileSpeed,ThrowingStack;}
+class RangeInt{public RangeInt(int a,int b){}}
+class Config{public int CursedArtifactWeaponBonus=10;}
+static class BLTAdoptAHeroModule{public static Config EventConfig=new();}
+class StoredItem{public ItemObject Item;public ItemModifier ItemModifier;}
+class BLTAdoptAHeroCampaignBehavior{public static BLTAdoptAHeroCampaignBehavior Current=new(); public List<StoredItem> Items=new(); public IEnumerable<StoredItem> GetCustomItems(Hero h)=>Items;}
+static class RewardHelpers
+{
+ public enum RewardType{Weapon}
+ public static int Assignments; public static bool Throw;
+ public static (ItemObject item,ItemModifier modifier,EquipmentIndex slot) GenerateRewardType(RewardType type,int tier,Hero hero,object cls,bool duplicates,RandomItemModifierDef mod,string name,float weight)=> (new(),new(),EquipmentIndex.Weapon);
+ public static void AssignCustomReward(Hero h,ItemObject item,ItemModifier modifier,EquipmentIndex slot){if(Throw)throw new Exception("temporary"); Assignments++;BLTAdoptAHeroCampaignBehavior.Current.Items.Add(new(){Item=item,ItemModifier=modifier});}
+}
+static class CampaignTime{public static object Now="today";}
+static class Log{public static List<string> Messages=new();public static void LogFeedEvent(string s)=>Messages.Add(s);public static void Error(string s){}}
+static class Translations{public static string Translate(this string s,params (string,object)[] args)=>s;}

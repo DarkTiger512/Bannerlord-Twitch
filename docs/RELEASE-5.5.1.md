@@ -33,3 +33,7 @@ See [the manual checklist](CLASSIC-5.5.1-TEST-CHECKLIST.md). Automated and compi
 ## Ordinary retinue recruitment boundary
 
 Ordinary retinue now uses only explicitly configured cultural recruitment trees and their upgrades. Unassigned special trees are excluded from hiring, upgrading, and class conversion, including with class guidance disabled. Previously acquired ineligible units are replaced on the next retinue command or class change without a replacement charge or resetting paid upgrade counters. If no eligible replacement exists, they remain without upgrades and can still be cleared. Elite retinue access and pricing are unchanged. Configuration generation remains 2; this correction does not require another profile reset.
+
+## Curse reward lookup correction
+
+Completed curses resolve heroes through the campaign roster before the object registry. A missing hero lookup now leaves the earned reward pending instead of discarding five completed wins. The latest legacy completion that failed specifically because the hero could not be resolved is recovered on load or daily tick when that same hero is alive; genuine deaths are not recovered. Failure announcements now include the viewer and reason.

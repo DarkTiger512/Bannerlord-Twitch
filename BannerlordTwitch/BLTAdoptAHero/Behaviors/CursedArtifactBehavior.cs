@@ -42,6 +42,7 @@ namespace BLTAdoptAHero.Behaviors
                 participation.Clear();
                 playedMission = null;
                 missionResolved = false;
+                RestoreLookupFailure();
                 TryGrantPendingReward();
             });
         }
@@ -88,6 +89,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private void OnDailyTick()
         {
+            RestoreLookupFailure();
             var cfg = BLTAdoptAHeroModule.EventConfig;
             if (Active?.Status == CurseLifecycle.CompletedPendingReward) { TryGrantPendingReward(); return; }
             if (cfg?.RandomEventsEnabled != true || cfg.CursedArtifactEnabled != true) return;
@@ -135,10 +137,11 @@ namespace BLTAdoptAHero.Behaviors
         private void TryGrantPendingReward()
         {
             if (active?.Status != CurseLifecycle.CompletedPendingReward) return;
-            Hero hero = ResolveHero();
-            if (hero == null || hero.IsDead) { Fail("the cursed hero is no longer available"); return; }
             try
             {
+                Hero hero = ResolveHero();
+                if (hero == null) { NotifyPendingReward(); return; }
+                if (hero.IsDead) { Fail("the cursed hero died"); return; }
                 var cfg = BLTAdoptAHeroModule.EventConfig;
                 var modifier = new RandomItemModifierDef
                 {
@@ -184,8 +187,38 @@ namespace BLTAdoptAHero.Behaviors
             active.PendingRewardNotified = true;
         }
 
-        private Hero ResolveHero() => string.IsNullOrWhiteSpace(Active?.HeroId) ? null
-            : MBObjectManager.Instance.GetObject<Hero>(Active.HeroId);
+        private Hero ResolveHero()
+        {
+            return ResolveCampaignHero(Active?.HeroId);
+        }
+
+        private static Hero ResolveCampaignHero(string heroId)
+        {
+            if (string.IsNullOrWhiteSpace(heroId)) return null;
+            // Runtime campaign heroes are not reliably registered in MBObjectManager.
+            // Match the saved identity, never the viewer name or a newly adopted replacement.
+            return CampaignHelpers.AllHeroes.FirstOrDefault(h => h.StringId == heroId)
+                ?? MBObjectManager.Instance.GetObject<Hero>(heroId);
+        }
+
+        private void RestoreLookupFailure()
+        {
+            if (Active != null) return;
+            var failed = history.LastOrDefault();
+            // This exact legacy reason was used only after completing all required wins,
+            // before any reward was generated. Do not revive real deaths or other failures.
+            if (failed?.Status != CurseLifecycle.Failed || failed.Reason != "the cursed hero is no longer available") return;
+            var hero = ResolveCampaignHero(failed.HeroId);
+            if (hero == null || hero.IsDead) return;
+            active = new CurseRecord
+            {
+                HeroId = failed.HeroId, Owner = failed.Owner, QualifyingWins = failed.Wins,
+                Status = CurseLifecycle.CompletedPendingReward
+            };
+            failed.Status = CurseLifecycle.CompletedPendingReward;
+            failed.Reason = "Recovered reward after legacy campaign hero lookup failure";
+            Log.LogFeedEvent($"@{active.Owner}: restored the completed curse; retrying the earned weapon reward.");
+        }
 
         private void Fail(string reason)
         {
@@ -194,7 +227,8 @@ namespace BLTAdoptAHero.Behaviors
             active.FinishedAt = CampaignTime.Now.ToString();
             active.FailureReason = reason;
             AddHistory(active, reason);
-            Log.LogFeedEvent("{=BLTCurseFailed}The cursed artifact event failed. No reward was granted.".Translate());
+            Log.LogFeedEvent("{=BLTCurseFailedReason}@{Owner}: the cursed artifact event ended because {Reason}. No reward was granted."
+                .Translate(("Owner", active.Owner), ("Reason", reason)));
             active = null;
             participation.Clear();
             playedMission = null;
