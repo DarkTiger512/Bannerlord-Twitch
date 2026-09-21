@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using BannerlordTwitch;
 using BannerlordTwitch.Localization;
@@ -16,6 +16,18 @@ namespace BLTAdoptAHero
      UsedImplicitly]
     public class Retinue : ActionHandlerBase
     {
+        internal static readonly Guid DefaultCommandId = new("38eed507-87b9-47f4-b235-af921cef00c4");
+        internal static BLTAdoptAHeroCampaignBehavior.RetinueSettings CurrentSettings =>
+            (ActionManager.GetCommandConfig(nameof(Retinue), DefaultCommandId) as Settings)?.Retinue
+            ?? new BLTAdoptAHeroCampaignBehavior.RetinueSettings
+            {
+                CostTier1 = 25000, CostTier2 = 50000, CostTier3 = 100000,
+                CostTier4 = 200000, CostTier5 = 400000, CostTier6 = 800000,
+                MaxRetinueSize = 5, HireByHeroClass = true, UseHeroesCultureUnits = true,
+                UseBasicTroops = true, UseEliteTroops = false, UseMilitiaTroops = true,
+                UseEliteMilitiaTroops = true, IncludeBanditUnits = false
+            };
+
         private class Settings : IDocumentable
         {
             [LocDisplayName("{=tLSFX9Xc}Retinue"),

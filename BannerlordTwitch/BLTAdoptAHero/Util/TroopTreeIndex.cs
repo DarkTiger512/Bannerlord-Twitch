@@ -10,6 +10,7 @@ namespace BLTAdoptAHero.Util
     /// <summary>Cycle-safe index and the single source of truth for smart-retinue selection.</summary>
     public static class TroopTreeIndex
     {
+        public enum RecruitmentPolicy { CulturalTreesOnly, IncludeUnassignedTrees }
         public sealed class TroopInfo
         {
             public CharacterObject Troop { get; internal set; }
@@ -80,14 +81,15 @@ namespace BLTAdoptAHero.Util
             return ToResult(role, selection);
         }
 
-        public static SelectionResult SelectCompatibleUpgrade(CharacterObject troop, HeroClassDef heroClass)
+        public static SelectionResult SelectCompatibleUpgrade(CharacterObject troop, HeroClassDef heroClass,
+            ISet<CharacterObject> eligible = null)
         {
             var role = InterpretRole(heroClass);
             WarnUnknown(heroClass, role);
             int distance = CompatibleDistance(troop, role);
             int score = CompatibleScore(troop, role);
             var selection = SmartTroopPolicy.SelectCompatible(GetTroopInfo(troop)?.UpgradeTargets,
-                t => IsCompatiblePath(t, role) && CompatibleScore(t, role) == score && CompatibleDistance(t, role) < distance,
+                t => (eligible == null || eligible.Contains(t)) && IsCompatiblePath(t, role) && CompatibleScore(t, role) == score && CompatibleDistance(t, role) < distance,
                 t => CompatibleScore(t, role),
                 t => t.StringId);
             return ToResult(role, selection);
@@ -146,7 +148,8 @@ namespace BLTAdoptAHero.Util
             && troop.Occupation is Occupation.Soldier or Occupation.Mercenary or Occupation.Bandit;
 
         public static IReadOnlyList<CharacterObject> RecruitmentRoots(IEnumerable<CultureObject> cultures,
-            bool basic, bool elite, bool militia, bool eliteMilitia, bool bandits)
+            bool basic, bool elite, bool militia, bool eliteMilitia, bool bandits,
+            RecruitmentPolicy policy = RecruitmentPolicy.IncludeUnassignedTrees)
         {
             EnsureBuilt();
             var roots = new HashSet<CharacterObject>();
@@ -164,7 +167,7 @@ namespace BLTAdoptAHero.Util
             }
             // Overhauls can add military trees without assigning a culture's BasicTroop slot.
             // Treat these otherwise unclassified recruitment roots as basic troops.
-            if (basic)
+            if (basic && policy == RecruitmentPolicy.IncludeUnassignedTrees)
             {
                 var children = new HashSet<CharacterObject>(Index.Values.SelectMany(i => i.UpgradeTargets));
                 foreach (var troop in Index.Keys.Where(IsCombatTroop))
@@ -173,6 +176,29 @@ namespace BLTAdoptAHero.Util
             }
             return roots.Where(t => t != null && !t.IsHero && GetTroopInfo(t)?.TerminalDestinations.Count > 0)
                 .OrderBy(t => t.StringId, StringComparer.Ordinal).ToList();
+        }
+
+        public static HashSet<CharacterObject> ReachableTroops(IEnumerable<CharacterObject> roots)
+        {
+            var result = new HashSet<CharacterObject>();
+            var pending = new Stack<CharacterObject>(roots);
+            while (pending.Count > 0)
+            {
+                var troop = pending.Pop();
+                if (troop == null || troop.IsHero || !result.Add(troop)) continue;
+                foreach (var child in GetTroopInfo(troop)?.UpgradeTargets ?? Array.Empty<CharacterObject>())
+                    pending.Push(child);
+            }
+            return result;
+        }
+
+        public static CharacterObject SelectCulturalReplacement(CharacterObject oldTroop, Hero hero,
+            HeroClassDef heroClass, bool classGuided, IEnumerable<CharacterObject> eligible)
+        {
+            return eligible.Where(t => !classGuided || CanReachHeroClass(t, heroClass))
+                .OrderByDescending(t => t.Culture == hero?.Culture)
+                .ThenBy(t => Math.Abs(t.Tier - (oldTroop?.Tier ?? 0)))
+                .ThenBy(t => t.StringId, StringComparer.Ordinal).FirstOrDefault();
         }
 
         private static int CompatibleDistance(CharacterObject troop, SmartTroopPolicy.SmartTroopRole role)

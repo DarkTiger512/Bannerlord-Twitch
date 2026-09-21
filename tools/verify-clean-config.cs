@@ -87,6 +87,41 @@ internal static class VerifyCleanConfig
                 var config = Property(Property(command, "HandlerConfig"), name);
                 Check((bool)Property(config, "HireByHeroClass"), "Class guidance is disabled for " + name);
             }
+            // Exercise the actual Retinue settings resolver without connecting Twitch.
+            var retinueType = assemblies[1].GetType("BLTAdoptAHero.Retinue", true);
+            var currentRetinue = retinueType.GetProperty("CurrentSettings", BindingFlags.Static | BindingFlags.NonPublic);
+            var primary = commands.Single(c => (string)Property(c, "Handler") == "Retinue");
+            var primaryConfig = Property(Property(primary, "HandlerConfig"), "Retinue");
+            var fallbackConfig = currentRetinue.GetValue(null);
+            foreach (var property in primaryConfig.GetType().GetProperties().Where(p => p.CanRead && p.CanWrite))
+                Check(Equals(property.GetValue(primaryConfig), property.GetValue(fallbackConfig)), "Retinue fallback differs from shipped default: " + property.Name);
+            var serviceType = core.GetType("BannerlordTwitch.Twitch.TwitchService", false)
+                ?? core.GetTypes().Single(t => t.Name == "TwitchService");
+            var service = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(serviceType);
+            GC.SuppressFinalize(service);
+            serviceType.GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(service, settings);
+            var serviceProperty = core.GetType("BannerlordTwitch.BLTModule", true).GetProperty("TwitchService", BindingFlags.Static | BindingFlags.Public);
+            var commandList = (IList)Property(settings, "Commands");
+            var retinueAlias = Activator.CreateInstance(primary.GetType());
+            retinueAlias.GetType().GetProperty("Handler").SetValue(retinueAlias, "Retinue");
+            retinueAlias.GetType().GetProperty("ID").SetValue(retinueAlias, Guid.Empty);
+            retinueAlias.GetType().GetProperty("HandlerConfig").SetValue(retinueAlias, Activator.CreateInstance(Property(primary, "HandlerConfig").GetType()));
+            commandList.Add(retinueAlias);
+            serviceProperty.GetSetMethod(true).Invoke(null, new[] { service });
+            try
+            {
+                Check(ReferenceEquals(currentRetinue.GetValue(null), primaryConfig), "Retinue alias displaced primary settings.");
+                commandList.Remove(primary);
+                Check(ReferenceEquals(currentRetinue.GetValue(null), Property(Property(retinueAlias, "HandlerConfig"), "Retinue")), "Retinue alias fallback failed.");
+                commandList.Remove(retinueAlias);
+                Check(!(bool)Property(currentRetinue.GetValue(null), "UseEliteTroops"), "Missing command did not use shipped retinue defaults.");
+            }
+            finally
+            {
+                serviceProperty.GetSetMethod(true).Invoke(null, new object[] { null });
+                commandList.Remove(retinueAlias);
+                if (!commandList.Contains(primary)) commandList.Add(primary);
+            }
             var eventConfig = globals.Single(c => (string)Property(c, "Id") == "Adopt A Hero - Events");
             Type eventType = assemblies[1].GetType("BLTAdoptAHero.GlobalEventConfig", true);
             object events = convert.Invoke(null, new[] { Property(eventConfig, "Config"), eventType });

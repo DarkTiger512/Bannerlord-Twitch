@@ -86,6 +86,65 @@ static class Tests
         TroopTreeIndex.BuildIndex();
         Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==orphanRoot,
             "Additional overhaul trees remain available when regular trees lack the role.");
+        // Ordinary retinue must exclude unassigned trees entirely, unlike secondary retinue.
+        var strictRoots=TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false,
+            TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly);
+        Check(!strictRoots.Contains(orphanRoot), "Ordinary pool admitted an unassigned overhaul tree.");
+        Check(TroopTreeIndex.SelectHire(hero,infantry,strictRoots).SelectedTroop==null,
+            "Ordinary retinue must not fall back to special troops when no cultural infantry exists.");
+        // Restore the normal branch for command-level replacement checks.
+        root.UpgradeTargets=new[] {aBow,aInf};
+        TroopTreeIndex.BuildIndex();
+        var excludedElite=Troop("elite_only",a,FormationClass.Infantry,6);
+        a.EliteBasicTroop=excludedElite;
+        TroopTreeIndex.BuildIndex();
+        strictRoots=TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false,
+            TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly);
+        Check(!TroopTreeIndex.ReachableTroops(strictRoots).Contains(excludedElite), "Excluded elite category leaked into ordinary pool.");
+        behavior.Data.Retinue.Clear();
+        var oldEntry=new BLTAdoptAHeroCampaignBehavior.HeroData.RetinueData {TroopType=orphanInf,Level=4};
+        behavior.Data.Retinue.Add(oldEntry);
+        behavior.Data.ClassID=infantry.ID;
+        int beforeGold=behavior.Gold;
+        var repaired=behavior.UpgradeRetinue(hero,settings.Retinue,0);
+        Check(repaired.success && oldEntry.TroopType==aInf && oldEntry.Level==4 && behavior.Gold==beforeGold,
+            "Replacement must preserve slots, paid level and gold.");
+        Check(repaired.status.Contains("no gold charged"), "Replacement missing from command reply.");
+        oldEntry.TroopType=excludedElite;
+        behavior.SetClass(hero,infantry);
+        Check(oldEntry.TroopType==aInf && oldEntry.Level==4 && behavior.Gold==beforeGold,
+            "Class change must reconcile special troops even without a role change.");
+        settings.Retinue.HireByHeroClass=false;
+        oldEntry.TroopType=orphanInf;
+        repaired=behavior.UpgradeRetinue(hero,settings.Retinue,0);
+        Check(oldEntry.TroopType==aBow && oldEntry.Level==4 && behavior.Gold==beforeGold,
+            "Unguided replacement must use eligible closest tier and deterministic ID.");
+        settings.Retinue.HireByHeroClass=true;
+        // No candidate: retain the special unit but never upgrade or charge for it.
+        settings.Retinue.UseBasicTroops=false;
+        oldEntry.TroopType=orphanRoot;
+        repaired=behavior.UpgradeRetinue(hero,settings.Retinue,int.MaxValue);
+        Check(!repaired.success && oldEntry.TroopType==orphanRoot && behavior.Gold==beforeGold && repaired.status.Contains("retained"),
+            "No eligible pool must retain existing special unit without upgrades or payment.");
+        commands.ExecuteRetinue(new ReplyContext {UserName="viewer",Args="clear all"},settings,_=>{},e=>throw new Exception(e));
+        Check(!behavior.Data.Retinue.Any(), "Clear must remain available with an empty eligible pool.");
+        settings.Retinue.UseBasicTroops=true;
+        // Secondary command keeps its configured elite roots and first-step price.
+        settings.Retinue2.UseBasicTroops=false; settings.Retinue2.UseEliteTroops=true;
+        behavior.Data.Retinue2.Clear();
+        behavior.Data.ClassID=infantry.ID;
+        commands.ExecuteRetinue2(new ReplyContext {UserName="viewer",Args="1"},settings,_=>{},e=>throw new Exception(e));
+        Check(behavior.Data.Retinue2.Single().TroopType==excludedElite && behavior.Gold==beforeGold-10,
+            "Elite command access or hire price changed.");
+        behavior.Data.Retinue2.Clear();
+        // Elite command must not reconcile the separate ordinary roster.
+        behavior.Data.Retinue.Add(oldEntry);
+        oldEntry.TroopType=orphanRoot;
+        commands.ExecuteRetinue2(new ReplyContext {UserName="viewer",Args="1"},settings,_=>{},e=>throw new Exception(e));
+        Check(oldEntry.TroopType==orphanRoot, "Elite command changed the ordinary roster.");
+        behavior.Data.Retinue.Clear(); behavior.Data.Retinue2.Clear();
+        a.EliteBasicTroop=root;
+        CharacterObject.All.Remove(excludedElite);
         // Simulate loading another mod roster / campaign: the new index must replace old destinations.
         root.UpgradeTargets = new[] { aBow };
         CharacterObject.All.Remove(aInf);
@@ -126,7 +185,7 @@ static class Tests
         // A deep overhaul graph must not recurse until stack overflow.
         var terminals=CycleSafeGraph.FindTerminals(0, n=>n<20000 ? new[] {n+1} : Array.Empty<int>());
         Check(terminals.SequenceEqual(new[] {20000}), "Deep graph traversal failed.");
-        Console.WriteLine("PASS actual retinue/secondary commands and campaign methods: archer-clear-infantry, class conversion, culture fallback, mounted roles, overhaul roots, reload, no-match/no-charge, cycles and deep graphs.");
+        Console.WriteLine("PASS actual retinue/secondary commands and campaign methods: archer-clear-infantry, class conversion, culture fallback, mounted roles, overhaul roots, reload, no-match/no-charge, cycles, deep graphs, ordinary eligibility/replacement and unchanged elite access/pricing.");
     }
 }
 namespace TaleWorlds.Core { public enum FormationClass { Infantry,Ranged,Cavalry,HorseArcher,LightCavalry,HeavyCavalry,HeavyInfantry,Skirmisher } }
@@ -146,7 +205,7 @@ namespace TaleWorlds.CampaignSystem
 }
 namespace BannerlordTwitch.Util
 {
-    public static class Log { public static void Info(string _){} public static void Error(string _){} }
+    public static class Log { public static void Info(string _){} public static void Error(string _){} public static List<string> Responses=new(); public static void LogFeedResponse(string name, params string[] messages){Responses.AddRange(messages);} }
     public static class Extensions
     {
         public static string Translate(this string text, params (string,object)[] args)=>text;
@@ -163,6 +222,7 @@ namespace BLTAdoptAHero
     public static class Naming { public const string Gold="g",To="->",Dec="-"; public static string NotEnoughGold(int a,int b)=>"not enough"; public static string JoinList(IEnumerable<string> v)=>string.Join(";",v); }
     public class ReplyContext { public string UserName,Args; public string ArgsErrorMessage(string value)=>value; }
     public static class AdoptAHero { public const string NoHeroMessage="No hero"; }
+    public static class Retinue { public static BLTAdoptAHeroCampaignBehavior.RetinueSettings CurrentSettings=new(); }
     public class CommandSettings { public BLTAdoptAHeroCampaignBehavior.RetinueSettings Retinue=new(); public BLTAdoptAHeroCampaignBehavior.Retinue2Settings Retinue2=new(); public bool AllByDefault=true; }
     public class Commands { /* COMMAND METHODS */ }
     public class BLTAdoptAHeroCampaignBehavior

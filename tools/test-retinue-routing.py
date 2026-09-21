@@ -18,7 +18,9 @@ def method(text, signature):
     return text[start:pos]
 methods = [method(source, s) for s in [
     "        public void SetClass(", "        private CharacterObject SelectClassGuidedTroop(",
-    "        private void ConvertClassGuidedRetinues(", "        private static void ConvertIncompatible<T>(",
+    "        private void ConvertClassGuidedRetinues(",
+    "        private static IReadOnlyList<CharacterObject> OrdinaryRetinueRoots(",
+    "        private (bool changed, List<string> messages) ReconcileOrdinaryRetinue(", "        private static void ConvertIncompatible<T>(",
     "        public (bool success, string status) UpgradeRetinue(",
     "        public (bool success, string status) UpgradeRetinue2(",
     "        public void KillRetinueAtIndex(", "        public void KillRetinue2AtIndex("

@@ -41,6 +41,15 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 - [ ] With an overhaul enabled, start/load a campaign and repeat. Check the log for the loaded troop index and selected terminal paths. No vanilla troop IDs should be assumed.
 - [ ] Save/reload and repeat the class switch: the index is rebuilt and the selected class remains current.
 
+## Ordinary retinue recruitment boundary
+
+- [ ] Ordinary retinue never recruits unassigned special trees, even when those trees share the hero culture or start at tier 4-5. Only enabled cultural recruitment roots and their upgrades are eligible.
+- [ ] Disable a troop category and change class: conversion must not pick units from the excluded category. Repeat with class guidance disabled.
+- [ ] Load a save containing special ordinary-retinue troops. On the next retinue command or class change, they become eligible troops without charging for the replacement or resetting paid upgrade counters. Save/reload and confirm the replacements persist.
+- [ ] With no eligible replacement, the unit stays in its slot without upgrading; the reply explains why. Clearing the slot still works.
+- [ ] Elite retinue retains its configured troop access and costs. Test an elite purchase without changing the ordinary retinue.
+- [ ] Prayer/unlock mechanics attached to an otherwise normal cultural upgrade path are outside this restriction; confirm overhaul-specific behavior separately.
+
 ## Existing gameplay regression pass
 
 - [ ] Retinue purchase and upgrades follow the selected class; changing class converts class-guided retinues correctly. Repeat for elite retinue.

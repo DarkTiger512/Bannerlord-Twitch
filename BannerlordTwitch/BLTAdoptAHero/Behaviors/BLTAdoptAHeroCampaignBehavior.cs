@@ -1234,11 +1234,45 @@ namespace BLTAdoptAHero
 
         private void ConvertClassGuidedRetinues(Hero hero, HeroClassDef heroClass, HeroData data)
         {
-            if (heroClass == null) return;
-            if (data.RetinueClassGuided)
-                ConvertIncompatible(data.Retinue, hero, heroClass, r => r.TroopType, (r, t) => r.TroopType = t, "Retinue");
-            if (data.Retinue2ClassGuided)
+            var settings = Retinue.CurrentSettings;
+            var eligible = TroopTreeIndex.ReachableTroops(OrdinaryRetinueRoots(settings));
+            ReconcileOrdinaryRetinue(hero, heroClass, settings, eligible);
+            if (heroClass != null && data.Retinue2ClassGuided)
                 ConvertIncompatible(data.Retinue2, hero, heroClass, r => r.TroopType, (r, t) => r.TroopType = t, "Retinue2");
+        }
+
+        private static IReadOnlyList<CharacterObject> OrdinaryRetinueRoots(RetinueSettings settings)
+        {
+            return TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
+                settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
+                TroopTreeIndex.RecruitmentPolicy.CulturalTreesOnly);
+        }
+
+        private (bool changed, List<string> messages) ReconcileOrdinaryRetinue(Hero hero,
+            HeroClassDef heroClass, RetinueSettings settings, HashSet<CharacterObject> eligible)
+        {
+            bool changed = false;
+            var messages = new List<string>();
+            foreach (var entry in GetHeroData(hero).Retinue)
+            {
+                var old = entry.TroopType;
+                if (eligible.Contains(old) && (!settings.HireByHeroClass || TroopTreeIndex.CanReachHeroClass(old, heroClass))) continue;
+                var replacement = TroopTreeIndex.SelectCulturalReplacement(old, hero, heroClass,
+                    settings.HireByHeroClass, eligible);
+                string message;
+                if (replacement == null)
+                    message = $"No eligible cultural retinue replacement for {old}; retained without upgrades. Clear the slot or change class/settings.";
+                else
+                {
+                    entry.TroopType = replacement;
+                    changed = true;
+                    message = $"Retinue: {old} -> {replacement} (no gold charged).";
+                }
+                messages.Add(message);
+                Log.LogFeedResponse(hero.Name.ToString(), message);
+            }
+            return (changed, messages);
         }
 
         private static void ConvertIncompatible<T>(IEnumerable<T> retinue, Hero hero, HeroClassDef heroClass,
@@ -1438,16 +1472,13 @@ namespace BLTAdoptAHero
         {
             var heroDataForGuidance = GetHeroData(hero);
             heroDataForGuidance.RetinueClassGuided = settings.HireByHeroClass;
-            if (settings.HireByHeroClass)
-                ConvertClassGuidedRetinues(hero, GetClass(hero), heroDataForGuidance);
-
-            var availableTroops = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
-                settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
-                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
+            var availableTroops = OrdinaryRetinueRoots(settings);
+            var eligible = TroopTreeIndex.ReachableTroops(availableTroops);
+            var reconciliation = ReconcileOrdinaryRetinue(hero, GetClass(hero), settings, eligible);
 
             if (!availableTroops.Any())
             {
-                return (false, "{=bBCyH0vV}No valid troop types could be found, please check your settings".Translate());
+                return (reconciliation.changed, Naming.JoinList(reconciliation.messages.Concat(new[] { "No eligible cultural recruitment trees; check retinue settings." })));
             }
 
             var heroRetinue = GetHeroData(hero).Retinue;
@@ -1457,7 +1488,7 @@ namespace BLTAdoptAHero
             int heroGold = GetHeroGold(hero);
             int totalCost = 0;
 
-            var results = new List<string>();
+            var results = new List<string>(reconciliation.messages);
             int effectiveMaxRetinue = settings.MaxRetinueSize + (UpgradeBehavior.Current?.GetTotalRetinueSizeBonus(hero) ?? 0);
 
             while (maxToUpgrade-- > 0)
@@ -1500,15 +1531,15 @@ namespace BLTAdoptAHero
                     // upgrade the lowest tier unit
                     var retinueToUpgrade = heroRetinue
                         .OrderBy(h => h.TroopType.Tier)
-                        .FirstOrDefault(t => t.TroopType.UpgradeTargets?.Any() == true &&
-                            (!settings.HireByHeroClass || TroopTreeIndex.SelectCompatibleUpgrade(t.TroopType, GetClass(hero)).SelectedTroop != null));
+                        .FirstOrDefault(t => eligible.Contains(t.TroopType) && t.TroopType.UpgradeTargets?.Any(eligible.Contains) == true &&
+                            (!settings.HireByHeroClass || TroopTreeIndex.SelectCompatibleUpgrade(t.TroopType, GetClass(hero), eligible).SelectedTroop != null));
 
                     if (retinueToUpgrade != null)
                     {
                         var oldTroopType = retinueToUpgrade.TroopType;
                         var upgradedTroopType = settings.HireByHeroClass
-                            ? TroopTreeIndex.SelectCompatibleUpgrade(oldTroopType, GetClass(hero)).SelectedTroop
-                            : oldTroopType.UpgradeTargets.SelectRandom();
+                            ? TroopTreeIndex.SelectCompatibleUpgrade(oldTroopType, GetClass(hero), eligible).SelectedTroop
+                            : oldTroopType.UpgradeTargets.Where(eligible.Contains).SelectRandom();
                         if (upgradedTroopType == null)
                         {
                             results.Add("{=BLTNoCompatibleUpgrade}No class-compatible upgrade path remains.".Translate());
@@ -1584,7 +1615,7 @@ namespace BLTAdoptAHero
                 ChangeHeroGold(hero, -totalCost, isSpending: true);
             }
 
-            return (retinueChanges.Any(), Naming.JoinList(troopUpgradeSummary.Concat(results)));
+            return (retinueChanges.Any() || reconciliation.changed, Naming.JoinList(troopUpgradeSummary.Concat(results)));
         }
 
         public void KillRetinue(Hero retinueOwnerHero, BasicCharacterObject retinueCharacterObject)
@@ -1746,12 +1777,13 @@ namespace BLTAdoptAHero
         {
             var heroDataForGuidance = GetHeroData(hero);
             heroDataForGuidance.Retinue2ClassGuided = settings.HireByHeroClass;
-            if (settings.HireByHeroClass)
-                ConvertClassGuidedRetinues(hero, GetClass(hero), heroDataForGuidance);
+            if (settings.HireByHeroClass && GetClass(hero) != null)
+                ConvertIncompatible(heroDataForGuidance.Retinue2, hero, GetClass(hero), r => r.TroopType, (r, t) => r.TroopType = t, "Retinue2");
 
             var availableTroops = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
                 settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
-                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
+                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits,
+                TroopTreeIndex.RecruitmentPolicy.IncludeUnassignedTrees);
 
             if (!availableTroops.Any())
             {

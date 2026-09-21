@@ -21,7 +21,7 @@ Install the new `Bannerlord-Twitch-v4.yaml` along with all four modules. Do not 
 ## Retinue class correction
 
 - Corrected the shipped Infantry formation from Ranged to Infantry and enabled Hire By Hero Class for both retinue commands.
-- Rebuild the loaded troop-tree index for new campaigns and loaded saves. Military trees added by overhauls are discovered without hardcoded troop IDs or a main-culture restriction; unassigned military roots count as basic troops.
+- Rebuild the loaded troop-tree index for new campaigns and loaded saves. Military trees added by overhauls are discovered without hardcoded troop IDs or a main-culture restriction; ordinary retinue uses explicit cultural recruitment roots, while secondary retinue retains its existing discovery rules.
 - Prefer compatible paths in the adopted hero's culture, then compatible paths in other cultures, within the enabled troop categories. Never substitute an incompatible troop when no valid path exists.
 - Keep every upgrade progressing toward a compatible terminal, including cyclic trees with an exit. Closed cycles are not valid destinations.
 - Regression coverage exercises the actual command and campaign methods for archer → hire → clear → infantry → hire, both retinue systems, class conversion, culture fallback, changed rosters, and cycles.
@@ -29,3 +29,7 @@ Install the new `Bannerlord-Twitch-v4.yaml` along with all four modules. Do not 
 ## Test gate
 
 See [the manual checklist](CLASSIC-5.5.1-TEST-CHECKLIST.md). Automated and compiled-configuration checks do not replace in-game testing. Use a disposable campaign save to test prestige resets and event rewards. Publication requires explicit approval after testing.
+
+## Ordinary retinue recruitment boundary
+
+Ordinary retinue now uses only explicitly configured cultural recruitment trees and their upgrades. Unassigned special trees are excluded from hiring, upgrading, and class conversion, including with class guidance disabled. Previously acquired ineligible units are replaced on the next retinue command or class change without a replacement charge or resetting paid upgrade counters. If no eligible replacement exists, they remain without upgrades and can still be cleared. Elite retinue access and pricing are unchanged. Configuration generation remains 2; this correction does not require another profile reset.
