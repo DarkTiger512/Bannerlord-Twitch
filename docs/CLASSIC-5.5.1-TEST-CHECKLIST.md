@@ -1,6 +1,6 @@
 # Classic 5.5.1 test checklist
 
-This draft requires a clean configuration. Every older settings profile is replaced with generation 1 defaults when opened. Reapply desired customizations. Authentication and campaign saves are not reset. Nothing should be published until in-game testing is approved.
+This draft requires a clean configuration. Every older settings profile is replaced with generation 2 defaults when opened. Reapply desired customizations. Authentication and campaign saves are not reset. Nothing should be published until in-game testing is approved.
 
 ## Configuration and commands
 
@@ -10,7 +10,7 @@ This draft requires a clean configuration. Every older settings profile is repla
 - [ ] Prestige appears under Chat Commands, with readable requirements/perks/reset fields. It no longer appears in Common Config. A Prestige alias shares the same settings.
 - [ ] Neither commands nor rewards offer Respond in Extension. Twitch/overlay responses work through their selected destinations.
 - [ ] Enchant, Balance, Ammo, Prestige and Predict are enabled in the default command list. Their help text and handlers work.
-- [ ] New Command → Predict creates a predict command using TournamentPrediction.
+- [ ] New Command -> Predict creates a predict command using TournamentPrediction.
 - [ ] Enable SimGold for testing: broadcaster/moderator `!simgold 100` adds 100 gold to their hero; `!simgold 100 viewer` targets that adopted hero.
 - [ ] Ordinary viewers cannot grant gold, even if Moderator Only is unchecked. Zero, negative, malformed, overflowing amounts and nonexistent heroes change no balances. Disable SimGold again after testing.
 
@@ -31,6 +31,15 @@ Use a disposable campaign save. For faster triggering, temporarily set the Event
 - [ ] If HP drops to 20% or below before acceptance, the encounter closes safely, the temporary enemy disappears, and no gold is awarded.
 - [ ] Load a save with an outstanding encounter: existing safe-abort behavior leaves no stuck conversation.
 - [ ] Run a Stream Objective and trigger a Priest's Crusade to verify both read the new Events settings.
+
+## Retinue class regression
+
+- [ ] With enough BLT gold: `!class archer`, `!retinue all`, `!retinue clear all`, `!class infantry`, `!retinue all`. The second retinue must finish as infantry, not archers.
+- [ ] Switch class without clearing: existing class-guided retinue converts to a compatible troop of the closest available tier in the preferred culture.
+- [ ] Repeat with `!eliteretinue` (secondary retinue).
+- [ ] Test a class whose allowed paths do not exist in the viewer's culture: recruitment comes from another culture and every upgrade remains on a compatible path.
+- [ ] With an overhaul enabled, start/load a campaign and repeat. Check the log for the loaded troop index and selected terminal paths. No vanilla troop IDs should be assumed.
+- [ ] Save/reload and repeat the class switch: the index is rebuilt and the selected class remains current.
 
 ## Existing gameplay regression pass
 

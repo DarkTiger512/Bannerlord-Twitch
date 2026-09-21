@@ -43,7 +43,7 @@ namespace BLTAdoptAHero.Util
         }
 
         public static Selection<T> Select<T>(IEnumerable<T> candidates, Func<T, bool> sameCulture,
-            Func<T, bool> classCompatible, IEnumerable<T> safeFallback, Func<T, string> stableKey,
+            Func<T, bool> classCompatible, Func<T, string> stableKey,
             Func<T, int> compatibilityScore = null)
         {
             compatibilityScore ??= _ => 0;
@@ -58,13 +58,8 @@ namespace BLTAdoptAHero.Util
             if (selected != null) return Result(selected, 2, compatibilityScore, rejections);
             rejections.Add("tier 2 rejected: no cross-culture class-compatible path");
 
-            selected = Best(available.Where(sameCulture), compatibilityScore, stableKey);
-            if (selected != null) return Result(selected, 3, compatibilityScore, rejections);
-            rejections.Add("tier 3 rejected: no same-culture path");
-
-            selected = Best(Clean(safeFallback), compatibilityScore, stableKey);
-            if (selected == null) rejections.Add("tier 4 rejected: no safe fallback");
-            return Result(selected, 4, compatibilityScore, rejections);
+            // A different troop role is never a successful class-guided hire.
+            return Result(default(T), 0, compatibilityScore, rejections);
         }
 
         public static Selection<T> SelectCompatible<T>(IEnumerable<T> candidates,
@@ -83,8 +78,8 @@ namespace BLTAdoptAHero.Util
             Func<T, int> compatibilityScore, Func<T, string> stableKey)
         {
             var selected = Clean(candidates).Where(classCompatible)
-                .OrderBy(v => Math.Abs(tier(v) - targetTier))
-                .ThenByDescending(sameCulture)
+                .OrderByDescending(sameCulture)
+                .ThenBy(v => Math.Abs(tier(v) - targetTier))
                 .ThenByDescending(compatibilityScore)
                 .ThenBy(stableKey, StringComparer.Ordinal)
                 .FirstOrDefault();

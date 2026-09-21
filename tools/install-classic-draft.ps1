@@ -29,7 +29,7 @@ New-Item -ItemType Directory -Path $backup | Out-Null
 $draftMetadata=Get-Content -LiteralPath (Join-Path $stage 'release-metadata.json') -Raw | ConvertFrom-Json
 if ($draftMetadata.sourceCommit -ne $ExpectedCommit) { throw 'Draft source mismatch' }
 $defaultYaml=Join-Path $stage 'BannerlordTwitch/Bannerlord-Twitch-v4.yaml'
-if ((Get-Content -LiteralPath $defaultYaml -Raw) -notmatch '(?m)^ConfigurationGeneration: 1\r?$') {throw 'Missing clean default configuration generation.'}
+if (!$draftMetadata.configurationGeneration -or (Get-Content -LiteralPath $defaultYaml -Raw) -notmatch ('(?m)^ConfigurationGeneration: ' + [regex]::Escape([string]$draftMetadata.configurationGeneration) + '\r?$')) {throw 'Missing clean default configuration generation.'}
 $preserved=[Collections.Generic.List[string]]::new()
 $moved=[Collections.Generic.List[string]]::new()
 $copied=[Collections.Generic.List[string]]::new()
@@ -69,7 +69,7 @@ foreach($module in $modules) {
   }
   Copy-Item -LiteralPath "$stage/release-metadata.json" -Destination (ChildPath (ChildPath $gameRoot $module) 'testdraft-metadata.json')
  }
- [ordered]@{sourceCommit=$ExpectedCommit;configurationGeneration=1;resetOldProfilesOnLoad=$true;installedAt=(Get-Date -Format o);modules=$modules;gameModules=$gameRoot;backup=$backup;verifiedDraftFiles=$checked;preservedConfiguration=$preserved.ToArray();manualTestStatus='awaiting owner testing'} | ConvertTo-Json -Depth 5 | Set-Content "$releaseRoot/installation.json"
+ [ordered]@{sourceCommit=$ExpectedCommit;configurationGeneration=$draftMetadata.configurationGeneration;resetOldProfilesOnLoad=$true;installedAt=(Get-Date -Format o);modules=$modules;gameModules=$gameRoot;backup=$backup;verifiedDraftFiles=$checked;preservedConfiguration=$preserved.ToArray();manualTestStatus='awaiting owner testing'} | ConvertTo-Json -Depth 5 | Set-Content "$releaseRoot/installation.json"
  Write-Output "Installed four draft modules; verified $checked files and preserved $($preserved.Count) authentication/service files; installed the clean default YAML. Backup: $backup"
 } catch {
  $failed=[IO.Path]::GetFullPath("$releaseRoot/failed-install")

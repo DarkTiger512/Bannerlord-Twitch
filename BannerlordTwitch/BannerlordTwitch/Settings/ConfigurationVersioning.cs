@@ -5,7 +5,7 @@ namespace BannerlordTwitch
 {
     public static class ConfigurationVersioning
     {
-        public const int CurrentGeneration = 1;
+        public const int CurrentGeneration = 2;
         public sealed class Header
         {
             public int ConfigurationGeneration { get; set; }

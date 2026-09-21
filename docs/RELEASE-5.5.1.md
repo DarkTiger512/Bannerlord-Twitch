@@ -1,10 +1,10 @@
-# BLT Classic 5.5.1 — configuration and campaign event fixes
+# BLT Classic 5.5.1 - configuration and campaign event fixes
 
 Draft for Bannerlord 1.4.8. Awaiting in-game testing and owner approval; do not publish yet.
 
 ## Mandatory clean configuration
 
-This release replaces older command/configuration YAML with a new clean default configuration. Existing settings profiles reset once when opened. Reapply your custom command names, costs, event settings, and other preferences after upgrading. Settings edited after the reset persist normally. Authentication credentials and campaign saves are not reset.
+This release replaces older command/configuration YAML with a new clean default configuration. Existing settings profiles reset once when opened. This retinue test uses configuration generation 2 so the previous draft cannot retain its incorrect Infantry definition. Reapply your custom command names, costs, event settings, and other preferences after upgrading. Settings edited after the reset persist normally. Authentication credentials and campaign saves are not reset.
 
 Install the new `Bannerlord-Twitch-v4.yaml` along with all four modules. Do not restore an older YAML over it.
 
@@ -17,6 +17,14 @@ Install the new `Bannerlord-Twitch-v4.yaml` along with all four modules. Do not 
 - Clean defaults include Enchant, Balance, Ammo, Prestige, and Predict. Predict now uses the correctly registered TournamentPrediction handler in both chat and New Command.
 - Curse wins track actual mission participation and fighting side, including summoned heroes. Duplicate callbacks, losses and unresolved retreats do not count. Rewards support retry without duplication and report pending delivery.
 - Immortal encounters require strictly more than 20% player health, regardless of configuration, and recheck before battle acceptance.
+
+## Retinue class correction
+
+- Corrected the shipped Infantry formation from Ranged to Infantry and enabled Hire By Hero Class for both retinue commands.
+- Rebuild the loaded troop-tree index for new campaigns and loaded saves. Military trees added by overhauls are discovered without hardcoded troop IDs or a main-culture restriction; unassigned military roots count as basic troops.
+- Prefer compatible paths in the adopted hero's culture, then compatible paths in other cultures, within the enabled troop categories. Never substitute an incompatible troop when no valid path exists.
+- Keep every upgrade progressing toward a compatible terminal, including cyclic trees with an exit. Closed cycles are not valid destinations.
+- Regression coverage exercises the actual command and campaign methods for archer → hire → clear → infantry → hire, both retinue systems, class conversion, culture fallback, changed rosters, and cycles.
 
 ## Test gate
 

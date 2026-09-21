@@ -35,21 +35,21 @@ var troops = new[]
     new Troop("same-compatible-high-a", "A", true, 6)
 };
 var selected = SmartTroopPolicy.Select(troops, t => t.Culture == "A", t => t.Compatible,
-    new[] { new Troop("fallback", "A", true, 1) }, t => t.Id, t => t.MaxTier);
+    t => t.Id, t => t.MaxTier);
 Assert(selected.Value.Id == "same-compatible-high-a" && selected.FallbackTier == 1 && selected.Score == 6,
     "Tier 1 scoring/stable tie-break failed.");
 
 selected = SmartTroopPolicy.Select(troops.Where(t => t.Culture != "A" || !t.Compatible),
-    t => t.Culture == "A", t => t.Compatible, Array.Empty<Troop>(), t => t.Id, t => t.MaxTier);
+    t => t.Culture == "A", t => t.Compatible, t => t.Id, t => t.MaxTier);
 Assert(selected.Value.Id == "other-compatible" && selected.FallbackTier == 2, "Tier 2 failed.");
 
 selected = SmartTroopPolicy.Select(troops.Where(t => !t.Compatible), t => t.Culture == "A",
-    t => t.Compatible, Array.Empty<Troop>(), t => t.Id, t => t.MaxTier);
-Assert(selected.Value.Id == "same-incompatible" && selected.FallbackTier == 3, "Tier 3 failed.");
+    t => t.Compatible, t => t.Id, t => t.MaxTier);
+Assert(selected.Value == null, "An incompatible troop must never be a class-guided fallback.");
 
 selected = SmartTroopPolicy.Select(Array.Empty<Troop>(), _ => false, _ => false,
-    new[] { new Troop("fallback", "A", true, 1) }, t => t.Id, t => t.MaxTier);
-Assert(selected.Value.Id == "fallback" && selected.FallbackTier == 4, "Tier 4 failed.");
+    t => t.Id, t => t.MaxTier);
+Assert(selected.Value == null, "No candidates must report failure.");
 
 var branch = SmartTroopPolicy.SelectCompatible(troops, t => t.Compatible, t => t.MaxTier, t => t.Id);
 Assert(branch.Value.Id == "other-compatible", "Compatible branch score/tie-break failed.");

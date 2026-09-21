@@ -75,6 +75,18 @@ internal static class VerifyCleanConfig
             Check(ReferenceEquals(Property(alias, "HandlerConfig"), prestigeConfig), "Prestige aliases diverge.");
             ((IList)Property(settings, "Commands")).Remove(alias);
             var globals = ((IEnumerable)Property(settings, "GlobalConfigs")).Cast<object>().ToList();
+            var classGlobal = globals.Single(c => (string)Property(c, "Id") == "Adopt A Hero - Class Config");
+            var classType = assemblies[1].GetType("BLTAdoptAHero.GlobalHeroClassConfig", true);
+            var classes = convert.Invoke(null, new[] { Property(classGlobal, "Config"), classType });
+            var infantry = ((IEnumerable)Property(classes, "ClassDefs")).Cast<object>()
+                .Single(c => (Guid)Property(c, "ID") == new Guid("9fa426af-af3e-41f6-9b48-0ffef6dc3553"));
+            Check((string)Property(infantry, "Formation") == "Infantry", "Default Infantry class is not infantry.");
+            foreach (string name in new[] { "Retinue", "Retinue2" })
+            {
+                var command = commands.Single(c => (string)Property(c, "Handler") == name);
+                var config = Property(Property(command, "HandlerConfig"), name);
+                Check((bool)Property(config, "HireByHeroClass"), "Class guidance is disabled for " + name);
+            }
             var eventConfig = globals.Single(c => (string)Property(c, "Id") == "Adopt A Hero - Events");
             Type eventType = assemblies[1].GetType("BLTAdoptAHero.GlobalEventConfig", true);
             object events = convert.Invoke(null, new[] { Property(eventConfig, "Config"), eventType });

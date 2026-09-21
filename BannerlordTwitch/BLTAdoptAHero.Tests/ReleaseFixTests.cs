@@ -7,15 +7,15 @@ internal static class ReleaseFixTests
     public static void Run()
     {
         void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
-        const string defaults = "ConfigurationGeneration: 1\nCommands: []\nGlobalConfigs: []\n";
+        const string defaults = "ConfigurationGeneration: 2\nCommands: []\nGlobalConfigs: []\n";
         int reads = 0;
         string ReadDefaults() { reads++; return defaults; }
-        foreach (string old in new[] { null, "", "Commands: [!RemovedHandler {Name: obsolete}]\n", "ConfigurationGeneration: 0\nCommands: []\n" })
+        foreach (string old in new[] { null, "", "Commands: [!RemovedHandler {Name: obsolete}]\n", "ConfigurationGeneration: 0\nCommands: []\n", "ConfigurationGeneration: 1\nCommands: [{Name: old-infantry}]\n" })
         {
             Check(ConfigurationVersioning.SelectYaml(old, ReadDefaults, out bool reset) == defaults && reset,
                 "Missing/old profiles must reset before resolving obsolete tagged handlers.");
         }
-        string edited = "ConfigurationGeneration: 1\nCommands: [{Name: mycustomcommand, Enabled: false}]\n";
+        string edited = "ConfigurationGeneration: 2\nCommands: [{Name: mycustomcommand, Enabled: false}]\n";
         int before = reads;
         for (int i = 0; i < 2; i++)
             Check(ConfigurationVersioning.SelectYaml(edited, ReadDefaults, out bool reset) == edited && !reset,
@@ -26,7 +26,7 @@ internal static class ReleaseFixTests
         catch (InvalidOperationException) { rejected = true; }
         Check(rejected, "Outdated installed defaults must not cause a perpetual reset.");
         rejected = false;
-        try { ConfigurationVersioning.SelectYaml("ConfigurationGeneration: 2", ReadDefaults, out _); }
+        try { ConfigurationVersioning.SelectYaml("ConfigurationGeneration: 3", ReadDefaults, out _); }
         catch (InvalidOperationException) { rejected = true; }
         Check(rejected, "Do not downgrade future-generation profiles.");
 

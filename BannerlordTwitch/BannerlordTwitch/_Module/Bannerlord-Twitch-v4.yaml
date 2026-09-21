@@ -1,4 +1,4 @@
-ConfigurationGeneration: 1
+ConfigurationGeneration: 2
 Commands:
 - Documentation: 'Grant test gold. Broadcaster/moderator only. Usage: !simgold <positive amount> [viewer].'
   Enabled: false
@@ -763,6 +763,7 @@ Commands:
       CostTier4: 200000
       CostTier5: 400000
       CostTier6: 800000
+      HireByHeroClass: true
       IncludeBanditUnits: false
       MaxRetinueSize: 5
       UseBasicTroops: true
@@ -1309,6 +1310,7 @@ Commands:
       CostTier4: 350000
       CostTier5: 550000
       CostTier6: 800000
+      HireByHeroClass: true
       IncludeBanditUnits: false
       MaxRetinue2Size: 5
       UseBasicTroops: false
@@ -1436,7 +1438,7 @@ GlobalConfigs:
             MinLevel: 3
       Description: Basic foot soldier, the core around which every army is built.
       Enabled: true
-      Formation: Ranged
+      Formation: Infantry
       ID: 9fa426af-af3e-41f6-9b48-0ffef6dc3553
       Name: '{=m8bz4drX}infantry'
       PassivePower:

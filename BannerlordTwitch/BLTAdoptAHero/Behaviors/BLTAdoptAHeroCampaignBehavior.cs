@@ -117,6 +117,8 @@ namespace BLTAdoptAHero
         #region CampaignBehaviorBase        
         public override void RegisterEvents()
         {
+            TroopTreeIndex.Reset();
+            CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, _ => TroopTreeIndex.BuildIndex());
             // We put all initialization that relies on loading being complete into this listener
             CampaignEvents.OnGameLoadFinishedEvent.AddNonSerializedListener(this, () =>
             {
@@ -1212,11 +1214,7 @@ namespace BLTAdoptAHero
                 .Distinct()
                 .ToList();
 
-            var safeFallback = new[] { hero.Culture?.BasicTroop }.Concat(CampaignHelpers.AllCultures
-                .Where(c => c.IsMainCulture)
-                .Select(c => c.BasicTroop)
-                .Where(t => t != null && !t.IsMounted));
-            var selection = TroopTreeIndex.SelectHire(hero, heroClass, candidates, safeFallback);
+            var selection = TroopTreeIndex.SelectHire(hero, heroClass, candidates);
             var selected = selection.SelectedTroop;
             fallbackTier = selection.FallbackTier;
 
@@ -1418,7 +1416,7 @@ namespace BLTAdoptAHero
              LocCategory("Troop Types", "{=qYhM3gcn}Troop Types"),
              LocDescription("{=BLTHireByClassDesc}Hire and upgrade troops along paths compatible with the adopted hero's class."),
              PropertyOrder(5), UsedImplicitly]
-            public bool HireByHeroClass { get; set; }
+            public bool HireByHeroClass { get; set; } = true;
 
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
@@ -1443,23 +1441,9 @@ namespace BLTAdoptAHero
             if (settings.HireByHeroClass)
                 ConvertClassGuidedRetinues(hero, GetClass(hero), heroDataForGuidance);
 
-            var availableTroops = CampaignHelpers.AllCultures
-                .Where(c => settings.IncludeBanditUnits || c.IsMainCulture)
-                .SelectMany(c =>
-                {
-                    var troopTypes = new List<CharacterObject>();
-                    if (settings.UseBasicTroops && c.BasicTroop != null) troopTypes.Add(c.BasicTroop);
-                    if (settings.UseEliteTroops && c.EliteBasicTroop != null) troopTypes.Add(c.EliteBasicTroop);
-                    if (settings.UseMilitiaTroops && c.MeleeMilitiaTroop != null) troopTypes.Add(c.MeleeMilitiaTroop);
-                    if (settings.UseMilitiaTroops && c.RangedMilitiaTroop != null) troopTypes.Add(c.RangedMilitiaTroop);
-                    if (settings.UseEliteMilitiaTroops && c.MeleeEliteMilitiaTroop != null) troopTypes.Add(c.MeleeEliteMilitiaTroop);
-                    if (settings.UseEliteMilitiaTroops && c.RangedEliteMilitiaTroop != null) troopTypes.Add(c.RangedEliteMilitiaTroop);
-                    return troopTypes;
-                })
-                // Accept every root with a valid path. Looking only at the first branch
-                // excluded otherwise valid custom and overhaul troop trees.
-                .Where(c => c?.UpgradeTargets?.Any() == true || ((settings.UseMilitiaTroops || settings.UseEliteMilitiaTroops) && (c == c?.Culture?.MeleeMilitiaTroop || c == c?.Culture?.RangedMilitiaTroop || c == c?.Culture?.MeleeEliteMilitiaTroop || c == c?.Culture?.RangedEliteMilitiaTroop)))
-                .ToList();
+            var availableTroops = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
+                settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
 
             if (!availableTroops.Any())
             {
@@ -1740,7 +1724,7 @@ namespace BLTAdoptAHero
              LocCategory("Troop Types", "{=qYhM3gcn}Troop Types"),
              LocDescription("{=BLTHireByClassDesc}Hire and upgrade troops along paths compatible with the adopted hero's class."),
              PropertyOrder(5), UsedImplicitly]
-            public bool HireByHeroClass { get; set; }
+            public bool HireByHeroClass { get; set; } = true;
 
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
@@ -1765,23 +1749,9 @@ namespace BLTAdoptAHero
             if (settings.HireByHeroClass)
                 ConvertClassGuidedRetinues(hero, GetClass(hero), heroDataForGuidance);
 
-            var availableTroops = CampaignHelpers.AllCultures
-                .Where(c => settings.IncludeBanditUnits || c.IsMainCulture)
-                .SelectMany(c =>
-                {
-                    var troopTypes = new List<CharacterObject>();
-                    if (settings.UseBasicTroops && c.BasicTroop != null) troopTypes.Add(c.BasicTroop);
-                    if (settings.UseEliteTroops && c.EliteBasicTroop != null) troopTypes.Add(c.EliteBasicTroop);
-                    if (settings.UseMilitiaTroops && c.MeleeMilitiaTroop != null) troopTypes.Add(c.MeleeMilitiaTroop);
-                    if (settings.UseMilitiaTroops && c.RangedMilitiaTroop != null) troopTypes.Add(c.RangedMilitiaTroop);
-                    if (settings.UseEliteMilitiaTroops && c.MeleeEliteMilitiaTroop != null) troopTypes.Add(c.MeleeEliteMilitiaTroop);
-                    if (settings.UseEliteMilitiaTroops && c.RangedEliteMilitiaTroop != null) troopTypes.Add(c.RangedEliteMilitiaTroop);
-                    return troopTypes;
-                })
-                // Accept every root with a valid path. Looking only at the first branch
-                // excluded otherwise valid custom and overhaul troop trees.
-                .Where(c => c?.UpgradeTargets?.Any() == true || ((settings.UseMilitiaTroops || settings.UseEliteMilitiaTroops) && (c == c?.Culture?.MeleeMilitiaTroop || c == c?.Culture?.RangedMilitiaTroop || c == c?.Culture?.MeleeEliteMilitiaTroop || c == c?.Culture?.RangedEliteMilitiaTroop)))
-                .ToList();
+            var availableTroops = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,
+                settings.UseBasicTroops, settings.UseEliteTroops, settings.UseMilitiaTroops,
+                settings.UseEliteMilitiaTroops, settings.IncludeBanditUnits);
 
             if (!availableTroops.Any())
             {

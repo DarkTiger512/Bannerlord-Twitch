@@ -1,0 +1,182 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using BLTAdoptAHero;
+using BLTAdoptAHero.Util;
+using BannerlordTwitch.Util;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.MountAndBlade;
+
+static class Tests
+{
+    static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    static CharacterObject Troop(string id, CultureObject culture, FormationClass formation, int tier, params CharacterObject[] children)
+    {
+        var t = new CharacterObject { StringId=id, Culture=culture, DefaultFormationClass=formation, Tier=tier,
+            IsMounted=formation is FormationClass.Cavalry or FormationClass.HorseArcher, UpgradeTargets=children };
+        CharacterObject.All.Add(t);
+        return t;
+    }
+    static void Main()
+    {
+        var infantry = new HeroClassDef { Formation="Infantry" };
+        var archer = new HeroClassDef { Formation="Ranged" };
+        var cavalry = new HeroClassDef { Formation="Cavalry", Mounted=true };
+        var horseArcher = new HeroClassDef { Formation="HorseArcher", Mounted=true };
+        var a = new CultureObject { StringId="overhaul_a" };
+        var b = new CultureObject { StringId="overhaul_b" };
+        CampaignHelpers.AllCultures.AddRange(new[] { a,b });
+        var aInf = Troop("a_guard",a,FormationClass.Infantry,5);
+        var aBow = Troop("a_bow",a,FormationClass.Ranged,5);
+        var root = Troop("a_recruit",a,FormationClass.Infantry,1,aBow,aInf); // Archer deliberately first.
+        a.BasicTroop = a.EliteBasicTroop = root;
+        var bHorse = Troop("b_knight",b,FormationClass.Cavalry,6);
+        var bHorseBow = Troop("b_horsebow",b,FormationClass.HorseArcher,6);
+        b.BasicTroop = b.EliteBasicTroop = Troop("b_recruit",b,FormationClass.Infantry,1,bHorse,bHorseBow);
+        var hero = new Hero { Culture=a, Name="viewer" };
+        var behavior = new BLTAdoptAHeroCampaignBehavior(hero);
+        var commands = new Commands();
+        var settings = new CommandSettings();
+        TroopTreeIndex.Reset();
+        TroopTreeIndex.BuildIndex();
+        foreach(bool secondary in new[] { false,true })
+        {
+            Action<string> send = args => {
+                var ctx = new ReplyContext { UserName="viewer", Args=args };
+                if(secondary) commands.ExecuteRetinue2(ctx,settings,_=>{},e=>throw new Exception(e));
+                else commands.ExecuteRetinue(ctx,settings,_=>{},e=>throw new Exception(e));
+            };
+            Func<IEnumerable<CharacterObject>> troops = () => secondary ? behavior.GetRetinue2(hero) : behavior.GetRetinue(hero);
+            behavior.SetClass(hero, archer);
+            send("all");
+            Check(troops().Count()==3 && troops().All(t=>t==aBow), "Archer hire/all must finish as archers.");
+            send("clear all");
+            Check(!troops().Any(), "Actual clear-all command must empty retinue.");
+            behavior.SetClass(hero,infantry);
+            send("all");
+            Check(troops().Count()==3 && troops().All(t=>t==aInf), "Archer -> clear -> Infantry must finish as infantry.");
+            behavior.SetClass(hero,archer);
+            Check(troops().All(t=>t==aBow), "Changing class with existing retinue must convert to the new role.");
+            send("clear all");
+            behavior.SetClass(hero,cavalry);
+            send("all");
+            Check(troops().All(t=>t==bHorse), "Missing own-culture cavalry must follow the other culture's cavalry tree.");
+            send("clear all");
+            behavior.SetClass(hero,horseArcher);
+            send("all");
+            Check(troops().All(t=>t==bHorseBow), "Horse archers must not become melee cavalry.");
+            send("clear all");
+        }
+        // A non-main overhaul culture has an additional tree outside its BasicTroop/Elite slots.
+        var orphanInf = Troop("extra_spearman",a,FormationClass.HeavyInfantry,6);
+        var orphanRoot = Troop("extra_recruit",a,FormationClass.Infantry,1,orphanInf);
+        TroopTreeIndex.BuildIndex();
+        var roots = TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false);
+        Check(roots.Contains(orphanRoot), "Unanchored overhaul military tree was omitted.");
+        Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==orphanRoot, "Compatible own-culture overhaul tree should be selected.");
+        // Simulate loading another mod roster / campaign: the new index must replace old destinations.
+        root.UpgradeTargets = new[] { aBow };
+        CharacterObject.All.Remove(aInf);
+        CharacterObject.All.Remove(orphanRoot);
+        CharacterObject.All.Remove(orphanInf);
+        var bInf = Troop("b_spearman",b,FormationClass.Infantry,5);
+        b.BasicTroop.UpgradeTargets = new[] { bHorse,bHorseBow,bInf };
+        TroopTreeIndex.Reset();
+        TroopTreeIndex.BuildIndex();
+        roots=TroopTreeIndex.RecruitmentRoots(CampaignHelpers.AllCultures,true,false,false,false,false);
+        Check(TroopTreeIndex.SelectHire(hero,infantry,roots).SelectedTroop==b.BasicTroop, "Reload must discard stale own-culture infantry reachability.");
+        behavior.SetClass(hero,infantry);
+        var result=behavior.UpgradeRetinue(hero,settings.Retinue,int.MaxValue);
+        Check(result.success && behavior.GetRetinue(hero).All(t=>t==bInf), "Actual hire/upgrade must reach cross-culture infantry.");
+        // No compatible role anywhere must not buy an arbitrary archer or debit gold.
+        behavior.Data.Retinue.Clear();
+        behavior.SetClass(hero,new HeroClassDef { Formation="unknown" });
+        int gold=behavior.Gold;
+        result=behavior.UpgradeRetinue(hero,settings.Retinue,int.MaxValue);
+        Check(!result.success && behavior.Gold==gold && !behavior.GetRetinue(hero).Any(), "No matching class must fail without mutation.");
+        behavior.SetClass(hero,infantry);
+        b.BasicTroop.UpgradeTargets=new[] { bHorse,bHorseBow };
+        CharacterObject.All.Remove(bInf);
+        TroopTreeIndex.BuildIndex();
+        result=behavior.UpgradeRetinue(hero,settings.Retinue,int.MaxValue);
+        Check(!result.success && behavior.Gold==gold, "No infantry path must never fall back to an incompatible tree.");
+        // Cycle with an exit: every chosen upgrade must progress toward a terminal, not loop on !retinue all.
+        CharacterObject.All.Add(aInf);
+        var cycleA=Troop("0_cycle_a",a,FormationClass.Infantry,1);
+        var cycleB=Troop("0_cycle_b",a,FormationClass.Infantry,2);
+        cycleA.UpgradeTargets=new[] {cycleB}; cycleB.UpgradeTargets=new[] {cycleA,aInf};
+        a.BasicTroop=cycleA; TroopTreeIndex.BuildIndex();
+        result=behavior.UpgradeRetinue(hero,settings.Retinue,int.MaxValue);
+        Check(result.success && behavior.GetRetinue(hero).All(t=>t==aInf), "Cycle with exit must terminate at infantry.");
+        // Closed cycles are not valid recruitment paths.
+        cycleB.UpgradeTargets=new[] {cycleA}; TroopTreeIndex.BuildIndex();
+        Check(!TroopTreeIndex.CanReachHeroClass(cycleA,infantry), "Closed cycle falsely advertised a destination.");
+        // A deep overhaul graph must not recurse until stack overflow.
+        var terminals=CycleSafeGraph.FindTerminals(0, n=>n<20000 ? new[] {n+1} : Array.Empty<int>());
+        Check(terminals.SequenceEqual(new[] {20000}), "Deep graph traversal failed.");
+        Console.WriteLine("PASS actual retinue/secondary commands and campaign methods: archer-clear-infantry, class conversion, culture fallback, mounted roles, overhaul roots, reload, no-match/no-charge, cycles and deep graphs.");
+    }
+}
+namespace TaleWorlds.Core { public enum FormationClass { Infantry,Ranged,Cavalry,HorseArcher,LightCavalry,HeavyCavalry,HeavyInfantry,Skirmisher } }
+namespace TaleWorlds.MountAndBlade { public class Mission { public static Mission Current; } }
+namespace TaleWorlds.CampaignSystem
+{
+    public enum Occupation { Soldier,Mercenary,Bandit,Villager }
+    public class CharacterObject
+    {
+        public static List<CharacterObject> All=new(); public string StringId; public CultureObject Culture;
+        public bool IsHero,IsMounted; public int Tier; public FormationClass DefaultFormationClass;
+        public Occupation Occupation=Occupation.Soldier; public CharacterObject[] UpgradeTargets=Array.Empty<CharacterObject>();
+        public override string ToString()=>StringId;
+    }
+    public class CultureObject { public string StringId; public bool IsMainCulture,IsBandit; public CharacterObject BasicTroop,EliteBasicTroop,MeleeMilitiaTroop,RangedMilitiaTroop,MeleeEliteMilitiaTroop,RangedEliteMilitiaTroop; }
+    public class Hero { public CultureObject Culture; public string Name; }
+}
+namespace BannerlordTwitch.Util
+{
+    public static class Log { public static void Info(string _){} public static void Error(string _){} }
+    public static class Extensions
+    {
+        public static string Translate(this string text, params (string,object)[] args)=>text;
+        public static bool IsEmpty<T>(this IEnumerable<T> values)=>!values.Any();
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> values)=>values;
+        public static T SelectRandom<T>(this IEnumerable<T> values)=>values.FirstOrDefault();
+    }
+}
+namespace BLTAdoptAHero
+{
+    public class HeroClassDef { public static List<HeroClassDef> All=new(); public HeroClassDef(){All.Add(this);} public Guid ID=Guid.NewGuid(); public string Formation; public bool Mounted; }
+    public static class CampaignHelpers { public static List<CultureObject> AllCultures=new(); }
+    public class UpgradeBehavior { public static UpgradeBehavior Current; public int GetTotalRetinueSizeBonus(Hero hero)=>0; public int GetTotalRetinue2SizeBonus(Hero hero)=>0; }
+    public static class Naming { public const string Gold="g",To="->",Dec="-"; public static string NotEnoughGold(int a,int b)=>"not enough"; public static string JoinList(IEnumerable<string> v)=>string.Join(";",v); }
+    public class ReplyContext { public string UserName,Args; public string ArgsErrorMessage(string value)=>value; }
+    public static class AdoptAHero { public const string NoHeroMessage="No hero"; }
+    public class CommandSettings { public BLTAdoptAHeroCampaignBehavior.RetinueSettings Retinue=new(); public BLTAdoptAHeroCampaignBehavior.Retinue2Settings Retinue2=new(); public bool AllByDefault=true; }
+    public class Commands { /* COMMAND METHODS */ }
+    public class BLTAdoptAHeroCampaignBehavior
+    {
+        public static BLTAdoptAHeroCampaignBehavior Current;
+        public Hero Hero; public HeroData Data=new(); public int Gold=1000000;
+        public BLTAdoptAHeroCampaignBehavior(Hero hero) { Hero=hero; Current=this; }
+        public Hero GetAdoptedHero(string name)=>Hero;
+        public HeroData GetHeroData(Hero h)=>Data;
+        public HeroClassDef GetClass(Hero h)=>HeroClassDef.All.FirstOrDefault(c=>c.ID==Data.ClassID);
+        public int GetHeroGold(Hero h)=>Gold;
+        public void ChangeHeroGold(Hero h,int value,bool isSpending)=>Gold+=value;
+        public IEnumerable<CharacterObject> GetRetinue(Hero h)=>Data.Retinue.Select(r=>r.TroopType);
+        public IEnumerable<CharacterObject> GetRetinue2(Hero h)=>Data.Retinue2.Select(r=>r.TroopType);
+        public class HeroData
+        {
+            private Guid classId;
+            public Guid ClassID { get=>classId; set { classId=value; } }
+            public bool RetinueClassGuided,Retinue2ClassGuided;
+            public class RetinueData { public CharacterObject TroopType; public int Level; }
+            public class Retinue2Data { public CharacterObject TroopType; public int Level; }
+            public List<RetinueData> Retinue=new(); public List<Retinue2Data> Retinue2=new();
+        }
+        public class RetinueSettings { public bool HireByHeroClass=true,UseBasicTroops=true,UseEliteTroops,UseMilitiaTroops,UseEliteMilitiaTroops,IncludeBanditUnits,UseHeroesCultureUnits=true; public int MaxRetinueSize=3; public int GetTierCost(int level)=>10; }
+        public class Retinue2Settings : RetinueSettings { public int MaxRetinue2Size=3; }
+        /* CAMPAIGN METHODS */
+    }
+}
