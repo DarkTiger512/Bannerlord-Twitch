@@ -1,29 +1,51 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace BLTAdoptAHero.Util
 {
+    [TypeConverter(typeof(ExpandableObjectConverter))]
     public class PrestigeSettings
     {
+        [Category("General"), DisplayName("Enable Prestige"), Description("Enable prestige progression and permanent perks.")]
         public bool Enabled { get; set; } = true;
+        [Category("Requirements"), DisplayName("Base Kills"), Description("Personal campaign battle kills required for the first prestige.")]
         public int BaseKills { get; set; } = 500;
+        [Category("Requirements"), DisplayName("Additional Kills Per Prestige"), Description("Extra kills required for each completed prestige.")]
         public int KillsPerPrestige { get; set; } = 250;
+        [Category("Requirements"), DisplayName("Base Gold"), Description("Gold required for the first prestige.")]
         public int BaseGold { get; set; } = 5000000;
+        [Category("Requirements"), DisplayName("Additional Gold Per Prestige"), Description("Extra gold required for each completed prestige.")]
         public int GoldPerPrestige { get; set; } = 2500000;
+        [Category("Perks"), DisplayName("Ranks Per Perk"), Description("Maximum ranks for each perk, from 1 to 10.")]
         public int RankCap { get; set; } = 10;
+        [Category("Perks"), DisplayName("Might Per Rank"), Description("Outgoing damage bonus per rank: 0.02 means 2%.")]
         public double MightPerRank { get; set; } = .02;
+        [Category("Perks"), DisplayName("Resilience Per Rank"), Description("Incoming damage reduction per rank: 0.02 means 2%.")]
         public double ResiliencePerRank { get; set; } = .02;
+        [Category("Perks"), DisplayName("Vitality Per Rank"), Description("Additional hit points per rank.")]
         public double VitalityPerRank { get; set; } = 5;
+        [Category("Perks"), DisplayName("Fortune Per Rank"), Description("Battle gold bonus per rank: 0.02 means 2%.")]
         public double FortunePerRank { get; set; } = .02;
+        [Category("Perks"), DisplayName("Insight Per Rank"), Description("BLT experience bonus per rank: 0.02 means 2%.")]
         public double InsightPerRank { get; set; } = .02;
+        [Category("Reset"), DisplayName("Starting Level"), Description("Hero level after prestige.")]
         public int StartingLevel { get; set; } = 1;
+        [Category("Reset"), DisplayName("Starting Attributes"), Description("Value of each attribute after prestige.")]
         public int StartingAttributes { get; set; } = 2;
+        [Category("Reset"), DisplayName("Starting Combat Skills"), Description("Melee and ranged skill levels after prestige.")]
         public int StartingCombatSkills { get; set; } = 50;
+        [Category("Reset"), DisplayName("Starting Movement Skills"), Description("Riding and athletics levels after prestige.")]
         public int StartingMovementSkills { get; set; } = 25;
+        [Category("Reset"), DisplayName("Starting Other Skills"), Description("Other skill levels after prestige.")]
         public int StartingOtherSkills { get; set; }
+        [Category("Reset"), DisplayName("Starting Equipment Tier"), Description("Equipment tier after prestige, from 0 to 6.")]
         public int StartingEquipmentTier { get; set; } = 1;
+        [Category("Reset"), DisplayName("Starting Gold"), Description("Hero gold after prestige.")]
         public int StartingGold { get; set; } = 50000;
+
+        public override string ToString() => "Prestige requirements, perks and reset";
 
         public bool IsValid() => BaseKills > 0 && KillsPerPrestige >= 0 && BaseGold > 0 && GoldPerPrestige >= 0
             && RankCap > 0 && RankCap <= 10 && StartingLevel >= 1 && StartingAttributes >= 1 && StartingAttributes <= 10

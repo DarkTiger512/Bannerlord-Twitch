@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -51,6 +51,7 @@ namespace BLTAdoptAHero
     {
         private Harmony harmony;
 
+        internal static GlobalEventConfig EventConfig { get; private set; }
         internal static GlobalCommonConfig CommonConfig { get; private set; }
         internal static GlobalTournamentConfig TournamentConfig { get; private set; }
         internal static GlobalHeroClassConfig HeroClassConfig { get; private set; }
@@ -61,6 +62,7 @@ namespace BLTAdoptAHero
             ActionManager.RegisterAll(typeof(BLTAdoptAHeroModule).Assembly);
 
             GlobalCommonConfig.Register();
+            GlobalEventConfig.Register();
             GlobalTournamentConfig.Register();
             GlobalHeroClassConfig.Register();
             GlobalHeroPowerConfig.Register();
@@ -206,6 +208,7 @@ namespace BLTAdoptAHero
                 {
                     // Reload settings here so they are fresh
                     CommonConfig = GlobalCommonConfig.Get();
+                    EventConfig = GlobalEventConfig.Get();
                     TournamentConfig = GlobalTournamentConfig.Get();
                     HeroClassConfig = GlobalHeroClassConfig.Get();
                     HeroPowerConfig = GlobalHeroPowerConfig.Get();

@@ -1,0 +1,43 @@
+# Classic 5.5.1 test checklist
+
+This draft requires a clean configuration. Every older settings profile is replaced with generation 1 defaults when opened. Reapply desired customizations. Authentication and campaign saves are not reset. Nothing should be published until in-game testing is approved.
+
+## Configuration and commands
+
+- [ ] Launch with an old profile: old custom commands/settings disappear and the new defaults load without missing-handler errors.
+- [ ] Edit one setting, save, restart twice: the edit remains. Open another old profile: that profile resets once as well.
+- [ ] Global Configs has an Events tab with Stream Objectives, Random Events, Cursed Artifact, Immortal Encounter, and Priest's Crusade.
+- [ ] Prestige appears under Chat Commands, with readable requirements/perks/reset fields. It no longer appears in Common Config. A Prestige alias shares the same settings.
+- [ ] Neither commands nor rewards offer Respond in Extension. Twitch/overlay responses work through their selected destinations.
+- [ ] Enchant, Balance, Ammo, Prestige and Predict are enabled in the default command list. Their help text and handlers work.
+- [ ] New Command → Predict creates a predict command using TournamentPrediction.
+- [ ] Enable SimGold for testing: broadcaster/moderator `!simgold 100` adds 100 gold to their hero; `!simgold 100 viewer` targets that adopted hero.
+- [ ] Ordinary viewers cannot grant gold, even if Moderator Only is unchecked. Zero, negative, malformed, overflowing amounts and nonexistent heroes change no balances. Disable SimGold again after testing.
+
+## Cursed Artifact
+
+Use a disposable campaign save. For faster triggering, temporarily set the Events daily curse chance to 100 and cooldown to 0. Keep Required Battle Wins at 5. Restore event defaults after testing.
+
+- [ ] Identify the cursed hero from the overlay announcement. Summon them into five qualifying winning campaign battles. Confirm progress 1/5 through 5/5.
+- [ ] Save/reload between victories: progress remains. Test normal party participation as well as summoned participation.
+- [ ] Knockout on the winning side still counts. Losing, retreating, tournaments, training and auto-resolve do not count. An absent cursed hero gains no credit.
+- [ ] At five wins, penalties stop and exactly one Cursed Legacy is delivered, with an overlay cleanse announcement. Having other custom weapons does not block it.
+- [ ] Save/reload after completion: no duplicate reward or additional win. If delivery fails, a pending notification appears and a later campaign day/load retries it.
+
+## Immortal and other events
+
+- [ ] With daily chance 100, the Immortal does not trigger below or exactly at 20% player HP. The manual `blt.trigger_immortal_event` command also refuses.
+- [ ] Above 20% HP and otherwise eligible, the encounter starts. Change configured chances/level requirements: none bypasses the health gate.
+- [ ] If HP drops to 20% or below before acceptance, the encounter closes safely, the temporary enemy disappears, and no gold is awarded.
+- [ ] Load a save with an outstanding encounter: existing safe-abort behavior leaves no stuck conversation.
+- [ ] Run a Stream Objective and trigger a Priest's Crusade to verify both read the new Events settings.
+
+## Existing gameplay regression pass
+
+- [ ] Retinue purchase and upgrades follow the selected class; changing class converts class-guided retinues correctly. Repeat for elite retinue.
+- [ ] Enchant a compatible custom weapon through +5, including insufficient funds and failure outcomes; save/reload retains the result.
+- [ ] Test summon/attack on land and, if available, a naval battle; confirm normal rewards and battle-balance reporting.
+- [ ] Verify prestige status/preview/confirmation on a disposable hero and retained prestige after save/reload.
+- [ ] Run a tournament prediction and resolve/refund the pool normally.
+- [ ] Try markup-like item/clan names and inspect overlay rendering; no executable markup or broken UI.
+- [ ] Play several battles, enter/leave settlements, and save/reload without crashes. Record failures with the command/event, expected result, actual result, and relevant log excerpt.

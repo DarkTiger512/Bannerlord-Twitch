@@ -12,6 +12,24 @@ namespace BLTAdoptAHero
     [LocDisplayName("{=BLTPrestigeCommand}Prestige"), LocDescription("{=BLTPrestigeCommandDesc}Reset progression to choose a permanent perk."), UsedImplicitly]
     internal class PrestigeCommand : HeroCommandHandlerBase
     {
+        internal static readonly Guid DefaultCommandId = new("5d4dcbde-937b-4ed5-88a5-b909d31bdb21");
+        public override Type HandlerConfigType => typeof(Settings);
+        public sealed class Settings : PrestigeSettings, ILoaded
+        {
+            public void OnLoaded(BannerlordTwitch.Settings settings)
+            {
+                var commands = settings.Commands.Where(c => c.Handler == nameof(PrestigeCommand))
+                    .OrderByDescending(c => c.ID == DefaultCommandId).ThenBy(c => c.ID).ToList();
+                var canonical = commands.FirstOrDefault()?.HandlerConfig as Settings;
+                if (canonical == null) return;
+                foreach (var command in commands) command.HandlerConfig = canonical;
+            }
+        }
+
+        internal static PrestigeSettings CurrentSettings =>
+            BannerlordTwitch.Rewards.ActionManager.GetCommandConfig(nameof(PrestigeCommand), DefaultCommandId) as PrestigeSettings
+            ?? new PrestigeSettings { Enabled = false };
+
         protected override void ExecuteInternal(Hero adoptedHero, ReplyContext context, object config, Action<string> onSuccess, Action<string> onFailure)
         {
             var behavior = BLTAdoptAHeroCampaignBehavior.Current;

@@ -29,12 +29,14 @@ namespace BLTAdoptAHero.Behaviors
         private ImmortalEncounterState state;
         private double lastSuccessfulTriggerDay = -100000;
         private bool cleaningUp;
+        private bool healthCancellationPending;
 
         public bool BattleActive => state?.Phase is RandomEventLifecycle.BattlePending or RandomEventLifecycle.Active;
 
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.TickEvent.AddNonSerializedListener(this, OnCampaignTick);
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, RegisterDialogs);
             CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
             CampaignEvents.MobilePartyDestroyed.AddNonSerializedListener(this, OnPartyDestroyed);
@@ -71,7 +73,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private void OnDailyTick()
         {
-            var cfg = BLTAdoptAHeroModule.CommonConfig;
+            var cfg = BLTAdoptAHeroModule.EventConfig;
             if (cfg?.RandomEventsEnabled != true || cfg.ImmortalEncounterEnabled != true || !Eligible(out _)) return;
             double day = CampaignTime.Now.ToDays;
             if (!RandomEventPolicy.CanRoll(day, lastSuccessfulTriggerDay, cfg.ImmortalEncounterCooldownDays, state != null && RandomEventPolicy.IsActive(state.Phase))) return;
@@ -83,9 +85,10 @@ namespace BLTAdoptAHero.Behaviors
 
         private bool Eligible(out string reason)
         {
-            var cfg = BLTAdoptAHeroModule.CommonConfig;
+            var cfg = BLTAdoptAHeroModule.EventConfig;
             if (state != null && RandomEventPolicy.IsActive(state.Phase)) { reason = "an Immortal Encounter is already active"; return false; }
             if (Hero.MainHero?.IsAlive != true) { reason = "the main hero is not alive"; return false; }
+            if (!PlayerHealthyEnough()) { reason = "the player must have more than 20% health"; return false; }
             if (Hero.MainHero.Level < (cfg?.ImmortalEncounterMinimumPlayerLevel ?? 10)) { reason = "the main hero level is too low"; return false; }
             if (MobileParty.MainParty?.IsActive != true) { reason = "the main party is unavailable"; return false; }
             if (Mission.Current != null || PlayerEncounter.Current != null) { reason = "a mission or encounter is active"; return false; }
@@ -98,7 +101,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private bool TryStart(bool manual, out string result)
         {
-            if (BLTAdoptAHeroModule.CommonConfig?.RandomEventsEnabled != true)
+            if (BLTAdoptAHeroModule.EventConfig?.RandomEventsEnabled != true)
             {
                 result = "{=BLTRandomEventsDisabled}Random events are disabled.".Translate();
                 return false;
@@ -110,7 +113,7 @@ namespace BLTAdoptAHero.Behaviors
             state = new ImmortalEncounterState { Phase = RandomEventLifecycle.Preparing, StartedDay = CampaignTime.Now.ToDays };
             try
             {
-                var cfg = BLTAdoptAHeroModule.CommonConfig;
+                var cfg = BLTAdoptAHeroModule.EventConfig;
                 string suffix = $"{CampaignTime.Now.ToHours:F0}_{MBRandom.RandomInt(1000000)}";
                 var culture = Hero.MainHero.Culture;
                 clan = Clan.CreateClan($"blt_immortal_clan_{suffix}");
@@ -177,9 +180,20 @@ namespace BLTAdoptAHero.Behaviors
 
         private bool IsImmortalConversation() => state?.Phase == RandomEventLifecycle.AwaitingResponse && Hero.OneToOneConversationHero?.StringId == state.HeroId;
 
+        private static bool PlayerHealthyEnough() => Hero.MainHero?.IsAlive == true
+            && RandomEventPolicy.CanStartImmortalBattle(Hero.MainHero.HitPoints, Hero.MainHero.MaxHitPoints);
+
         private void AcceptBattle()
         {
             if (state?.Phase != RandomEventLifecycle.AwaitingResponse) return;
+            if (!PlayerHealthyEnough())
+            {
+                // Let the closing dialog release its hero/party before destroying them.
+                healthCancellationPending = true;
+                PlayerEncounter.LeaveEncounter = true;
+                Log.LogFeedEvent("{=BLTImmortalLowHealth}The Immortal withdrew: you must have more than 20% health to fight.".Translate());
+                return;
+            }
             try
             {
                 state.Phase = RandomEventLifecycle.BattlePending;
@@ -187,6 +201,16 @@ namespace BLTAdoptAHero.Behaviors
                 state.Phase = RandomEventLifecycle.Active;
             }
             catch (Exception ex) { Abort($"battle start failed: {ex.Message}"); }
+        }
+
+        private void OnCampaignTick(float dt)
+        {
+            if (!healthCancellationPending || Mission.Current != null
+                || Campaign.Current?.ConversationManager?.IsConversationInProgress == true) return;
+            healthCancellationPending = false;
+            if (PlayerEncounter.Current != null && PlayerEncounter.EncounteredMobileParty?.StringId == state?.PartyId)
+                PlayerEncounter.Finish(false);
+            Complete(false, "player health is at or below 20%");
         }
 
         private void RefuseBattle()
@@ -205,7 +229,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private void RewardParticipants()
         {
-            int reward = RandomEventPolicy.ClampReward(BLTAdoptAHeroModule.CommonConfig.ImmortalEncounterGoldReward);
+            int reward = RandomEventPolicy.ClampReward(BLTAdoptAHeroModule.EventConfig.ImmortalEncounterGoldReward);
             foreach (string heroId in state.ParticipantHeroIds.ToList())
             {
                 if (!RandomEventPolicy.RecordReward(state, heroId)) continue;
@@ -220,6 +244,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private void Complete(bool victory, string reason)
         {
+            healthCancellationPending = false;
             Diagnostic($"completed ({reason})");
             if (state != null) state.Phase = RandomEventLifecycle.Resolved;
             CleanupObjects();
@@ -229,6 +254,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private void Abort(string reason)
         {
+            healthCancellationPending = false;
             Log.Error($"[Immortal Encounter] aborted: {reason}");
             if (state != null) state.Phase = RandomEventLifecycle.Failed;
             CleanupObjects();
@@ -272,7 +298,7 @@ namespace BLTAdoptAHero.Behaviors
             }
         }
 
-        private static void Diagnostic(string message) { if (BLTAdoptAHeroModule.CommonConfig?.ImmortalEncounterDiagnostics == true) Log.Info($"[Immortal Encounter] {message}"); }
+        private static void Diagnostic(string message) { if (BLTAdoptAHeroModule.EventConfig?.ImmortalEncounterDiagnostics == true) Log.Info($"[Immortal Encounter] {message}"); }
 
         [CommandLineFunctionality.CommandLineArgumentFunction("trigger_immortal_event", "blt")]
         [UsedImplicitly]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -83,7 +83,7 @@ namespace BLTConfigure.UI
             var newCommand = new Command
             {
                 Handler = handler.GetType().Name,
-                Name = "New Command",
+                Name = handler.GetType().Name == "TournamentPrediction" ? "predict" : "New Command",
             };
             var settingsType = handler.HandlerConfigType;
             if (settingsType != null)
@@ -91,6 +91,7 @@ namespace BLTConfigure.UI
                 newCommand.HandlerConfig = Activator.CreateInstance(settingsType);
             }
             Model.EditedSettings.Commands.Add(newCommand);
+            if (newCommand.HandlerConfig is BannerlordTwitch.Util.ILoaded loaded) loaded.OnLoaded(Model.EditedSettings);
             Model.RefreshActionList();
             ActionsListBox.SelectedItem = newCommand;
         }

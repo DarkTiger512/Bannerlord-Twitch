@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -20,8 +20,15 @@ namespace BannerlordTwitch
 {
     // Docs here https://dev.twitch.tv/docs/api/reference#create-custom-rewards
 
-    public class Settings : IDocumentable, IUpdateFromDefault
+    public class Settings : IDocumentable
     {
+        public const int CurrentConfigurationGeneration = ConfigurationVersioning.CurrentGeneration;
+        [Browsable(false)]
+        public int ConfigurationGeneration { get; set; }
+
+        public static Settings ReadCurrentConfiguration(string yaml, Func<string> readDefaults, out bool reset)
+            => YamlHelpers.Deserialize<Settings>(ConfigurationVersioning.SelectYaml(yaml, readDefaults, out reset));
+
         public ObservableCollection<Reward> Rewards { get; set; } = new();
         [YamlIgnore]
         public IEnumerable<Reward> EnabledRewards => Rewards.Where(r => r.Enabled);
@@ -54,11 +61,10 @@ namespace BannerlordTwitch
         public static Settings Load()
         {
             
-            var settings = YamlHelpers.Deserialize<Settings>(File.ReadAllText(SaveFilePath));
-            if (settings == null)
-                throw new Exception($"Couldn't load the mod settings from {SaveFilePath}");
-
+            var settings = ReadCurrentConfiguration(File.ReadAllText(SaveFilePath),
+                () => File.ReadAllText(DefaultSettingsFileName), out bool reset);
             SettingsPostLoad(settings);
+            if (reset) Save(settings);
             
             return settings;
         }
@@ -76,102 +82,17 @@ namespace BannerlordTwitch
 
         public static Settings Load()
         {
-            Settings settings = null;
-            // Try loading settings from the active profile
-            try
-            {
-                PlatformFilePath ProfileFilePath = FileSystem.GetConfigPath($"Bannerlord-Twitch-v4-p{ActiveProfile}.yaml");
-                if (FileSystem.FileExists(ProfileFilePath))
-                {
-                    try
-                    {
-                        settings = YamlHelpers.Deserialize<Settings>(FileSystem.GetFileContentString(ProfileFilePath));
-                        Log.Info($"Settings loaded from {ProfileFilePath}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Exception($"Exception loading settings from {ProfileFilePath}: {ex.Message}", ex);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Exception($"Failed to load profile {ActiveProfile}", ex);
-            }
-
-            // If we failed to load anything then load defaults
-            if (settings == null)
-            {
-                Log.Info($"Couldn't find existing settings, loading defaults from internal {DefaultSettingsFileName}.");
-                settings = YamlHelpers.Deserialize<Settings>(File.ReadAllText(DefaultSettingsFileName));
-                if (settings != null)
-                    Save(settings);
-            }
-
-            // If we STILL haven't loaded anything, then the mod install must be broken
-            if (settings == null)
-            {
-                throw new Exception($"Couldn't load the settings, check the mod is installed correctly!");
-            }
-
+            var profilePath = FileSystem.GetConfigPath($"Bannerlord-Twitch-v4-p{ActiveProfile}.yaml");
+            string yaml = FileSystem.FileExists(profilePath) ? FileSystem.GetFileContentString(profilePath) : null;
+            var settings = ReadCurrentConfiguration(yaml, () => File.ReadAllText(DefaultSettingsFileName), out bool reset);
             SettingsPostLoad(settings);
-
-            SettingsHelpers.CallInDepth<IUpdateFromDefault>(settings,
-                config => config.OnUpdateFromDefault(settings));
-
-            Log.Info($"Settings succesfully applied");
-
+            if (reset)
+            {
+                Save(settings);
+                Log.Info($"Profile {ActiveProfile} replaced with clean configuration generation {CurrentConfigurationGeneration}. Reapply any custom settings.");
+            }
             return settings;
         }
-
-        //public static void ImportOld()
-        //{
-        //    Settings settings = null;
-        //    // Try loading settings from the active profile
-        //    try
-        //    {
-        //        PlatformFilePath ProfileFilePath = FileSystem.GetConfigPath($"Bannerlord-Twitch-v3.yaml");
-        //        PlatformFilePath ProfileFilePath2 = FileSystem.GetConfigPath($"Bannerlord-Twitch-v4.yaml");
-        //        if (FileSystem.FileExists(ProfileFilePath))
-        //        {
-        //            try
-        //            {
-        //                settings = YamlHelpers.Deserialize<Settings>(FileSystem.GetFileContentString(ProfileFilePath));
-        //                Log.Info($"Settings imported from {ProfileFilePath}");
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                Log.Exception($"Exception loading settings from {ProfileFilePath}: {ex.Message}", ex);
-        //            }
-        //        }
-        //        else if (FileSystem.FileExists(ProfileFilePath2))
-        //        {
-        //            try
-        //            {
-        //                settings = YamlHelpers.Deserialize<Settings>(FileSystem.GetFileContentString(ProfileFilePath2));
-        //                Log.Info($"Settings imported from {ProfileFilePath2}");
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                Log.Exception($"Exception loading settings from {ProfileFilePath2}: {ex.Message}", ex);
-        //            }
-        //        }
-        //        else
-        //            Log.Info($"No settings found at {ProfileFilePath} or {ProfileFilePath2}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Log.Exception($"Failed to import settings", ex);
-        //    }
-
-        //    SettingsHelpers.CallInDepth<IUpdateFromDefault>(settings,
-        //        config => config.OnUpdateFromDefault(settings));
-
-        //    SettingsPostLoad(settings);
-
-        //    Log.Info($"Settings succesfully imported");
-
-        //}
 
         public static void Save(Settings settings)
         {
@@ -280,29 +201,5 @@ namespace BannerlordTwitch
             });
         }
 
-        #region IUpdateFromDefault
-        public void OnUpdateFromDefault(Settings defaultSettings)
-        {
-            // merge missing actions / rewards / global configs from template
-            SettingsHelpers.MergeCollectionsSorted(
-                Commands,
-                defaultSettings.Commands,
-                (s, s2) => s.ID == s2.ID || s.ToString() == s2.ToString(),
-                (a, b) => string.Compare(a.ToString(), b.ToString(), StringComparison.CurrentCulture)
-            );
-            SettingsHelpers.MergeCollectionsSorted(
-                Rewards,
-                defaultSettings.Rewards,
-                (s, s2) => s.ID == s2.ID || s.ToString() == s2.ToString(),
-                (a, b) => string.Compare(a.ToString(), b.ToString(), StringComparison.CurrentCulture)
-            );
-            SettingsHelpers.MergeCollectionsSorted(
-                GlobalConfigs,
-                defaultSettings.GlobalConfigs,
-                (s, s2) => s.Id == s2.Id,
-                (a, b) => string.Compare(a.ToString(), b.ToString(), StringComparison.CurrentCulture)
-            );
-        }
-        #endregion
     }
 }

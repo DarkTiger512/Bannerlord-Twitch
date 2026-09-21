@@ -159,7 +159,9 @@
     <Compile Include="Actions\SkillXP.cs" />
     <Compile Include="Actions\SmithItem.cs" />
     <Compile Include="Actions\SummonHero.cs" />
-    <Compile Include="Actions\TournamentBet.cs" />
+    <Compile Include="Actions\TournamentPrediction.cs" />
+    <Compile Include="Actions\SimGold.cs" />
+    <Compile Include="Util\SimGoldPolicy.cs" />
     <Compile Include="Actions\TransferAction.cs" />
     <Compile Include="Actions\UpgradeAction.cs" />
     <Compile Include="Actions\UpgradeDefinitions.cs" />
@@ -222,6 +224,7 @@
     <Compile Include="Diplomacy\BLTTreatyManager.cs" />
     <Compile Include="Diplomacy\Diplomacy.cs" />
     <Compile Include="GlobalConfigs\GlobalCommonConfig.cs" />
+    <Compile Include="GlobalConfigs\GlobalEventConfig.cs" />
     <Compile Include="GlobalConfigs\GlobalHeroClassConfig.cs" />
     <Compile Include="GlobalConfigs\GlobalHeroPowerConfig.cs" />
     <Compile Include="GlobalConfigs\GlobalTournamentConfig.cs" />
@@ -414,7 +417,7 @@
   <Import Project="$(SolutionDir)BLTBuildTargets.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>Ce projet fait référence à des packages NuGet qui sont manquants sur cet ordinateur. Utilisez l'option de restauration des packages NuGet pour les télécharger. Pour plus d'informations, consultez http://go.microsoft.com/fwlink/?LinkID=322105. Le fichier manquant est : {0}.</ErrorText>
+      <ErrorText>Ce projet fait rÃƒÂ©fÃƒÂ©rence ÃƒÂ  des packages NuGet qui sont manquants sur cet ordinateur. Utilisez l'option de restauration des packages NuGet pour les tÃƒÂ©lÃƒÂ©charger. Pour plus d'informations, consultez http://go.microsoft.com/fwlink/?LinkID=322105. Le fichier manquant est : {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props'))" />
     <Error Condition="!Exists('..\packages\Fody.6.9.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.6.9.1\build\Fody.targets'))" />

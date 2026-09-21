@@ -1,4 +1,16 @@
+ConfigurationGeneration: 1
 Commands:
+- Documentation: 'Grant test gold. Broadcaster/moderator only. Usage: !simgold <positive amount> [viewer].'
+  Enabled: false
+  Handler: SimGold
+  HandlerConfig:
+  Help: grant test gold to an adopted hero
+  HideHelp: true
+  ID: 9bf1e2f3-fd3b-4904-a3b3-541818f4c7ee
+  ModeratorOnly: true
+  Name: simgold
+  RespondInOverlay: true
+  RespondInTwitch: true
 - Documentation: Current viewer participation and estimated smaller-side joining bonuses. The game locks your bonus on a successful join.
   Enabled: true
   Handler: BalanceCommand
@@ -14,12 +26,29 @@ Commands:
   Enabled: true
   Handler: PrestigeCommand
   HandlerConfig:
+    Enabled: true
+    BaseKills: 500
+    KillsPerPrestige: 250
+    BaseGold: 5000000
+    GoldPerPrestige: 2500000
+    RankCap: 10
+    MightPerRank: 0.02
+    ResiliencePerRank: 0.02
+    VitalityPerRank: 5
+    FortunePerRank: 0.02
+    InsightPerRank: 0.02
+    StartingLevel: 1
+    StartingAttributes: 2
+    StartingCombatSkills: 50
+    StartingMovementSkills: 25
+    StartingOtherSkills: 0
+    StartingEquipmentTier: 1
+    StartingGold: 50000
   Help: view prestige progress and choose permanent perks
   HideHelp: false
   ID: 5d4dcbde-937b-4ed5-88a5-b909d31bdb21
   ModeratorOnly: false
   Name: prestige
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Moderator controls for community stream objectives. Use list, start, status, or stop.
@@ -32,7 +61,6 @@ Commands:
   ModeratorOnly: true
   Name: objective
   RespondInDM: false
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Show the active community objective and your contribution.
@@ -45,7 +73,6 @@ Commands:
   ModeratorOnly: false
   Name: objectives
   RespondInDM: false
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Check how much live ammunition your adopted hero has remaining in the current mission. Shows each ammunition stack and the combined total.
@@ -58,7 +85,6 @@ Commands:
   ModeratorOnly: false
   Name: ammo
   RespondInDM: false
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: '{=ZVxCqyJL}Show the heroes achievements and tracked stats.'
@@ -87,7 +113,6 @@ Commands:
   ID: 6b05f682-afe1-45e2-ba68-e6ee086ee412
   ModeratorOnly: false
   Name: '{=woTpsqyV}ach'
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: Adopt a newly created Hero. Almost all other actions require an adopted hero.
@@ -131,7 +156,6 @@ Commands:
   ID: e317c63a-5a1f-455c-b953-6dcb92dc9424
   ModeratorOnly: false
   Name: '{=0grO6hB5}adopt'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Adopt a randomly selected Hero, filtered by Clan
@@ -166,7 +190,6 @@ Commands:
   ID: 749a1d9f-516c-4c1c-9603-f22586c06818
   ModeratorOnly: false
   Name: adoptByClan
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Adopt a randomly selected Hero, filtered by Culture <br> Can do "!adoptByCulture list" for a list of cultures
@@ -201,7 +224,6 @@ Commands:
   ID: 25aaa31b-f456-4629-9b0d-95088d079ce9
   ModeratorOnly: false
   Name: adoptByCulture
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Adopt a randomly selected Hero, filtered by Faction <br> Can do "!adoptByFaction list" for a list of factions
@@ -236,7 +258,6 @@ Commands:
   ID: 8186522f-8087-4e8b-8be8-2cccf7b33aca
   ModeratorOnly: false
   Name: adoptByFaction
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Adopt a randomly selected Hero, filtered by Hero Name
@@ -271,7 +292,6 @@ Commands:
   ID: 34d71a7c-dd7a-4449-93ce-128e360f6712
   ModeratorOnly: false
   Name: adoptByName
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Adopt a randomly selected Hero
@@ -306,7 +326,6 @@ Commands:
   ID: 4cbefb28-4d74-45f2-8e26-a23e8729eab1
   ModeratorOnly: false
   Name: adoptRandom
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Use this when the streamer enters a battle, to spawn your adopted hero on the enemy side (along with your retinue).
@@ -331,7 +350,6 @@ Commands:
   ID: 9082614c-46a3-47f9-b198-e56babde5745
   ModeratorOnly: false
   Name: attack
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Start an auction on a custom item you own, with a specified reserve price. Other viewers are able to bid upon your item, and the highest bidder will receive it at the end of the auction.<br>Usage is <code>!auction (custom item index) (reserve price)</code>, e.g. <code>!auction 3 50000</code> would start a new auction for your custom item with the index of 3 (as shown by the 'customitems' command), with a reserve price of 50000.
@@ -345,7 +363,6 @@ Commands:
   ID: 303342d6-c3c3-4f58-8d0d-0daee20677f8
   ModeratorOnly: false
   Name: '{=QQX2aboq}auction'
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: "{=1TBIIJVZ}Place a bid on the current auction, if one is active.<br>Usage is <code>!bid (gold amount)</code>, e.g. <code>!bid 100000</code>. If there is no auction, or the bid doesn't exceed the reserve price, it will be rejected."
@@ -357,19 +374,17 @@ Commands:
   ID: 95bcd31c-154b-4d70-a3e6-cb247efe9fb4
   ModeratorOnly: false
   Name: '{=taI6SRSG}bid'
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
-- Documentation: '{=thajdk5s}Use this to bet on tournament matches, when available.<br>Usage is <code>!bltbet (team) (gold)</code>, for example <code>!bltbet red 10000</code> to bet 10000 gold on red. Winnings are divided up from the whole pot, based on relative bet size.<br>If only one team is bet upon, the bets will be refunded.'
+- Documentation: 'Predict the winning tournament team using hero gold. Usage: !predict <team> <gold>. Rewards are shared from the pool; a single-team pool is refunded.'
   Enabled: true
-  Handler: TournamentBet
+  Handler: TournamentPrediction
   HandlerConfig: 
-  Help: '{=xBgLXaf7}bet on tournament'
+  Help: predict the winning tournament team
   HideHelp: false
   ID: 7cbdbc43-660c-4500-9029-d06e81c89f04
   ModeratorOnly: false
-  Name: '{=haKiwbsR}bltbet'
-  RespondInExtension: false
+  Name: predict
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Buy a randomly tiered mount for your Hero.Only for mounted classes.(1250000 gold)
@@ -388,7 +403,6 @@ Commands:
   ID: 87bed827-fbe4-472e-a300-f6f85e46dd28
   ModeratorOnly: false
   Name: buymount
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: 'Use to manage clan actions <br> Usage is <code>!clan (join/create/lead/rename/stats/leave/buy title/banner) name </code> <br> Example: !clan join Banu Tammar or !clan stats'
@@ -421,7 +435,6 @@ Commands:
   ID: 203d9d85-4004-40d3-9f6b-19ffa1ba41b2
   ModeratorOnly: false
   Name: clan
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: '{=K3297TEM}Selects a new class for your hero, updating your existing equipment to match the class requirements.<br>Usage is <code>!class (new class name)</code>, e.g. <code>!class archer</code>.'
@@ -441,7 +454,6 @@ Commands:
   ID: da8416ca-e59b-458a-8953-31291d03c835
   ModeratorOnly: false
   Name: '{=nV9iIsDC}class'
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: Shows the viewers custom item list, which is required so they know what item index to use in the custom item related commands.
@@ -470,7 +482,6 @@ Commands:
   ID: a0b89b07-f834-43e2-92df-51e975c2c829
   ModeratorOnly: false
   Name: customitems
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Throw away one of your custom items.<br>Usage is <code>!discarditem (custom item index)</code>, e.g. <code>!discarditem 3</code> would discard your custom item with the index 3. The custom item index is shown in the 'customs' command.
@@ -482,7 +493,6 @@ Commands:
   ID: 752eb016-7df1-465c-83c7-80cc88f8c02d
   ModeratorOnly: false
   Name: discarditem
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: 'Upgrades your heroes equipment tier, replacing any existing equipment of lower tier, except for custom items. The cost depends on the tier you are trying to upgrade to. <br> Usage is <code>!equip (blank for auto upgrade/tier number) </code> <br> Example: !equip 1 or !equip'
@@ -502,7 +512,6 @@ Commands:
   ID: 90b571d1-dba8-4006-860c-a0401b6f8fd2
   ModeratorOnly: false
   Name: '{=wHqxd4kb}equip'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Give one of your custom items to another viewer.<br>Usage is <code>!giveitem (custom item index) (viewer)</code>, e.g. <code>!giveitem 3 C4alad0g</code> would give your custom item with the index 3 to the viewer called C4lad0g. The custom item index is shown in the 'customitems' command.
@@ -514,7 +523,6 @@ Commands:
   ID: 0e255e77-4c17-44ad-aeb8-ff01bbbe0bee
   ModeratorOnly: false
   Name: '{=osvl34my}giveitem'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: '{=eWI5oDce}Show your heroes current gold.'
@@ -543,7 +551,6 @@ Commands:
   ID: 42e45ee9-647f-486f-9764-5e765507a70d
   ModeratorOnly: false
   Name: '{=W5uX9HCJ}gold'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Heals your hero over time. Only works in battle, when your hero is summoned.
@@ -572,7 +579,6 @@ Commands:
   ID: 895736e0-4584-4f61-b97f-fc062264d151
   ModeratorOnly: false
   Name: heal
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: 'Use to adjust hero physical features <br> Usage is <code>!hero gender (male/female) / !hero looks (appearance string) / !hero marry (culture/clan/name)</code> <br> Example: !hero gender male'
@@ -596,7 +602,6 @@ Commands:
   ID: 8443567a-70cb-4073-bb00-b00cc150ab81
   ModeratorOnly: false
   Name: hero
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Shows your heroes equipped loadout and inventory, excluding custom items (do !customItems instead)
@@ -625,7 +630,6 @@ Commands:
   ID: 7b6caafc-0246-47c2-8622-e091b10b8897
   ModeratorOnly: false
   Name: '{=UbklIEGh}inv'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: 'Use to manage clan actions <br> Usage is <code>!kingdom (join/rebel/leave/stats) name </code> <br> Example: !kingdom join Aserai or !clan stats'
@@ -676,7 +680,6 @@ Commands:
   ID: a87232d0-93a7-4123-9981-892b3d19c832
   ModeratorOnly: false
   Name: kingdom
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: You can use this to name your custom items.<br>Usage is <code>!nameitem (custom item index) (name)</code>, for example <code>!nameitem 3 Foehammer</code>. The custom item index is shown in the 'customitems' command.
@@ -688,7 +691,6 @@ Commands:
   ID: aef1ded6-f8dd-4b9a-9d70-96e96d17cb12
   ModeratorOnly: false
   Name: nameitem
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -700,7 +702,6 @@ Commands:
   ID: 4aa62cc4-9ac2-4920-b921-c641f6ad0e24
   ModeratorOnly: false
   Name: '{=NUQ5PsjF}power'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: '{=GYYbCXmu}Shows your available powers'
@@ -729,7 +730,6 @@ Commands:
   ID: b595b0f2-ad40-409c-a286-c7f58ac87e13
   ModeratorOnly: false
   Name: '{=GHCxNIaR}powers'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: "{=zBIv0a4I}Randomizes your equipment, at its current tier. It will not replace items that are higher than your current tier, or custom items. e.g. if you are equipment tier 3, but also have a tier 6 weapon won in a tournament, this command will not replace that weapon. Sometimes you will end up with some items not changing, particularly if there aren't many items of that type available at your current tier."
@@ -749,7 +749,6 @@ Commands:
   ID: d4fb255c-4bb3-454e-9e26-39b4d7a321f0
   ModeratorOnly: false
   Name: '{=fGfTaAoD}reequip'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: 'Purchases new retinue troops, or upgrades existing ones to the next tier if you have reached the limit. Retinue will appear with you in battle when you summon, earning you money when they make kills. <br> Usage is <code>!retinue (blank or all for auto upgrade/upgrade amount) </code> <br> Example: !retinue 1 or !retinue all'
@@ -776,7 +775,6 @@ Commands:
   ID: 38eed507-87b9-47f4-b235-af921cef00c4
   ModeratorOnly: false
   Name: '{=mge9rH9J}retinue'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: '{=BlBiEmbf}Shows your current retinue troops.'
@@ -805,7 +803,6 @@ Commands:
   ID: afd51f50-caaf-40a8-bf29-d75447e34ef4
   ModeratorOnly: false
   Name: '{=kG6yjBBR}retinuelist'
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -818,7 +815,6 @@ Commands:
   ID: dd5268c5-3732-4c27-b990-6e364e66cc84
   ModeratorOnly: false
   Name: retire
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: Smith a custom armor item(500000 gold)
@@ -837,7 +833,6 @@ Commands:
   ID: 2d829c81-f451-4b59-b9b2-ae12962986e9
   ModeratorOnly: false
   Name: smitharmor
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: Smith a custom weapon(1000000 gold)
@@ -856,7 +851,6 @@ Commands:
   ID: a2b33796-a5f0-4bc9-be7c-8e887d3f00c4
   ModeratorOnly: false
   Name: smithweapon
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: Reforge a custom weapon up to +5. Use !enchant for weapons and !enchant <number> for configured costs and risks.
@@ -880,7 +874,6 @@ Commands:
   ID: c733588e-ddbf-4fb0-bc32-2452180780c7
   ModeratorOnly: false
   Name: enchant
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: '{=JiMaaypq}Shows your heroes general information, including clan, gold, location, HP, skills, attributes and retinue.'
@@ -909,7 +902,6 @@ Commands:
   ID: 1cf3abfd-3310-4a51-808e-e14d454eed05
   ModeratorOnly: false
   Name: '{=J2AqvpeF}stats'
-  RespondInExtension: true
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: Use this when the streamer enters a battle, to spawn your adopted hero on the streamers side (along with your retinue).
@@ -934,7 +926,6 @@ Commands:
   ID: 01a497f3-d529-4780-80dd-41343b3e05ad
   ModeratorOnly: false
   Name: summon
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: Join the tournament queue with your adopted hero. You can see the queue in the overlay. Each tournament can have up to 16 heroes in it, once it is full further heroes will remain in the queue for the next tournament.
@@ -947,7 +938,6 @@ Commands:
   ID: 7cd05224-859e-41b0-beaa-739907ffc4e0
   ModeratorOnly: false
   Name: tournament
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -959,7 +949,6 @@ Commands:
   ID: 68ddc127-7829-405d-8f4e-b2fb3a7999da
   ModeratorOnly: false
   Name: itemstats
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -975,7 +964,6 @@ Commands:
   ID: bd1fb6e6-1c01-4be1-b41e-eaa92c457542
   ModeratorOnly: false
   Name: buyattribute
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: ''
@@ -987,7 +975,6 @@ Commands:
   ID: f57bc344-22e1-4df3-be2e-877d0da278ca
   ModeratorOnly: false
   Name: info
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
 - Documentation: ''
@@ -1002,7 +989,6 @@ Commands:
   ID: 1a8ec0e1-f46b-4c09-9102-09577b238047
   ModeratorOnly: false
   Name: rejuvenate
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1014,7 +1000,6 @@ Commands:
   ID: e1f1ac41-095e-4d3d-af94-eb4c98431d54
   ModeratorOnly: false
   Name: leaderboard
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1036,7 +1021,6 @@ Commands:
   ID: 9f5f5c57-be76-4389-a138-e14f2f3a898c
   ModeratorOnly: false
   Name: heir
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1085,7 +1069,6 @@ Commands:
   ID: b7b02d70-f943-4f60-9cea-e6c1ae1437c8
   ModeratorOnly: false
   Name: diplomacy
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1097,7 +1080,6 @@ Commands:
   ID: 84f063ca-3c3d-4839-b981-d7ded370609d
   ModeratorOnly: false
   Name: battle
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1124,7 +1106,6 @@ Commands:
   ID: 4e9393c0-e9f9-4045-b1a4-1a6ba58f0fba
   ModeratorOnly: false
   Name: reinforce
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1138,7 +1119,6 @@ Commands:
   ID: 37127dc4-6d2c-4fd2-9f70-c8198a5047b4
   ModeratorOnly: false
   Name: transfer
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1155,7 +1135,6 @@ Commands:
   ID: 54a3a8e7-529c-440a-8667-fe78c595b1a7
   ModeratorOnly: false
   Name: buyfocus
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1194,7 +1173,6 @@ Commands:
   ID: 39691dbb-a4f0-4f39-9ec7-966e2a0b22f9
   ModeratorOnly: false
   Name: party
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1206,7 +1184,6 @@ Commands:
   ID: 02dd3781-2967-4ff2-8075-7dcbacd67fee
   ModeratorOnly: false
   Name: income
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1225,7 +1202,6 @@ Commands:
   ID: 70142873-1f14-4521-9be0-7d563d574a25
   ModeratorOnly: false
   Name: upgrade
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1238,7 +1214,6 @@ Commands:
   ID: 9557f67a-aef7-4098-949e-be84b9570df8
   ModeratorOnly: false
   Name: family
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1254,7 +1229,6 @@ Commands:
   ID: 6537f552-5afc-44fb-a252-bf4e0c479bd8
   ModeratorOnly: false
   Name: logs
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1268,7 +1242,6 @@ Commands:
   ID: 186cb16d-7084-4eab-89fa-a851d986f9d7
   ModeratorOnly: false
   Name: equipcustom
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1281,7 +1254,6 @@ Commands:
   ID: f91592e1-2748-43f4-945a-21851787f892
   ModeratorOnly: false
   Name: formation
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1293,7 +1265,6 @@ Commands:
   ID: c009d87c-b00a-495d-9e56-3dd6db4f21b3
   ModeratorOnly: false
   Name: fief
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1312,7 +1283,6 @@ Commands:
   ID: 2cadb3ed-78f3-4136-b440-f8ff49b11390
   ModeratorOnly: false
   Name: vassal
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 - Documentation: ''
@@ -1325,7 +1295,6 @@ Commands:
   ID: 44412857-2e64-45d5-9183-0f8dbbbf3fd7
   ModeratorOnly: false
   Name: capital
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1352,7 +1321,6 @@ Commands:
   ID: 9788a897-d48b-4428-ba57-7d4dd34b8bd5
   ModeratorOnly: false
   Name: eliteretinue
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: ''
@@ -1381,11 +1349,45 @@ Commands:
   ID: 5fbbaab9-fcb6-445b-a557-edbb9bd0ba7e
   ModeratorOnly: false
   Name: skills
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
 DisableAutomaticFulfillment: false
 GlobalConfigs:
+- Id: Adopt A Hero - Events
+  Config:
+    StreamObjectivesEnabled: true
+    StreamObjectivesOverlayEnabled: true
+    StreamObjectivesContributorCount: 3
+    StreamObjectivesMilestones: true
+    StreamObjectivesHistorySize: 10
+    StreamObjectivesOverlayWidthPercent: 38
+    StreamObjectivesOverlayOpacity: 0.92
+    RandomEventsEnabled: true
+    CursedArtifactEnabled: true
+    CursedArtifactDailyChancePercent: 1
+    CursedArtifactCooldownDays: 30
+    CursedArtifactRequiredWins: 5
+    CursedArtifactOutgoingPenaltyPercent: 20
+    CursedArtifactIncomingIncreasePercent: 25
+    CursedArtifactWeaponBonus: 35
+    CursedArtifactDiagnostics: false
+    ImmortalEncounterEnabled: true
+    ImmortalEncounterDailyChancePercent: 0.2
+    ImmortalEncounterCooldownDays: 90
+    ImmortalEncounterMinimumPlayerLevel: 10
+    ImmortalEncounterArmyStrengthPercent: 120
+    ImmortalEncounterGoldReward: 100000
+    ImmortalEncounterName: "The Immortal"
+    ImmortalEncounterCultName: "Cult of the Eternal"
+    ImmortalEncounterDiagnostics: false
+    PriestCrusadeEnabled: true
+    PriestCrusadeDailyChancePercent: 0.5
+    PriestCrusadeCooldownDays: 60
+    PriestCrusadeMinimumKingdomTier: 2
+    PriestCrusadeArmyStrengthPercent: 80
+    PriestCrusadePriestName: "Father Zealot"
+    PriestCrusadeClanName: "Holy Crusaders"
+    PriestCrusadeDiagnostics: false
 - Config:
     ClassDefs:
     - ActivePower:
@@ -3100,25 +3102,6 @@ GlobalConfigs:
       Enabled: true
       MaximumBonus: 0.20
       DenominatorFloor: 4
-    Prestige:
-      Enabled: true
-      BaseKills: 500
-      KillsPerPrestige: 250
-      BaseGold: 5000000
-      GoldPerPrestige: 2500000
-      RankCap: 10
-      MightPerRank: 0.02
-      ResiliencePerRank: 0.02
-      VitalityPerRank: 5
-      FortunePerRank: 0.02
-      InsightPerRank: 0.02
-      StartingLevel: 1
-      StartingAttributes: 2
-      StartingCombatSkills: 50
-      StartingMovementSkills: 25
-      StartingOtherSkills: 0
-      StartingEquipmentTier: 1
-      StartingGold: 50000
     RawXPSkillCap: 330
     ReferenceLevelReward: 15
     RelativeLevelScaling: 0.5
@@ -3130,13 +3113,6 @@ GlobalConfigs:
     RetinueUseHeroesFormation: false
     Shouts: []
     ShowCampaignMapOverlay: true
-    StreamObjectivesContributorCount: 3
-    StreamObjectivesEnabled: true
-    StreamObjectivesHistorySize: 10
-    StreamObjectivesMilestones: true
-    StreamObjectivesOverlayEnabled: true
-    StreamObjectivesOverlayOpacity: 0.92
-    StreamObjectivesOverlayWidthPercent: 38
     ShowKillStreakPopup: true
     StartHealthMultiplier: 2
     StartRetinueHealthMultiplier: 2
@@ -5010,7 +4986,6 @@ Rewards:
     SubscriberOnly: false
     ViewerSelects: Culture
   ID: eafbd312-1127-4930-bca0-47b83e205c7b
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
   RewardSpec:
@@ -5052,7 +5027,6 @@ Rewards:
     SubscriberOnly: false
     ViewerSelects: Faction
   ID: 55918467-fe58-49a0-a354-57af0be6cd24
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
   RewardSpec:
@@ -5109,7 +5083,6 @@ Rewards:
     SubscriberOnly: false
     ViewerSelects: Nothing
   ID: e072adb0-83a2-4408-87bb-b2cff3f12ee2
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
   RewardSpec:
@@ -5141,7 +5114,6 @@ Rewards:
     ShoutPercent: 0.25
     WithRetinue: true
   ID: 422cc8d9-84cb-4cc9-afdf-889e615fdea6
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5185,7 +5157,6 @@ Rewards:
     Target: Player
     TargetOnFootOnly: false
   ID: 5af6308d-ce73-402d-aa29-2a9e0d9ad7e8
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5205,7 +5176,6 @@ Rewards:
   HandlerConfig:
     Amount: 100000
   ID: 2ccc7258-ad66-4afa-a45a-93863c1d7f35
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5229,7 +5199,6 @@ Rewards:
     GoldCost: 0
     Skills: None
   ID: fe103fc4-fcaa-4e0d-809d-235d22676b6a
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5251,7 +5220,6 @@ Rewards:
     FromAdoptedHero: true
     GoldAmountToGive: 10000
   ID: 4ff890a2-ff83-41fa-9441-156f32abd9e8
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
   RewardSpec:
@@ -5287,7 +5255,6 @@ Rewards:
     Target: AdoptedHero
     TargetOnFootOnly: false
   ID: 6e75b94c-23cf-43cf-a647-2df806460874
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5325,7 +5292,6 @@ Rewards:
     Target: Player
     TargetOnFootOnly: false
   ID: f0b482c2-e121-4415-a2a6-95e592a4d7a9
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5345,7 +5311,6 @@ Rewards:
   HandlerConfig:
     RetireCreatedOnly: true
   ID: 60d43b2b-d1cb-4411-a126-d5089c264aca
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: true
   RewardSpec:
@@ -5365,7 +5330,6 @@ Rewards:
   HandlerConfig:
     AlertSound: Notification1
   ID: 1b1f00fe-fff8-4f76-8c09-8da0fd18c53b
-  RespondInExtension: false
   RespondInOverlay: false
   RespondInTwitch: false
   RewardSpec:
@@ -5397,7 +5361,6 @@ Rewards:
     ShoutPercent: 0.25
     WithRetinue: true
   ID: 77c1dbd8-02cb-47d7-9796-7308e989b7f3
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5417,7 +5380,6 @@ Rewards:
   HandlerConfig:
     GoldCost: 0
   ID: e1d775d0-0d60-4e12-baa7-39f0e791293a
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:
@@ -5436,7 +5398,6 @@ Rewards:
   Handler: UsePower
   HandlerConfig: 
   ID: 6f53994c-4513-4b81-95a3-21493d35b25d
-  RespondInExtension: false
   RespondInOverlay: true
   RespondInTwitch: false
   RewardSpec:

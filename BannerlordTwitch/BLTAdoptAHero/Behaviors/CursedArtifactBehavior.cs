@@ -7,6 +7,8 @@ using BannerlordTwitch.Util;
 using BLTAdoptAHero.Util;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
+using TaleWorlds.CampaignSystem.Party;
+using BannerlordTwitch.Helpers;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
@@ -19,8 +21,8 @@ namespace BLTAdoptAHero.Behaviors
 
         private CurseRecord active;
         private List<CurseHistoryEntry> history = new();
-        private HashSet<string> missionParticipants = new(StringComparer.Ordinal);
-        private int? playedMapEventHash;
+        private readonly CursedBattleParticipation participation = new();
+        private Mission playedMission;
         private double lastTriggerDay = -100000;
 
         public CurseRecord Active => active?.Status is CurseLifecycle.Active or CurseLifecycle.CompletedPendingReward ? active : null;
@@ -36,8 +38,8 @@ namespace BLTAdoptAHero.Behaviors
             });
             CampaignEvents.OnGameLoadFinishedEvent.AddNonSerializedListener(this, () =>
             {
-                missionParticipants.Clear();
-                playedMapEventHash = null;
+                participation.Clear();
+                playedMission = null;
                 TryGrantPendingReward();
             });
         }
@@ -55,25 +57,38 @@ namespace BLTAdoptAHero.Behaviors
         public bool IsCursed(Hero hero) => hero != null && Active?.Status == CurseLifecycle.Active && Active.HeroId == hero.StringId;
         public int BattleProgress(Hero hero) => IsCursed(hero) ? active.QualifyingWins : 0;
         public float OutgoingDamageMultiplier(Hero hero) => IsCursed(hero)
-            ? CursedArtifactPolicy.OutgoingMultiplier(BLTAdoptAHeroModule.CommonConfig?.CursedArtifactOutgoingPenaltyPercent ?? 20f) : 1f;
+            ? CursedArtifactPolicy.OutgoingMultiplier(BLTAdoptAHeroModule.EventConfig?.CursedArtifactOutgoingPenaltyPercent ?? 20f) : 1f;
         public float IncomingDamageMultiplier(Hero hero) => IsCursed(hero)
-            ? CursedArtifactPolicy.IncomingMultiplier(BLTAdoptAHeroModule.CommonConfig?.CursedArtifactIncomingIncreasePercent ?? 25f) : 1f;
+            ? CursedArtifactPolicy.IncomingMultiplier(BLTAdoptAHeroModule.EventConfig?.CursedArtifactIncomingIncreasePercent ?? 25f) : 1f;
         public bool IsEligible(Hero hero) => hero != null && !hero.IsDead && hero.IsActive && hero.IsAdopted()
             && !string.IsNullOrWhiteSpace(BLTAdoptAHeroCampaignBehavior.Current?.GetHeroOwner(hero));
 
-        public void MarkMissionParticipant(Hero hero)
+        public void MarkMissionParticipant(Agent agent)
         {
-            if (!IsCursed(hero)) return;
-            missionParticipants.Add(hero.StringId);
-            if (hero.PartyBelongedTo?.MapEvent != null)
-                playedMapEventHash = hero.PartyBelongedTo.MapEvent.GetHashCode();
+            var hero = agent.GetAdoptedHero();
+            var battle = MobileParty.MainParty?.MapEvent;
+            if (!IsCursed(hero) || agent.Team?.IsValid != true || battle == null || !QualifyingType(battle.EventType)
+                || MissionHelpers.InTournament() || MissionHelpers.InArenaPracticeMission() || MissionHelpers.InTrainingFieldMission()) return;
+            playedMission = Mission.Current;
+            participation.Mark(battle, (int)agent.Team.Side);
+        }
+
+        public void EndMission(Mission mission)
+        {
+            if (playedMission != mission) return;
+            // An unresolved sortie must not earn a win from a later auto-resolve of the same map event.
+            if (mission.MissionResult?.BattleResolved != true || mission.MissionResult.BattleState == BattleState.DefenderPullBack)
+            {
+                participation.Clear();
+                playedMission = null;
+            }
         }
 
         private void OnDailyTick()
         {
-            var cfg = BLTAdoptAHeroModule.CommonConfig;
-            if (cfg?.RandomEventsEnabled != true || cfg.CursedArtifactEnabled != true) return;
+            var cfg = BLTAdoptAHeroModule.EventConfig;
             if (Active?.Status == CurseLifecycle.CompletedPendingReward) { TryGrantPendingReward(); return; }
+            if (cfg?.RandomEventsEnabled != true || cfg.CursedArtifactEnabled != true) return;
             if (Active != null) return;
 
             double day = CampaignTime.Now.ToDays;
@@ -94,21 +109,21 @@ namespace BLTAdoptAHero.Behaviors
 
         private void OnMapEventEnded(MapEvent mapEvent)
         {
-            if (Active?.Status != CurseLifecycle.Active || mapEvent?.Winner == null || !missionParticipants.Contains(active.HeroId)
-                || playedMapEventHash != mapEvent.GetHashCode()) return;
+            if (mapEvent == null || !participation.Matches(mapEvent)) return;
             try
             {
-                if (!QualifyingType(mapEvent.EventType)) { Diagnostic("rejected non-qualifying battle type"); return; }
-                Hero hero = ResolveHero();
-                if (hero?.PartyBelongedTo?.MapEventSide != mapEvent.Winner) { Diagnostic("rejected loss or unavailable winning side"); return; }
-                string battleId = $"{mapEvent.EventType}:{CampaignTime.Now.ToHours:F4}:{string.Join(",", mapEvent.InvolvedParties.Select(p => p.MobileParty?.StringId).Where(x => x != null).OrderBy(x => x))}";
-                if (!CursedArtifactPolicy.RecordVictory(active, battleId, BLTAdoptAHeroModule.CommonConfig.CursedArtifactRequiredWins)) { Diagnostic("duplicate battle callback"); return; }
+                if (Active?.Status != CurseLifecycle.Active || !QualifyingType(mapEvent.EventType)) return;
+                bool resolved = playedMission?.MissionResult?.BattleResolved == true
+                    && playedMission.MissionResult.BattleState != BattleState.DefenderPullBack;
+                if (!participation.Complete(active, mapEvent, (int)(mapEvent.Winner?.MissionSide ?? BattleSideEnum.None),
+                    resolved, BLTAdoptAHeroModule.EventConfig.CursedArtifactRequiredWins))
+                { Diagnostic("rejected unresolved battle, loss, or duplicate callback"); return; }
                 Log.LogFeedEvent("{=BLTCurseProgress}@{Owner} won a cursed battle ({Wins}/{RequiredWins})."
                     .Translate(("Owner", active.Owner), ("Wins", active.QualifyingWins),
-                        ("RequiredWins", CursedArtifactPolicy.ClampRequiredWins(BLTAdoptAHeroModule.CommonConfig.CursedArtifactRequiredWins))));
+                        ("RequiredWins", CursedArtifactPolicy.ClampRequiredWins(BLTAdoptAHeroModule.EventConfig.CursedArtifactRequiredWins))));
                 if (active.Status == CurseLifecycle.CompletedPendingReward) TryGrantPendingReward();
             }
-            finally { missionParticipants.Clear(); playedMapEventHash = null; }
+            finally { participation.Clear(); playedMission = null; }
         }
 
         private static bool QualifyingType(MapEvent.BattleTypes type) => type is MapEvent.BattleTypes.FieldBattle
@@ -122,7 +137,7 @@ namespace BLTAdoptAHero.Behaviors
             if (hero == null || hero.IsDead) { Fail("the cursed hero is no longer available"); return; }
             try
             {
-                var cfg = BLTAdoptAHeroModule.CommonConfig;
+                var cfg = BLTAdoptAHeroModule.EventConfig;
                 var modifier = new RandomItemModifierDef
                 {
                     Power = 1f,
@@ -131,22 +146,40 @@ namespace BLTAdoptAHero.Behaviors
                     WeaponMissileSpeed = new RangeInt(cfg.CursedArtifactWeaponBonus, cfg.CursedArtifactWeaponBonus),
                     ThrowingStack = new RangeInt(0, 0)
                 };
-                var generated = RewardHelpers.GenerateRewardType(RewardHelpers.RewardType.Weapon, 6, hero, hero.GetClass(), false,
-                    modifier, "Cursed Legacy", 1f);
-                if (generated.item == null || generated.modifier == null) { Diagnostic("reward generation returned no compatible weapon"); return; }
-                RewardHelpers.AssignCustomReward(hero, generated.item, generated.modifier, generated.slot);
-                bool stored = BLTAdoptAHeroCampaignBehavior.Current.GetCustomItems(hero)
-                    .Any(i => i.Item == generated.item && i.ItemModifier == generated.modifier);
-                if (!stored) { Diagnostic("reward assignment was not persisted; will retry"); return; }
-                active.RewardItemId = generated.item.StringId;
+                ItemObject item = string.IsNullOrEmpty(active.RewardItemId) ? null : MBObjectManager.Instance.GetObject<ItemObject>(active.RewardItemId);
+                ItemModifier itemModifier = string.IsNullOrEmpty(active.RewardModifierId) ? null : MBObjectManager.Instance.GetObject<ItemModifier>(active.RewardModifierId);
+                if (item == null || itemModifier == null)
+                {
+                    var generated = RewardHelpers.GenerateRewardType(RewardHelpers.RewardType.Weapon, 6, hero, hero.GetClass(), true,
+                        modifier, "Cursed Legacy", 1f);
+                    if (generated.item == null || generated.modifier == null) { NotifyPendingReward(); return; }
+                    item = generated.item;
+                    itemModifier = generated.modifier;
+                    active.RewardItemId = item.StringId;
+                    active.RewardModifierId = itemModifier.StringId;
+                    active.RewardSlot = (int)generated.slot;
+                }
+                bool Stored() => BLTAdoptAHeroCampaignBehavior.Current.GetCustomItems(hero)
+                    .Any(i => i.Item == item && i.ItemModifier == itemModifier);
+                if (!Stored()) RewardHelpers.AssignCustomReward(hero, item, itemModifier, (EquipmentIndex)active.RewardSlot);
+                if (!Stored()) { NotifyPendingReward(); return; }
                 active.Status = CurseLifecycle.Completed;
                 active.FinishedAt = CampaignTime.Now.ToString();
                 AddHistory(active, null);
-                Log.LogFeedEvent("{=BLTCurseCompleted}@{Owner} broke the curse and received the legendary Cursed Legacy!"
-                    .Translate(("Owner", active.Owner)));
+                string owner = active.Owner;
                 active = null;
+                Log.LogFeedEvent("{=BLTCurseCompleted}@{Owner} broke the curse and received the legendary Cursed Legacy!"
+                    .Translate(("Owner", owner)));
             }
-            catch (Exception ex) { Log.Error($"[Cursed Artifact] reward pending after failure: {ex}"); }
+            catch (Exception ex) { Log.Error($"[Cursed Artifact] reward pending after failure: {ex}"); NotifyPendingReward(); }
+        }
+
+        private void NotifyPendingReward()
+        {
+            if (active?.Status != CurseLifecycle.CompletedPendingReward || active.PendingRewardNotified) return;
+            Log.LogFeedEvent("{=BLTCurseRewardPending}@{Owner} broke the curse! The weapon reward is pending and will be retried automatically."
+                .Translate(("Owner", active.Owner)));
+            active.PendingRewardNotified = true;
         }
 
         private Hero ResolveHero() => string.IsNullOrWhiteSpace(Active?.HeroId) ? null
@@ -161,8 +194,8 @@ namespace BLTAdoptAHero.Behaviors
             AddHistory(active, reason);
             Log.LogFeedEvent("{=BLTCurseFailed}The cursed artifact event failed. No reward was granted.".Translate());
             active = null;
-            missionParticipants.Clear();
-            playedMapEventHash = null;
+            participation.Clear();
+            playedMission = null;
         }
 
         private void AddHistory(CurseRecord record, string reason) => history.Add(new CurseHistoryEntry
@@ -173,7 +206,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private static void Diagnostic(string message)
         {
-            if (BLTAdoptAHeroModule.CommonConfig?.CursedArtifactDiagnostics == true) Log.Info($"[Cursed Artifact] {message}");
+            if (BLTAdoptAHeroModule.EventConfig?.CursedArtifactDiagnostics == true) Log.Info($"[Cursed Artifact] {message}");
         }
     }
 }

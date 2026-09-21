@@ -25,7 +25,8 @@ the cleared record. Existing campaign holdings continue producing their normal i
 
 Smaller-side voluntary joins can earn a locked [battle balance bonus](BATTLE-BALANCE.md). Both sides use identical rules; there is no permanent attacker advantage.
 
-Configure the nested `Prestige` section of Common Config. Invalid settings block resets
+Configure **Chat Commands → prestige → Handler Config**. Aliases share the canonical
+Prestige command settings, including campaign-wide perk calculations. Invalid settings block resets
 and disable perk application. Disabling prestige retains saved progression for later
 re-enablement. Battle balance is configured separately.
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -93,6 +93,9 @@ namespace BannerlordTwitch.Rewards
             globalConfigTypes.Add(key, settingsType);
             return true;
         }
+
+        public static object GetCommandConfig(string handler, Guid preferredId)
+            => BLTModule.TwitchService?.FindCommandConfig(handler, preferredId);
 
         public static T GetGlobalConfig<T>(string id)
         {

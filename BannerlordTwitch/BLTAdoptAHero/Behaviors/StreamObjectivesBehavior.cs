@@ -168,7 +168,7 @@ namespace BLTAdoptAHero.Behaviors
         private void Changed()
         {
             int milestone = StreamObjectivePolicy.Milestone(Active);
-            if (BLTAdoptAHeroModule.CommonConfig.StreamObjectivesMilestones && milestone > Active.LastMilestone && milestone < 100)
+            if (BLTAdoptAHeroModule.EventConfig.StreamObjectivesMilestones && milestone > Active.LastMilestone && milestone < 100)
             { Active.LastMilestone = milestone; Log.LogFeedEvent($"Stream objective is {milestone}% complete: {ProgressText(Active)}."); }
             if (StreamObjectivePolicy.IsComplete(Active)) Complete();
             Publish();
@@ -197,14 +197,14 @@ namespace BLTAdoptAHero.Behaviors
         private void AddHistory(StreamObjectiveState item)
         {
             history.Add(item);
-            int max = Math.Max(0, BLTAdoptAHeroModule.CommonConfig?.StreamObjectivesHistorySize ?? 10);
+            int max = Math.Max(0, BLTAdoptAHeroModule.EventConfig?.StreamObjectivesHistorySize ?? 10);
             if (history.Count > max) history.RemoveRange(0, history.Count - max);
         }
 
         private bool Enabled(out string message)
         {
             if (Campaign.Current == null) { message = "Stream objectives require an active campaign."; return false; }
-            if (BLTAdoptAHeroModule.CommonConfig?.StreamObjectivesEnabled != true) { message = "Stream objectives are disabled in settings."; return false; }
+            if (BLTAdoptAHeroModule.EventConfig?.StreamObjectivesEnabled != true) { message = "Stream objectives are disabled in settings."; return false; }
             message = null; return true;
         }
 

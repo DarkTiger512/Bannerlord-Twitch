@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BannerlordTwitch;
 using BannerlordTwitch.Localization;
 using BannerlordTwitch.Rewards;
@@ -7,8 +7,8 @@ using JetBrains.Annotations;
 
 namespace BLTAdoptAHero
 {
-    [UsedImplicitly]
-    public class TournamentBet : ICommandHandler
+    [UsedImplicitly, LocDisplayName("Predict"), LocDescription("Predict the winning tournament team using hero gold.")]
+    public class TournamentPrediction : ICommandHandler
     {
         public Type HandlerConfigType => null;
 

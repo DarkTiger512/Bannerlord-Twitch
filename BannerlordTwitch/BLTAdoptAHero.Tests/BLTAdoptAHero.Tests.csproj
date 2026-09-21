@@ -6,6 +6,11 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="YamlDotNet">
+      <HintPath>..\packages\YamlDotNet.15.3.0\lib\net8.0\YamlDotNet.dll</HintPath>
+    </Reference>
+    <Compile Include="..\BannerlordTwitch\Settings\ConfigurationVersioning.cs" Link="ConfigurationVersioning.cs" />
+    <Compile Include="..\BLTAdoptAHero\Util\SimGoldPolicy.cs" Link="SimGoldPolicy.cs" />
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net6.0\Newtonsoft.Json.dll</HintPath>
     </Reference>

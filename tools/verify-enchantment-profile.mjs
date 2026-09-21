@@ -4,7 +4,7 @@ import { cleanName, parseCommands, profilePath } from "./command-profile.mjs";
 
 // Exercise the working profile, without requiring a commit or an integration port.
 const commands = parseCommands(readFileSync(profilePath, "utf8"));
-assert.equal(commands.length, 64);
+assert.equal(commands.length, 65);
 const matches = commands.filter(command => cleanName(command.Name) === "enchant");
 assert.equal(matches.length, 1);
 const command = matches[0];
@@ -23,4 +23,4 @@ assert.deepEqual(command.HandlerConfig, {
 });
 // Nested settings must not be mistaken for command-level properties.
 assert.equal(command.DamageGain, undefined);
-console.log("Enchantment profile verified: 64 commands and all 12 configured defaults.");
+console.log("Enchantment profile verified: 65 commands and all 12 configured defaults.");

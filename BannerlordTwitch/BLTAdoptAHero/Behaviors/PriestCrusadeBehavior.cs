@@ -47,7 +47,7 @@ namespace BLTAdoptAHero.Behaviors
         private void OnDailyTick()
         {
             if (state?.Phase == RandomEventLifecycle.Active) { CheckResolution(); return; }
-            var cfg = BLTAdoptAHeroModule.CommonConfig;
+            var cfg = BLTAdoptAHeroModule.EventConfig;
             if (cfg?.RandomEventsEnabled != true || cfg.PriestCrusadeEnabled != true || !Eligible(out _)) return;
             double day = CampaignTime.Now.ToDays;
             if (!RandomEventPolicy.CanRoll(day, lastSuccessfulTriggerDay, cfg.PriestCrusadeCooldownDays, state != null && RandomEventPolicy.IsActive(state.Phase))) return;
@@ -64,7 +64,7 @@ namespace BLTAdoptAHero.Behaviors
             var kingdom = clan?.Kingdom;
             if (Hero.MainHero?.IsAlive != true || clan?.IsEliminated == true || kingdom?.IsEliminated != false)
             { reason = "the main hero does not belong to a living kingdom"; return false; }
-            if (clan.Tier < (BLTAdoptAHeroModule.CommonConfig?.PriestCrusadeMinimumKingdomTier ?? 2))
+            if (clan.Tier < (BLTAdoptAHeroModule.EventConfig?.PriestCrusadeMinimumKingdomTier ?? 2))
             { reason = "the player's clan tier is too low"; return false; }
             reason = null;
             return true;
@@ -72,7 +72,7 @@ namespace BLTAdoptAHero.Behaviors
 
         private bool TryStart(bool manual, out string result)
         {
-            if (BLTAdoptAHeroModule.CommonConfig?.RandomEventsEnabled != true)
+            if (BLTAdoptAHeroModule.EventConfig?.RandomEventsEnabled != true)
             {
                 result = "{=BLTRandomEventsDisabled}Random events are disabled.".Translate();
                 return false;
@@ -84,7 +84,7 @@ namespace BLTAdoptAHero.Behaviors
             state = new PriestCrusadeState { Phase = RandomEventLifecycle.Preparing, StartedDay = CampaignTime.Now.ToDays };
             try
             {
-                var cfg = BLTAdoptAHeroModule.CommonConfig;
+                var cfg = BLTAdoptAHeroModule.EventConfig;
                 var target = Hero.MainHero.Clan.Kingdom;
                 var culture = Hero.MainHero.Culture;
                 string suffix = $"{CampaignTime.Now.ToHours:F0}_{MBRandom.RandomInt(1000000)}";
@@ -215,7 +215,7 @@ namespace BLTAdoptAHero.Behaviors
         private static Clan ResolveClan(string id) => string.IsNullOrWhiteSpace(id) ? null : Clan.All.FirstOrDefault(c => c.StringId == id);
         private static Kingdom ResolveKingdom(string id) => string.IsNullOrWhiteSpace(id) ? null : Kingdom.All.FirstOrDefault(k => k.StringId == id);
         private static string SafeName(string value, string fallback) => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
-        private static void Diagnostic(string message) { if (BLTAdoptAHeroModule.CommonConfig?.PriestCrusadeDiagnostics == true) Log.Info($"[Priest's Crusade] {message}"); }
+        private static void Diagnostic(string message) { if (BLTAdoptAHeroModule.EventConfig?.PriestCrusadeDiagnostics == true) Log.Info($"[Priest's Crusade] {message}"); }
 
         [CommandLineFunctionality.CommandLineArgumentFunction("trigger_priest_crusade", "blt")]
         [UsedImplicitly]

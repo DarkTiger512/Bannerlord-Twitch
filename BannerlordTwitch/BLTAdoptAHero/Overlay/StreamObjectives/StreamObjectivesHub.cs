@@ -24,7 +24,7 @@ namespace BLTAdoptAHero.UI
 
         private static StreamObjectiveOverlayData Build(StreamObjectiveState state)
         {
-            var config = GlobalCommonConfig.Get();
+            var config = GlobalEventConfig.Get();
             if (state == null || config?.StreamObjectivesOverlayEnabled != true) return Hidden();
             int target = state.Kind == StreamObjectiveKind.Survive ? state.RequiredHeroes : state.Target;
             return new StreamObjectiveOverlayData

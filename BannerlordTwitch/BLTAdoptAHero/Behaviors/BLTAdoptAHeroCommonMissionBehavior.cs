@@ -89,7 +89,6 @@ namespace BLTAdoptAHero
 
                 BLTAdoptAHeroCampaignBehavior.SetAgentStartingHealth(hero, agent);
                 activeHeroes.Add(hero);
-                Behaviors.CursedArtifactBehavior.Current?.MarkMissionParticipant(hero);
                 bool onPlayerSide = agent.Team?.IsValid == true && Mission.PlayerTeam?.IsValid == true && agent.Team.IsFriendOf(Mission.PlayerTeam);
                 Behaviors.ImmortalEncounterBehavior.Current?.MarkMissionParticipant(hero, onPlayerSide);
             });
@@ -102,6 +101,7 @@ namespace BLTAdoptAHero
                 var hero = agent.GetAdoptedHero();
                 if (hero != null)
                 {
+                    Behaviors.CursedArtifactBehavior.Current?.MarkMissionParticipant(agent);
                     GetHeroMissionState(hero).LastAgentState = AgentState.Active;
 
                     if (agent.MountAgent != null)
@@ -153,6 +153,7 @@ namespace BLTAdoptAHero
 
         protected override void OnEndMission()
         {
+            Behaviors.CursedArtifactBehavior.Current?.EndMission(Mission);
             MissionInfoHub.Clear();
         }
 

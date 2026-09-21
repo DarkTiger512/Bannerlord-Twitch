@@ -19,7 +19,7 @@ namespace BLTAdoptAHero
         private readonly Dictionary<Hero, PrestigeConfirmation> prestigePreviews = new();
         private readonly Dictionary<Hero, string> prestigePreviewSettings = new();
         private readonly HashSet<Hero> prestigeInProgress = new();
-        public static PrestigeSettings PrestigeConfig => BLTAdoptAHeroModule.CommonConfig.Prestige ?? new PrestigeSettings();
+        public static PrestigeSettings PrestigeConfig => PrestigeCommand.CurrentSettings;
         public PrestigeProgress GetPrestige(Hero hero)
         {
             string owner = hero == null ? null : GetHeroData(hero).Owner;

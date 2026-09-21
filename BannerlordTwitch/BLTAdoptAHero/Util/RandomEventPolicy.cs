@@ -40,6 +40,10 @@ namespace BLTAdoptAHero.Util
 
     public static class RandomEventPolicy
     {
+        public static bool CanStartImmortalBattle(float health, float maximumHealth)
+            => maximumHealth > 0 && !float.IsInfinity(maximumHealth) && !float.IsInfinity(health)
+                && health > maximumHealth * .2f;
+
         public static float ClampChance(float value) => Math.Max(0f, Math.Min(100f, value));
         public static int ClampCooldown(int value) => Math.Max(0, Math.Min(3650, value));
         public static int ClampPercent(int value) => Math.Max(1, Math.Min(500, value));

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Packaging;
@@ -496,21 +496,7 @@ namespace BannerlordTwitch
                 }
             }
 
-            if (context.Source.RespondInExtension && !IsSimTesting)
-            {
-                // Twitch Extension PubSub (if configured)
-                if (extensionPubSub != null)
-                {
-                    if (context.UserName != null)
-                        _ = extensionPubSub.SendWhisperToUserNameAsync(context.UserName, messages);
-                    else
-                        _ = extensionPubSub.SendBroadcastAsync(messages);
-                }
 
-                // Local relay — always active, no configuration needed
-                if (localRelay != null)
-                    _ = localRelay.SendReplyAsync(context.UserName, messages);
-            }
         }
 
         public void SendNonReply(ReplyContext context, params string[] messages)
@@ -524,11 +510,7 @@ namespace BannerlordTwitch
                 bot.SendChat(messages);
             }
 
-            // Extension PubSub: non-replies are always broadcast (no specific user)
-            if (context.Source.RespondInExtension && extensionPubSub != null && !IsSimTesting)
-            {
-                _ = extensionPubSub.SendBroadcastAsync(messages);
-            }
+
         }
 
         public void SendChat(params string[] messages)
@@ -756,6 +738,10 @@ namespace BannerlordTwitch
         //     Log.ScreenFail("PubSub Service closed, attempting reconnect...");
         //     pubSub.Connect();
         // }
+
+        public object FindCommandConfig(string handler, Guid preferredId) => settings?.Commands?
+            .Where(c => c.Handler == handler).OrderByDescending(c => c.ID == preferredId)
+            .ThenBy(c => c.ID).FirstOrDefault()?.HandlerConfig;
 
         public object FindGlobalConfig(string id) => settings?.GlobalConfigs?.FirstOrDefault(c => c.Id == id)?.Config;
 

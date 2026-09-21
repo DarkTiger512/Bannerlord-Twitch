@@ -229,5 +229,7 @@ Assert(RandomEventPolicy.CrusadeResolved(true, true, true) && RandomEventPolicy.
 
 Console.WriteLine("Smart troop, ammunition, campaign map, stream objective, cursed artifact, and random-event policy tests passed.");
 
+ReleaseFixTests.Run();
+
 internal sealed record Troop(string Id, string Culture, bool Compatible, int MaxTier);
 internal sealed record Label(string Id, bool Hero, bool Town);
