@@ -11,6 +11,11 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' "/>
 
     <PropertyGroup>
+        <BANNERLORD_GAME_DIR>$(BANNERLORD_GAME_DIR)</BANNERLORD_GAME_DIR>
+        <BANNERLORD_GAME_DIR Condition=" '$(BANNERLORD_GAME_DIR)' == '' ">C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord</BANNERLORD_GAME_DIR>
+    </PropertyGroup>
+
+    <PropertyGroup>
         <TAOMHarmonyPath Condition="'$(TAOM_HARMONY_DLL)' != ''">$(TAOM_HARMONY_DLL)</TAOMHarmonyPath>
         <TAOMHarmonyPath Condition="'$(TAOMHarmonyPath)' == '' AND Exists('$(BANNERLORD_GAME_DIR)\Modules\TAOM.Dependencies\bin\Win64_Shipping_Client\0Harmony.dll')">$(BANNERLORD_GAME_DIR)\Modules\TAOM.Dependencies\bin\Win64_Shipping_Client\0Harmony.dll</TAOMHarmonyPath>
         <TAOMHarmonyPath Condition="'$(TAOMHarmonyPath)' == '' AND Exists('$(BANNERLORD_GAME_DIR)\Modules\TAOM\bin\Win64_Shipping_Client\0Harmony.dll')">$(BANNERLORD_GAME_DIR)\Modules\TAOM\bin\Win64_Shipping_Client\0Harmony.dll</TAOMHarmonyPath>
@@ -39,8 +44,6 @@
 
     <PropertyGroup>
         <GameVersion>1.4.8</GameVersion>
-        <BANNERLORD_GAME_DIR>$(BANNERLORD_GAME_DIR)</BANNERLORD_GAME_DIR>
-        <BANNERLORD_GAME_DIR Condition=" '$(BANNERLORD_GAME_DIR)' == '' ">C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord</BANNERLORD_GAME_DIR>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' != 'true'">
