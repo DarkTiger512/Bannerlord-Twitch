@@ -522,14 +522,26 @@ namespace BLTAdoptAHero
             var inheritedItems = BLTAdoptAHeroCampaignBehavior.Current.InheritCustomItems(newHero, settings.MaxInheritedCustomItems);
             if (settings.StartingEquipmentTier.HasValue)
             {
-                EquipHero.RemoveAllEquipment(newHero);
-                if (settings.StartingEquipmentTier.Value > 0)
+                if (EquipHero.IsTaomNonHumanHero(newHero))
                 {
-                    EquipHero.UpgradeEquipment(newHero, settings.StartingEquipmentTier.Value - 1,
-                        classDef, replaceSameTier: false);
+                    // TAOM's custom-race wanderer templates already carry skeleton-safe equipment.
+                    // Keep it intact and derive BLT's bookkeeping tier from the actual loadout.
+                    BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentTier(newHero,
+                        EquipHero.CalculateHeroEquipmentTier(newHero));
+                    BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentClass(newHero, classDef);
+                    Log.Info($"AdoptAHero: Preserved TAOM race-specific equipment for {newHero.Name} (race {newHero.CharacterObject.Race})");
                 }
-                BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentTier(newHero, settings.StartingEquipmentTier.Value - 1);
-                BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentClass(newHero, classDef);
+                else
+                {
+                    EquipHero.RemoveAllEquipment(newHero);
+                    if (settings.StartingEquipmentTier.Value > 0)
+                    {
+                        EquipHero.UpgradeEquipment(newHero, settings.StartingEquipmentTier.Value - 1,
+                            classDef, replaceSameTier: false);
+                    }
+                    BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentTier(newHero, settings.StartingEquipmentTier.Value - 1);
+                    BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentClass(newHero, classDef);
+                }
             }
 
             if (!CampaignHelpers.IsEncyclopediaBookmarked(newHero))
