@@ -7,7 +7,7 @@
 	<SingleplayerModule value="true"/>
 	<Official value="false" />
 	<DependedModules>
-		<DependedModule Id="Bannerlord.Harmony"/>
+		<DependedModule Id="TAOM.Dependencies"/>
 		<DependedModule Id="Native"/>
 		<DependedModule Id="SandBoxCore"/>
 		<DependedModule Id="Sandbox"/>
@@ -15,6 +15,7 @@
 		<!-- <DependedModule Id="NavalDLC"/> -->
 		<DependedModule Id="CustomBattle"/>
 		<DependedModule Id="BannerlordTwitch"/>
+		<DependedModule Id="TAOM"/>
 	</DependedModules>
 	<SubModules>
 		<SubModule>
@@ -30,7 +31,7 @@
 		<!-- optional: [ "true", "false" ] -->
 		<!-- version: [ "e1.0.0.0", "e1.*", "e1.0.*", "e1.0.0.*" ] -->
 		<!-- incompatible: [ "true", "false" ] -->
-		<DependedModuleMetadata id="Bannerlord.Harmony" order="LoadBeforeThis" />
+		<DependedModuleMetadata id="TAOM.Dependencies" order="LoadBeforeThis" version="v2.0.6" />
 		<DependedModuleMetadata id="Native" order="LoadBeforeThis" version="v1.4.8" />
 		<DependedModuleMetadata id="SandBoxCore" order="LoadBeforeThis" version="v1.4.8" />
 		<DependedModuleMetadata id="Sandbox" order="LoadBeforeThis" version="v1.4.8" />
@@ -38,8 +39,8 @@
 		<!-- <DependedModuleMetadata id="NavalDLC" order="LoadBeforeThis" /> -->
 		<DependedModuleMetadata id="CustomBattle" order="LoadBeforeThis" version="v1.4.8" />
 		<DependedModuleMetadata id="BannerlordTwitch" order="LoadBeforeThis" />
-		<!-- Optional TAOM interoperability: when present, let TAOM install its race/render patches first. -->
-		<DependedModuleMetadata id="TAOM" order="LoadBeforeThis" optional="true" />
+		<!-- TAOM compatibility build: TAOM owns race/render integration and must initialize first. -->
+		<DependedModuleMetadata id="TAOM" order="LoadBeforeThis" version="v2.0.28" />
 	</DependedModuleMetadatas>
 	<Xmls>
 	</Xmls>
