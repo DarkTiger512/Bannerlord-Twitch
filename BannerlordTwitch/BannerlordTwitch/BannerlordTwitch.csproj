@@ -34,7 +34,7 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(BANNERLORD_GAME_DIR)\bin\Win64_Shipping_Client\Bannerlord.exe</StartProgram>
     <StartWorkingDirectory>$(BANNERLORD_GAME_DIR)\bin\Win64_Shipping_Client</StartWorkingDirectory>
-    <StartArguments>/singleplayer _MODULES_%2aBannerlord.Harmony%2aNative%2aSandBoxCore%2aCustomBattle%2aSandbox%2aStoryMode%2aBannerlordTwitch%2aBLTAdoptAHero%2aBLTBuffet%2aBLTConfigure%2a_MODULES_</StartArguments>
+    <StartArguments>/singleplayer _MODULES_%2aTAOM.Dependencies%2aNative%2aSandBoxCore%2aCustomBattle%2aSandbox%2aStoryMode%2aTAOM%2aBannerlordTwitch%2aBLTAdoptAHero%2aBLTBuffet%2aBLTConfigure%2a_MODULES_</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="dnlib, Version=4.4.0.0, Culture=neutral, PublicKeyToken=50e96378b6e77999, processorArchitecture=MSIL">
