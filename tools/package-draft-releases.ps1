@@ -63,6 +63,8 @@ function CheckBundle([string]$Directory, $Record, [string]$ExpectedConfig) {
         if ($xml.Module.Id.value -ne $module -or $xml.Module.Version.value -ne "v$($Record.version)") { throw "Unexpected module identity/version in $module" }
         if (!(Test-Path -LiteralPath (Join-Path $moduleRoot "bin/Win64_Shipping_Client/$module.dll"))) { throw "Missing $module assembly" }
     }
+    $bundledHarmony = @(Get-ChildItem -LiteralPath $Directory -Recurse -File -Filter '0Harmony.dll')
+    if ($bundledHarmony.Count -gt 0) { throw 'Unexpected 0Harmony.dll in package; Harmony must be supplied by the runtime dependency stack.' }
     $config = Get-Content -LiteralPath (Join-Path $Directory 'BannerlordTwitch/Bannerlord-Twitch-v4.yaml') -Raw
     if ($config.Replace("`r`n", "`n") -cne $ExpectedConfig.Replace("`r`n", "`n")) { throw 'Bundled branch configuration changed.' }
     if ($config -notmatch 'Prestige:\s+Enabled: true' -or $config -notmatch 'BattleBalance:\s+Enabled: true' -or $config -notmatch 'DifficultyScalingOnEnemySide: false' -or $config -notmatch 'DifficultyScalingOnPlayersSide: false') { throw 'Unexpected gameplay defaults.' }

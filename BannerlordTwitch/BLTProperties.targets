@@ -10,6 +10,18 @@
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' "/>
 
+    <PropertyGroup>
+        <TAOMHarmonyPath Condition="'$(TAOM_HARMONY_DLL)' != ''">$(TAOM_HARMONY_DLL)</TAOMHarmonyPath>
+        <TAOMHarmonyPath Condition="'$(TAOMHarmonyPath)' == '' AND Exists('$(BANNERLORD_GAME_DIR)\Modules\TAOM.Dependencies\bin\Win64_Shipping_Client\0Harmony.dll')">$(BANNERLORD_GAME_DIR)\Modules\TAOM.Dependencies\bin\Win64_Shipping_Client\0Harmony.dll</TAOMHarmonyPath>
+        <TAOMHarmonyPath Condition="'$(TAOMHarmonyPath)' == '' AND Exists('$(BANNERLORD_GAME_DIR)\Modules\TAOM\bin\Win64_Shipping_Client\0Harmony.dll')">$(BANNERLORD_GAME_DIR)\Modules\TAOM\bin\Win64_Shipping_Client\0Harmony.dll</TAOMHarmonyPath>
+        <TAOMHarmonyPath Condition="'$(TAOMHarmonyPath)' == '' AND Exists('$(BANNERLORD_GAME_DIR)\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll')">$(BANNERLORD_GAME_DIR)\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</TAOMHarmonyPath>
+    </PropertyGroup>
+
+    <Target Name="ValidateHarmonyAssemblyPath" BeforeTargets="PrepareForBuild">
+        <Error Condition="'$(TAOMHarmonyPath)' == ''" Text="Could not find 0Harmony.dll. Install TAOM.Dependencies or Bannerlord.Harmony, or pass /p:TAOM_HARMONY_DLL=path\to\0Harmony.dll." />
+        <Error Condition="'$(TAOM_HARMONY_DLL)' != '' AND !Exists('$(TAOM_HARMONY_DLL)')" Text="TAOM_HARMONY_DLL does not exist: $(TAOM_HARMONY_DLL)" />
+    </Target>
+
     <PropertyGroup Condition="$(Configuration.StartsWith('Debug'))">
         <OutputPackageRoot>$(SolutionDir)deploy\debug\</OutputPackageRoot>
         <Optimize>false</Optimize>
@@ -265,7 +277,8 @@
     <ItemGroup>
         <Reference Include="0Harmony, Version=2.3.3.0, Culture=neutral, processorArchitecture=MSIL">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(BANNERLORD_GAME_DIR)\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
+            <Private>False</Private>
+            <HintPath>$(TAOMHarmonyPath)</HintPath>
         </Reference>
     </ItemGroup>
 
