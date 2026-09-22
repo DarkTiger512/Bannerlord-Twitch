@@ -7,6 +7,7 @@ using BannerlordTwitch.Localization;
 using BannerlordTwitch.Rewards;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero.Annotations;
+using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.Core;
@@ -148,6 +149,14 @@ namespace BLTAdoptAHero
                 return;
             }
 
+            // TAOM custom races use race-specific skeletons, armour and mounts.
+            // Replacing that equipment from BLT's global pool can produce invalid visuals or mounts.
+            if (IsTaomNonHumanHero(adoptedHero))
+            {
+                onFailure("TAOM non-human heroes keep their race-specific equipment; BLT automatic re-equipping is disabled for them.");
+                return;
+            }
+
             int targetTier = Math.Max(0, BLTAdoptAHeroCampaignBehavior.Current.GetEquipmentTier(adoptedHero) +
                              (settings.ReequipInsteadOfUpgrade ? 0 : 1));
 
@@ -201,8 +210,19 @@ namespace BLTAdoptAHero
             // $"Equipped Tier {targetTier + 1} ({charClass?.Name ?? "No Class"})");
         }
 
+        internal static bool IsTaomNonHumanHero(Hero hero)
+        {
+            if (hero?.CharacterObject == null || hero.CharacterObject.Race <= 0)
+                return false;
+
+            // Avoid a hard assembly dependency so BLT still works without TAOM installed.
+            return AccessTools.TypeByName("TAOM.SubModule") != null;
+        }
+
         internal static void RemoveAllEquipment(Hero adoptedHero)
         {
+            if (IsTaomNonHumanHero(adoptedHero))
+                return;
             foreach (var (_, index) in adoptedHero.BattleEquipment.YieldEquipmentSlots())
             {
                 adoptedHero.BattleEquipment[index] = EquipmentElement.Invalid;
@@ -234,6 +254,9 @@ namespace BLTAdoptAHero
 
         public static void UpgradeEquipment(Hero adoptedHero, int targetTier, HeroClassDef classDef, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, Func<EquipmentElement, bool> customKeepFilter = null, HashSet<string> restrictedItemIds = null)
         {
+            if (IsTaomNonHumanHero(adoptedHero))
+                return;
+
             customKeepFilter ??= _ => true;
             restrictedItemIds ??= new HashSet<string>();
 
