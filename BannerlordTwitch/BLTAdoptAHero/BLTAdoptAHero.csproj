@@ -261,6 +261,7 @@
     <Compile Include="Util\ConsoleCommands.cs" />
     <Compile Include="Util\HeroExtensions.cs" />
     <Compile Include="Util\Patches.cs" />
+    <Compile Include="Util\ViewerClanMembershipPatch.cs" />
     <Compile Include="Util\SmartTroopPolicy.cs" />
     <Compile Include="Util\EnchantmentPolicy.cs" />
     <Compile Include="Actions\EnchantWeapon.cs" />
