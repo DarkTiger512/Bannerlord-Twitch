@@ -1,0 +1,138 @@
+// Scheduling tests use actual production methods. Native troop spawning is stubbed.
+class Program
+{
+    static int checks;
+    static void Check(bool value, string description)
+    {
+        if (!value) throw new Exception(description);
+        checks++;
+    }
+    static Agent HeroAgent(PartyBase party = null) => new() {
+        Hero = new Hero { Party = party ?? new() }, Team = new(), Formation = new()
+    };
+    static Harness New() { Mission.Current = new(); return new Harness { Mission = Mission.Current }; }
+    static void Ready(Harness h) { h.Mission.IsLoadingFinished = true; h.Mission.Mode = MissionMode.Battle; }
+    static void Main()
+    {
+        foreach (bool sharedParty in new[] { false, true })
+        {
+            var h = New(); var a = HeroAgent(); var b = HeroAgent(sharedParty ? a.Hero.Party : null);
+            h.OnAgentBuild(a, null); h.OnAgentBuild(b, null); h.OnAgentBuild(a, null);
+            Check(h.Spawned.Count == 0 && h.Pending == 2, "Two heroes must queue, not spawn in build callbacks.");
+            Check(h.GetHeroSummonState(a.Hero).TimesSummoned == 1, "Duplicate callback must not increase summon count.");
+            h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 0, "Wait for loading.");
+            h.Mission.IsLoadingFinished = true; h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 0, "Wait for deployment to finish.");
+            Ready(h); h.Mission.CurrentState = Mission.State.Initializing; h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 0, "Wait for continuing mission state.");
+            h.Mission.CurrentState = Mission.State.Continuing;
+            h.DuringSpawn = hero => h.OnAgentBuild(hero == a.Hero ? a : b, null);
+            h.OnMissionTick(0.1f); h.OnMissionTick(0.1f);
+            Check(h.Spawned.SequenceEqual(new[] { a.Hero, b.Hero }) && h.Pending == 0, "Spawn each retinue once, including recursive callback.");
+        }
+        foreach (string invalid in new[] { "inactive", "replaced", "party-left", "party-changed", "ending", "resolved", "mission-changed", "state-removed" })
+        {
+            var h = New(); var a = HeroAgent(); h.OnAgentBuild(a, null); Ready(h);
+            switch (invalid)
+            {
+                case "inactive": a.Active = false; break;
+                case "replaced": h.GetHeroSummonState(a.Hero).CurrentAgent = HeroAgent(); break;
+                case "party-left": a.Hero.Party = null; break;
+                case "party-changed": a.Hero.Party = new(); break;
+                case "ending": h.Mission.IsMissionEnding = true; break;
+                case "resolved": h.Mission.MissionResult = new() { BattleResolved = true }; break;
+                case "mission-changed": Mission.Current = new(); break;
+                case "state-removed": h.Remove(a.Hero); break;
+            }
+            h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 0 && h.Pending == 0, "Cancel invalid queued spawn: " + invalid);
+        }
+        {
+            var h = New(); var a = HeroAgent(); a.Formation = null; h.OnAgentBuild(a, null); Ready(h);
+            h.OnMissionTick(0.1f); Check(h.Pending == 1 && h.Spawned.Count == 0, "Wait for formation.");
+            a.Formation = new(); a.Team.IsValid = false; h.OnMissionTick(0.1f);
+            Check(h.Pending == 1, "Wait for team.");
+            a.Team.IsValid = true; h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 1, "Spawn after formation/team become valid.");
+        }
+        {
+            var h = New(); var a = HeroAgent(); var b = HeroAgent();
+            h.OnAgentBuild(a, null); h.OnAgentBuild(b, null); Ready(h);
+            h.DuringSpawn = hero => { if (hero == a.Hero) throw new Exception("partial native spawn failure"); };
+            h.OnMissionTick(0.1f); h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 2 && h.Errors == 1 && h.Pending == 0, "One failure must not retry or block the other hero.");
+        }
+        {
+            var h = New(); var a = HeroAgent(); Ready(h); h.Voluntary(a.Hero);
+            h.AddHeroSummonState(a.Hero, true, a.Hero.Party, false, true);
+            h.OnAgentBuild(a, null);
+            Check(h.Spawned.Count == 1 && h.Pending == 0, "Keep voluntary summon behavior.");
+            var b = HeroAgent(); h.AddHeroSummonState(b.Hero, true, b.Hero.Party, false, false);
+            h.OnAgentBuild(b, null); h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 1, "Respect disabled retinue.");
+        }
+        {
+            var h = New(); Ready(h); var a = HeroAgent(); h.OnAgentBuild(a, null);
+            Check(h.Spawned.Count == 0 && h.Pending == 1, "Reinforcements must also wait for a tick.");
+            h.OnMissionTick(0.1f);
+            Check(h.Spawned.Count == 1, "Spawn reinforcement retinue on the next safe tick.");
+        }
+        Console.WriteLine($"Passed {checks} automatic retinue scheduling checks.");
+    }
+}
+class Harness
+{
+    public Mission Mission;
+    readonly List<HeroSummonState> heroSummonStates = new();
+    readonly Dictionary<HeroSummonState, Agent> pendingAutomaticRetinues = new();
+    readonly HashSet<Hero> voluntarySpawns = new();
+    readonly Dictionary<Hero, object> HeroDeathSpecifics = new();
+    readonly List<Action> onTickActions = new();
+    float balanceRefresh;
+    public List<Hero> Spawned = new(); public Action<Hero> DuringSpawn; public int Errors;
+    public int Pending => pendingAutomaticRetinues.Count;
+    public HeroSummonState GetHeroSummonState(Hero hero) => heroSummonStates.FirstOrDefault(s => s.Hero == hero);
+    public void Remove(Hero hero) => heroSummonStates.Remove(GetHeroSummonState(hero));
+    public void Voluntary(Hero hero) => voluntarySpawns.Add(hero);
+    void SafeCall(Action action) { try { action(); } catch { Errors++; } }
+    void RegisterBalanceAgent(Agent agent) { }
+    void ReconcileBalance() { }
+    void PublishBalance() { }
+    bool RetinueAllowed() => true;
+    bool ShouldBeMounted(int formation) => false;
+    void SpawnRetinue(Hero hero, bool mounted, int formation, HeroSummonState state, bool side)
+    { Spawned.Add(hero); DuringSpawn?.Invoke(hero); }
+    /* METHODS */
+}
+class HeroSummonState
+{
+    public Hero Hero; public bool WasPlayerSide, SpawnWithRetinue; public PartyBase Party;
+    public Agent CurrentAgent; public AgentState State; public int TimesSummoned; public float SummonTime;
+}
+class Hero { public PartyBase Party; public PartyBase GetMapEventParty() => Party; }
+class PartyBase { public object MemberRoster = new(); }
+class Agent
+{
+    public Hero Hero; public Team Team; public Formation Formation; public bool Active = true;
+    public Hero GetAdoptedHero() => Hero; public bool IsActive() => Active;
+}
+class Formation { public int FormationIndex; }
+class Team { public bool IsValid = true; public bool IsFriendOf(Team other) => true; }
+class Banner { }
+enum AgentState { Active, Killed }
+enum MissionMode { Battle, Deployment }
+class Mission
+{
+    public static Mission Current; public enum State { Initializing, Continuing }
+    public State CurrentState = State.Continuing; public MissionMode Mode = MissionMode.Deployment;
+    public bool IsMissionEnding, IsLoadingFinished; public Result MissionResult; public Team PlayerTeam = new();
+}
+class Result { public bool BattleResolved; }
+class CampaignMission { public static CampaignMission Current; public object Location; }
+static class CampaignHelpers { public static float GetTotalMissionTime() => 0; }
+class BLTAdoptAHeroCampaignBehavior
+{
+    public static BLTAdoptAHeroCampaignBehavior Current = new();
+    public void IncreaseParticipationCount(Hero hero, bool side, bool forced) { }
+}

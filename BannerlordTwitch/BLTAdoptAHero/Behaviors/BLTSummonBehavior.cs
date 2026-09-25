@@ -55,6 +55,7 @@ namespace BLTAdoptAHero
 
         private readonly List<HeroSummonState> heroSummonStates = new();
         private readonly List<Action> onTickActions = new();
+        private readonly Dictionary<HeroSummonState, Agent> pendingAutomaticRetinues = new();
 
         public HeroSummonState GetHeroSummonState(Hero hero)
             => heroSummonStates.FirstOrDefault(h => h.Hero == hero);
@@ -116,14 +117,8 @@ namespace BLTAdoptAHero
                                        forced: !voluntarySpawns.Contains(adoptedHero),
                                        withRetinue: true);
 
-                // First spawn, so spawn retinue also
-                if (heroSummonState.TimesSummoned == 0 && heroSummonState.SpawnWithRetinue && RetinueAllowed())
-                {
-                    var formationClass = agent.Formation.FormationIndex;
-                    SpawnRetinue(adoptedHero, ShouldBeMounted(formationClass), formationClass,
-                        heroSummonState, heroSummonState.WasPlayerSide);
-                }
-
+                if (heroSummonState.CurrentAgent == agent) return;
+                bool firstSpawn = heroSummonState.TimesSummoned == 0;
                 heroSummonState.CurrentAgent = agent;
                 heroSummonState.State = AgentState.Active;
                 heroSummonState.TimesSummoned++;
@@ -131,6 +126,22 @@ namespace BLTAdoptAHero
                 // If hero isn't registered yet then this must be a hero that is part of one of the involved parties
                 // already
                 HeroDeathSpecifics.Remove(adoptedHero);
+
+                if (firstSpawn && heroSummonState.SpawnWithRetinue && RetinueAllowed())
+                {
+                    if (!voluntarySpawns.Contains(adoptedHero))
+                    {
+                        // Native party heroes can be built during loading/deployment.
+                        // Never nest our troop spawning inside their build callback.
+                        pendingAutomaticRetinues[heroSummonState] = agent;
+                    }
+                    else
+                    {
+                        var formationClass = agent.Formation.FormationIndex;
+                        SpawnRetinue(adoptedHero, ShouldBeMounted(formationClass), formationClass,
+                            heroSummonState, heroSummonState.WasPlayerSide);
+                    }
+                }
 
             });
         }
@@ -244,8 +255,54 @@ namespace BLTAdoptAHero
         }
 
         private float balanceRefresh;
+        private void SpawnPendingAutomaticRetinues()
+        {
+            if (Mission == null || Mission.Current != Mission || Mission.IsMissionEnding
+                || Mission.MissionResult?.BattleResolved == true)
+            {
+                pendingAutomaticRetinues.Clear();
+                return;
+            }
+            // Deployment is still native formation setup, even after loading ends.
+            if (!Mission.IsLoadingFinished || Mission.CurrentState != Mission.State.Continuing
+                || Mission.Mode != MissionMode.Battle || !RetinueAllowed()) return;
+
+            foreach (var pending in pendingAutomaticRetinues.ToArray())
+            {
+                SafeCall(() =>
+                {
+                    var state = pending.Key;
+                    var agent = pending.Value;
+                    if (!heroSummonStates.Contains(state) || state.CurrentAgent != agent
+                        || state.State != AgentState.Active || !agent.IsActive())
+                    {
+                        pendingAutomaticRetinues.Remove(state);
+                        return;
+                    }
+                    if (agent.Formation == null || agent.Team?.IsValid != true
+                        || Mission.PlayerTeam?.IsValid != true) return;
+
+                    var party = state.Hero.GetMapEventParty();
+                    if (party?.MemberRoster == null || (state.Party != null && state.Party != party))
+                    {
+                        pendingAutomaticRetinues.Remove(state);
+                        return;
+                    }
+                    state.Party = party;
+                    state.WasPlayerSide = agent.Team.IsFriendOf(Mission.PlayerTeam);
+                    // Consume before spawning: recursive callbacks or a partial spawn
+                    // failure must not spawn this hero's retinue a second time.
+                    pendingAutomaticRetinues.Remove(state);
+                    var formationClass = agent.Formation.FormationIndex;
+                    SpawnRetinue(state.Hero, ShouldBeMounted(formationClass), formationClass,
+                        state, state.WasPlayerSide);
+                });
+            }
+        }
+
         public override void OnMissionTick(float dt)
         {
+            SafeCall(SpawnPendingAutomaticRetinues);
             SafeCall(() =>
             {
                 balanceRefresh -= dt;
@@ -266,6 +323,7 @@ namespace BLTAdoptAHero
 
         protected override void OnEndMission()
         {
+            pendingAutomaticRetinues.Clear();
             SafeCall(() =>
             {
                 // Remove still living retinue troops from their parties
