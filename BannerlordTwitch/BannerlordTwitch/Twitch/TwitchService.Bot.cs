@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Util;
@@ -34,7 +34,7 @@ namespace BannerlordTwitch
                 this.authSettings = authSettings;
                 this.channel = channel;
 
-                var api = new TwitchAPI();
+                var api = TwitchLibraryFactory.Create<TwitchAPI>(null, null, null, null);
 
                 //api.Settings.Secret = SECRET;
                 api.Settings.ClientId = authSettings.ClientID;
@@ -72,7 +72,7 @@ namespace BannerlordTwitch
                     client.OnDisconnected -= Client_OnDisconnected;
                     client.Disconnect();
                 }
-                client = new TwitchClient(customClient);
+                client = TwitchLibraryFactory.Create<TwitchClient>(customClient, ClientProtocol.WebSocket, null);
                 client.Initialize(credentials, channel);
 
                 client.OnLog += Client_OnLog;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +33,7 @@ namespace BannerlordTwitch.Twitch
         public TwitchEventSubSocket(ILogger<TwitchEventSubSocket> logger = null)
         {
             _logger = logger;
-            _eventSubWebsocketClient = new EventSubWebsocketClient(null);
+            _eventSubWebsocketClient = TwitchLibraryFactory.Create<EventSubWebsocketClient>((object)null);
 
             _eventSubWebsocketClient.WebsocketConnected += OnWebsocketConnected;
             _eventSubWebsocketClient.WebsocketDisconnected += OnWebsocketDisconnected;

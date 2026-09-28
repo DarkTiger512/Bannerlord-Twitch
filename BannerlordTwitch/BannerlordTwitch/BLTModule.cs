@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -234,12 +234,10 @@ namespace BannerlordTwitch
             }
             catch (Exception ex)
             {
-                InformationManager.ShowInquiry(
-                    new InquiryData(
-                        "{=Sphd7XTS}Bannerlord Twitch Mod DISABLED".Translate(),
-                        ex.Message,
-                        true, false, "{=hpFXglKx}Okay".Translate(), null,
-                        () => { }, () => { }), true);
+                // A modal inquiry here pauses GameLoadingState behind the loading
+                // screen. Report the failure without blocking campaign startup.
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "{=Sphd7XTS}Bannerlord Twitch Mod DISABLED".Translate() + ": " + ex.Message));
                 TwitchService = null;
                 Log.Exception($"TwitchService could not start: {ex.Message}", ex);
                 return false;
