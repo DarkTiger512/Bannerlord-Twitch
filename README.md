@@ -48,14 +48,14 @@ Viewers can "adopt" an in-game hero of types that can be specified in the config
 
 ### [Installation Guide Video](https://youtu.be/ATf5zilwNWk)
 
-1. Install [Bannerlord Harmony](https://www.nexusmods.com/mountandblade2bannerlord/mods/2006?tab=files)
+1. For this TAOM build, install TAOM and its `TAOM.Dependencies` module. All four BLT modules use the Harmony library supplied by TAOM; the standalone Bannerlord Harmony module is not required. War Sails is optional; naval summoning is available only when the DLC is enabled. When upgrading from an earlier TAOM BLT package, remove leftover `NavalDLC*.dll` files from the four BLT modules' `bin/Win64_Shipping_Client` folders; overwriting files does not remove these obsolete copies. Leave the actual War Sails module, configuration files, and saves intact.
    
 2. Unzip the BLT Package to the Bannerlord Modules directory (by default at `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules`).
    It should create the `BannerlordTwitch` directory, and the `BannerlordTwitch.dll` should be at `Modules\BannerlordTwitch\bin\Win64_Shipping_Client\BannerlordTwitch.dll`
    ![image](https://user-images.githubusercontent.com/1453936/115397098-9daae880-a1dd-11eb-87c7-0bda9af4c79d.png)
    It should also create the `BLTAdoptAHero`, `BLTBuffet`, and `BLTConfigure` directories.
    
-3. Run the launcher, make sure Harmony loads first and Bannerlord Twitch loads after the game modules and before any BLT extensions:  
+3. Run the launcher, make sure `TAOM.Dependencies` loads before all BLT modules, and TAOM loads before BLTAdoptAHero. Bannerlord Twitch loads after the game modules and before any BLT extensions:
    ![image](https://user-images.githubusercontent.com/1453936/116240320-95155d80-a75b-11eb-8920-6e0629ab81b9.png)
    
 4. Run the game.

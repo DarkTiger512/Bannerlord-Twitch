@@ -7,7 +7,7 @@ Both variants support campaign prestige, permanent perks, and voluntary smaller-
 | **Classic** | `main` | Existing BLT chat/overlay configuration | Chat commands and existing overlays; no extension pairing required |
 | **Twitch Extension** | `BLT/twitch-integration` | BLT configuration paired with the managed service, plus the Twitch extension | Chat commands plus extension panels, prestige choices and balance offers |
 
-Each mod archive contains `BannerlordTwitch`, `BLTAdoptAHero`, `BLTBuffet`, and `BLTConfigure` at its root. Extract those four folders into Bannerlord's `Modules` directory. Keep the existing Harmony dependency and load order. Read the included metadata for the supported Bannerlord version and source commit.
+Each mod archive contains `BannerlordTwitch`, `BLTAdoptAHero`, `BLTBuffet`, and `BLTConfigure` at its root. Extract those four folders into Bannerlord's `Modules` directory. Classic and Twitch use the standalone Harmony module. The TAOM build uses `TAOM.Dependencies` for all four modules and does not require standalone Harmony. War Sails is optional in TAOM. Consult the release page for supported versions.
 
 Install **one variant at a time**: the module IDs deliberately remain unchanged, so they cannot be installed side by side. Back up saves and local configuration before upgrading or switching. Cross-variant save compatibility has not been verified. Keep each variant's configuration rather than copying the other variant's default YAML over it. Existing local auth/settings are not included in these draft downloads; Classic uses the normal BLT configuration/auth flow, and Extension uses pairing.
 
