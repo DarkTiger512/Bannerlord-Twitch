@@ -247,6 +247,7 @@
     <Compile Include="Actions\EnchantWeapon.cs" />
     <Compile Include="Util\TournamentHelpers.cs" />
     <Compile Include="Util\TroopTreeIndex.cs" />
+    <Compile Include="Util\TaomEquipmentCompatibility.cs" />
     <Compile Include="Util\UIExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

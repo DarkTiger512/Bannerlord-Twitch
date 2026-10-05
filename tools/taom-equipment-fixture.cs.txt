@@ -1,0 +1,200 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TaleWorlds.Core;
+using TaleWorlds.CampaignSystem;
+using BannerlordTwitch.Util;
+using BLTAdoptAHero.Util;
+
+namespace HarmonyLib { public static class AccessTools { public static bool Installed = true; public static Type TypeByName(string name) => Installed ? typeof(AccessTools) : null; } }
+namespace TaleWorlds.Core
+{
+    public enum EquipmentIndex { Weapon0, Weapon1, Weapon2, Weapon3, Head, Body, Legs, Gloves, Cape, Horse, HorseHarness, WeaponItemBeginSlot = Weapon0 }
+    [Flags] public enum ItemFlags { None = 0, NotUsableByFemale = 1, NotUsableByMale = 2 }
+    public class SkillObject { }
+    public class ItemObject
+    {
+        public enum ItemUsageSetFlags { RequiresNoShield, RequiresMount, RequiresNoMount }
+        public enum ItemTypeEnum { Invalid, OneHandedWeapon, TwoHandedWeapon, Polearm, Bow, Crossbow, Thrown, Shield, Horse, HorseHarness, BodyArmor }
+        public string StringId;
+        public int Tier;
+        public ItemTypeEnum ItemType;
+        public ItemTypeEnum Type => ItemType;
+        public bool NotMerchandise, IsCivilian = true;
+        public int Difficulty;
+        public ItemFlags ItemFlags;
+        public SkillObject RelevantSkill;
+        public CultureObject Culture;
+        public HorseComponent HorseComponent;
+        public ArmorComponent ArmorComponent;
+        public static ItemTypeEnum GetAmmoTypeForItemType(ItemTypeEnum type) => ItemTypeEnum.Invalid;
+    }
+    public class HorseComponent { public bool IsMount = true; public Monster Monster = new(); }
+    public class Monster { public int FamilyType = 1; }
+    public class ArmorComponent { public int FamilyType = 1; }
+    public struct EquipmentElement
+    {
+        public ItemObject Item;
+        public object ItemModifier;
+        public bool IsEmpty => Item == null;
+        public static EquipmentElement Invalid => default;
+        public EquipmentElement(ItemObject item) { Item = item; ItemModifier = null; }
+        public EquipmentElement(EquipmentElement other) { Item = other.Item; ItemModifier = other.ItemModifier; }
+    }
+    public class Equipment
+    {
+        private readonly EquipmentElement[] slots = new EquipmentElement[11];
+        public EquipmentElement this[EquipmentIndex i] { get => slots[(int)i]; set => slots[(int)i] = value; }
+    }
+    public static class DefaultSkills { public static SkillObject Riding = new(), Athletics = new(); }
+}
+namespace TaleWorlds.CampaignSystem
+{
+    public class Campaign { public static Campaign Current = new(); }
+    public class CultureObject { }
+    public class CharacterObject
+    {
+        public static List<CharacterObject> All = new();
+        public int Race;
+        public bool IsHero, IsTemplate, IsFemale;
+        public List<Equipment> BattleEquipments = new(), CivilianEquipments = new();
+    }
+    public class Hero
+    {
+        public CharacterObject CharacterObject = new();
+        public Equipment BattleEquipment = new(), CivilianEquipment = new();
+        public int Tier, Gold = 1000;
+        public HeroClassDef Class = new();
+        public List<EquipmentElement> CustomItems = new();
+        public int GetSkillValue(SkillObject skill) => 100;
+    }
+}
+namespace BannerlordTwitch.Util
+{
+    public static class Extensions
+    {
+        public static T SelectRandom<T>(this IEnumerable<T> source) => source.FirstOrDefault();
+        public static string Translate(this string text, params (string, object)[] args) => text;
+        public static bool HasAnyFlag(this ItemFlags flags, ItemFlags other) => (flags & other) != 0;
+        public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => type == EquipmentType.Sword && item.ItemType == ItemObject.ItemTypeEnum.OneHandedWeapon;
+        public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldEquipmentSlots(this Equipment e)
+            => Enumerable.Range(0, 11).Select(i => (e[(EquipmentIndex)i], (EquipmentIndex)i));
+        public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldFilledEquipmentSlots(this Equipment e) => e.YieldEquipmentSlots().Where(x => !x.element.IsEmpty);
+        public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldWeaponSlots(this Equipment e) => e.YieldEquipmentSlots().Take(4);
+        public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldFilledWeaponSlots(this Equipment e) => e.YieldWeaponSlots().Where(x => !x.element.IsEmpty);
+    }
+}
+public enum EquipmentType { None, Sword, Stone }
+public class HeroClassDef { public bool Mounted, UseHorse, UseCamel; public string Name = "Test"; public EquipmentType[] SlotItems = { EquipmentType.Sword }; }
+public static class SkillGroup
+{
+    public static (EquipmentIndex, ItemObject.ItemTypeEnum)[] ArmorIndexType = { (EquipmentIndex.Body, ItemObject.ItemTypeEnum.BodyArmor) };
+    public static (SkillObject skill, ItemObject.ItemTypeEnum itemType)[] SkillItemPairs = { (new(), ItemObject.ItemTypeEnum.OneHandedWeapon) };
+    public static (SkillObject skill, ItemObject.ItemTypeEnum itemType)[] MeleeSkillItemPairs = SkillItemPairs;
+}
+public static class CampaignHelpers { public static List<ItemObject> AllItems = new(); }
+public static class BLTAdoptAHeroModule { public static Config CommonConfig = new(); public class Config { public HashSet<string> RestrictedItemIds = new(); } }
+public class BLTCustomItemsCampaignBehavior { public static BLTCustomItemsCampaignBehavior Current = new(); public bool IsRegistered(object modifier) => modifier != null; }
+public class BLTAdoptAHeroCampaignBehavior
+{
+    public static BLTAdoptAHeroCampaignBehavior Current = new();
+    public List<EquipmentElement> GetCustomItems(Hero h) => h.CustomItems;
+    public int GetEquipmentTier(Hero h) => h.Tier;
+    public void SetEquipmentTier(Hero h, int tier) => h.Tier = tier;
+    public void SetEquipmentClass(Hero h, HeroClassDef c) { }
+    public HeroClassDef GetClass(Hero h) => h.Class;
+    public int GetHeroGold(Hero h) => h.Gold;
+    public void ChangeHeroGold(Hero h, int amount, bool isSpending) => h.Gold += amount;
+}
+public class Settings { public int? StartingEquipmentTier = 1; public bool ReequipInsteadOfUpgrade; public int GetTierCost(int tier) => 100; }
+public static class Naming { public static string NotEnoughGold(int a, int b) => "Not enough gold"; }
+public static class EquipHero
+{
+    // Weapon engine semantics are not under test; all fixture weapons are swingable and mount-safe.
+    public static bool IsItemUsableMounted(Hero h, ItemObject i) => true;
+    public static bool WeaponIsSwingable(ItemObject i) => true;
+    public static bool WeaponRequires(ItemObject i, object flag) => false;
+    /* EQUIPMENT METHODS */
+    public static void Adopt(Hero newHero, Settings settings, HeroClassDef classDef) { /* ADOPTION */ }
+    public static void Paid(Hero adoptedHero, Settings settings, Action<string> onSuccess, Action<string> onFailure)
+    {
+        bool cultureFilterSpecified = false; CultureObject selectedCulture = null;
+        /* PAID COMMAND */
+    }
+}
+public static class Program
+{
+    static int checks;
+    static void Check(bool value, string description) { if (!value) throw new Exception(description); Console.WriteLine("PASS " + description); checks++; }
+    static ItemObject Item(string id, int tier, ItemObject.ItemTypeEnum type = ItemObject.ItemTypeEnum.BodyArmor) => new() { StringId = id, Tier = tier, ItemType = type };
+    static void Reset()
+    {
+        Campaign.Current = new(); CharacterObject.All.Clear(); CampaignHelpers.AllItems.Clear();
+        HarmonyLib.AccessTools.Installed = true; TaomEquipmentCompatibility.Reset();
+        BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Clear();
+    }
+    static void Donor(int race, params ItemObject[] items)
+    {
+        var c = new CharacterObject { Race = race };
+        foreach (var item in items) { var e = new Equipment(); e[EquipmentIndex.Body] = new(item); c.BattleEquipments.Add(e); }
+        CharacterObject.All.Add(c); CampaignHelpers.AllItems.AddRange(items);
+    }
+    static Hero Hero(int race, ItemObject initial = null)
+    {
+        var h = new Hero { CharacterObject = new() { Race = race, IsHero = true } };
+        h.BattleEquipment[EquipmentIndex.Body] = new(initial); h.CivilianEquipment[EquipmentIndex.Body] = new(initial); return h;
+    }
+    public static void Main()
+    {
+        Reset();
+        var human = Item("human", 0); var east = Item("east", 0); var elf = Item("elf", 0); var elite = Item("elf-elite", 5);
+        var sword = Item("elf-sword", 0, ItemObject.ItemTypeEnum.OneHandedWeapon);
+        Donor(0, human); Donor(1, east); Donor(2, elf, elite, sword);
+        Check(!EquipHero.CanUseItem(Hero(2), human, true, false), "Elf excludes human gear even when ability is ignored");
+        Check(!EquipHero.CanUseItem(Hero(1), elf, true, false), "Custom human race does not receive elf armour");
+        foreach (var race in new[] { 1, 2 })
+        {
+            var h = Hero(race, elite); h.CustomItems.Add(new(elite));
+            EquipHero.Adopt(h, new Settings(), h.Class);
+            Check(h.Tier == 0, $"Race {race} starts at displayed Tier 1");
+            Check(h.BattleEquipment.YieldFilledEquipmentSlots().All(x => x.element.Item.Tier <= 0), $"Race {race} has no template/inherited Tier 6 battle gear");
+            Check(h.CivilianEquipment.YieldFilledEquipmentSlots().All(x => x.element.Item.Tier <= 0), $"Race {race} has no Tier 6 civilian gear");
+            Check(h.BattleEquipment[EquipmentIndex.Body].Item == (race == 1 ? east : elf), $"Race {race} receives its own compatible armour");
+        }
+        var noGear = Hero(2, elite); EquipHero.Adopt(noGear, new Settings { StartingEquipmentTier = 0 }, noGear.Class);
+        Check(noGear.Tier == -1 && !noGear.BattleEquipment.YieldFilledEquipmentSlots().Any() && !noGear.CivilianEquipment.YieldFilledEquipmentSlots().Any(), "Starting tier zero clears both loadouts for custom races");
+        Reset(); Donor(2, elite);
+        var missing = Hero(2, elite); EquipHero.Adopt(missing, new Settings(), missing.Class);
+        Check(!missing.BattleEquipment.YieldFilledEquipmentSlots().Any(), "No low-tier kit means an empty slot, never elite fallback");
+        var changed = true; EquipHero.Paid(missing, new Settings(), _ => changed = true, _ => changed = false);
+        Check(!changed && missing.Gold == 1000 && missing.Tier == 0, "No suitable equipment does not charge or advance tier");
+        Reset(); var culture = new CultureObject(); elf.Culture = culture; elite.Culture = culture; Donor(2, elf, elite);
+        Check(EquipHero.FindRandomTieredEquipment(0, Hero(2), false, cultureFilter: culture, cultureFilterSpecified: true) == elf, "Culture selection obeys tier instead of taking the best item");
+        var foreign = new CultureObject(); human.Culture = foreign; Donor(0, human); TaomEquipmentCompatibility.Reset();
+        var fallback = Hero(2); EquipHero.UpgradeEquipment(fallback, 0, fallback.Class, true, foreign, true);
+        Check(fallback.BattleEquipment[EquipmentIndex.Body].Item == elf, "Culture fallback retains race and tier checks");
+        var upgraded = Item("elf-tier2", 1); Donor(2, upgraded); TaomEquipmentCompatibility.Reset();
+        EquipHero.Paid(fallback, new Settings(), _ => changed = true, _ => changed = false);
+        Check(changed && fallback.BattleEquipment[EquipmentIndex.Body].Item == upgraded && fallback.Gold == 900 && fallback.Tier == 1, "Non-human upgrade applies gear and charges once");
+        var alternative = Item("elf-tier2-alternate", 1); Donor(2, alternative); TaomEquipmentCompatibility.Reset();
+        EquipHero.Paid(fallback, new Settings { ReequipInsteadOfUpgrade = true }, _ => changed = true, _ => changed = false);
+        Check(changed && fallback.BattleEquipment[EquipmentIndex.Body].Item == alternative && fallback.Tier == 1, "Non-human re-equip selects an alternative at the same tier");
+        Reset(); var dwarf = Item("dwarf", 0); var horse = Item("human-horse", 0, ItemObject.ItemTypeEnum.Horse); horse.HorseComponent = new(); Donor(0, horse); Donor(3, dwarf);
+        var rider = Hero(3); rider.Class.Mounted = rider.Class.UseHorse = true;
+        EquipHero.UpgradeEquipment(rider, 0, rider.Class, true);
+        Check(rider.BattleEquipment[EquipmentIndex.Horse].IsEmpty, "Dwarf does not borrow a mount from a different race");
+        var customHero = Hero(3, human); customHero.CustomItems.Add(new(human) { ItemModifier = new() });
+        EquipHero.UpgradeEquipment(customHero, 0, customHero.Class, false);
+        Check(customHero.BattleEquipment[EquipmentIndex.Body].Item == dwarf, "Custom-item and retained-gear paths cannot bypass race compatibility");
+        Check(!TaomEquipmentCompatibility.CanUse(Hero(99), human), "Unknown races fail closed");
+        var live = Hero(3, human); live.CharacterObject.BattleEquipments.Add(live.BattleEquipment); CharacterObject.All.Add(live.CharacterObject); TaomEquipmentCompatibility.Reset();
+        Check(!TaomEquipmentCompatibility.CanUse(live, human), "Live hero gear cannot contaminate the compatibility catalogue");
+        BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add("dwarf");
+        Check(EquipHero.FindRandomTieredEquipment(0, Hero(3), false) == null, "Restricted items remain excluded");
+        Campaign.Current = new(); CharacterObject.All.Clear();
+        Check(!TaomEquipmentCompatibility.CanUse(Hero(3), dwarf), "Campaign change does not reuse the old catalogue");
+        Reset(); HarmonyLib.AccessTools.Installed = false; CampaignHelpers.AllItems.Add(human);
+        Check(EquipHero.FindRandomTieredEquipment(0, Hero(3), false) == human, "Without TAOM the ordinary item pool still works");
+        Console.WriteLine($"{checks} checks passed.");
+    }
+}

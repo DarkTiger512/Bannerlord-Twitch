@@ -7,7 +7,7 @@ using BannerlordTwitch.Localization;
 using BannerlordTwitch.Rewards;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero.Annotations;
-using HarmonyLib;
+using BLTAdoptAHero.Util;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.Core;
@@ -149,14 +149,6 @@ namespace BLTAdoptAHero
                 return;
             }
 
-            // TAOM custom races use race-specific skeletons, armour and mounts.
-            // Replacing that equipment from BLT's global pool can produce invalid visuals or mounts.
-            if (IsTaomNonHumanHero(adoptedHero))
-            {
-                onFailure("TAOM non-human heroes keep their race-specific equipment; BLT automatic re-equipping is disabled for them.");
-                return;
-            }
-
             int targetTier = Math.Max(0, BLTAdoptAHeroCampaignBehavior.Current.GetEquipmentTier(adoptedHero) +
                              (settings.ReequipInsteadOfUpgrade ? 0 : 1));
 
@@ -186,11 +178,15 @@ namespace BLTAdoptAHero
             // Get restricted items from global config
             var restrictedItemIds = BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds;
 
-            UpgradeEquipment(adoptedHero, targetTier, charClass,
+            if (!UpgradeEquipment(adoptedHero, targetTier, charClass,
                 replaceSameTier: settings.ReequipInsteadOfUpgrade,
                 cultureFilter: cultureFilterSpecified ? selectedCulture : null,
                 cultureFilterSpecified: cultureFilterSpecified,
-                restrictedItemIds: restrictedItemIds);
+                restrictedItemIds: restrictedItemIds))
+            {
+                onFailure("No different race-compatible equipment is available at this tier. No gold was spent.");
+                return;
+            }
 
             BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentTier(adoptedHero, targetTier);
             BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentClass(adoptedHero, charClass);
@@ -210,19 +206,8 @@ namespace BLTAdoptAHero
             // $"Equipped Tier {targetTier + 1} ({charClass?.Name ?? "No Class"})");
         }
 
-        internal static bool IsTaomNonHumanHero(Hero hero)
-        {
-            if (hero?.CharacterObject == null || hero.CharacterObject.Race <= 0)
-                return false;
-
-            // Avoid a hard assembly dependency so BLT still works without TAOM installed.
-            return AccessTools.TypeByName("TAOM.SubModule") != null;
-        }
-
         internal static void RemoveAllEquipment(Hero adoptedHero)
         {
-            if (IsTaomNonHumanHero(adoptedHero))
-                return;
             foreach (var (_, index) in adoptedHero.BattleEquipment.YieldEquipmentSlots())
             {
                 adoptedHero.BattleEquipment[index] = EquipmentElement.Invalid;
@@ -252,11 +237,10 @@ namespace BLTAdoptAHero
             || o.Type == ItemObject.ItemTypeEnum.Crossbow && hero?.CharacterObject?.GetPerkValue(DefaultPerks.Crossbow.MountedCrossbowman) == true
             ;
 
-        public static void UpgradeEquipment(Hero adoptedHero, int targetTier, HeroClassDef classDef, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, Func<EquipmentElement, bool> customKeepFilter = null, HashSet<string> restrictedItemIds = null)
+        public static bool UpgradeEquipment(Hero adoptedHero, int targetTier, HeroClassDef classDef, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, Func<EquipmentElement, bool> customKeepFilter = null, HashSet<string> restrictedItemIds = null, bool enforceTierCap = false)
         {
-            if (IsTaomNonHumanHero(adoptedHero))
-                return;
-
+            var previousBattle = adoptedHero.BattleEquipment.YieldEquipmentSlots().Select(e => e.element).ToArray();
+            var previousCivilian = adoptedHero.CivilianEquipment.YieldEquipmentSlots().Select(e => e.element).ToArray();
             customKeepFilter ??= _ => true;
             restrictedItemIds ??= new HashSet<string>();
 
@@ -276,6 +260,8 @@ namespace BLTAdoptAHero
                     .Where(e => (int)e.Item.Tier > targetTier || !replaceSameTier && (int)e.Item.Tier == targetTier)
                     // Can always use custom items
                     .Where(e => classDef?.Mounted != true || IsItemUsableMounted(adoptedHero, e.Item)))
+                    .Where(e => e.Item != null && TaomEquipmentCompatibility.CanUse(adoptedHero, e.Item))
+                    .Where(e => !enforceTierCap || (int)e.Item.Tier <= targetTier)
                     .Where(customKeepFilter)
                     // Filter out restricted items
                     .Where(e => !restrictedItemIds.Contains(e.Item?.StringId ?? ""))
@@ -285,6 +271,7 @@ namespace BLTAdoptAHero
             // falling back to the full item list
             EquipmentElement FindNewEquipment(Func<ItemObject, bool> filter = null, FindFlags flags = FindFlags.None)
             {
+                if (enforceTierCap) flags |= FindFlags.RequireAtMostTier;
                 var oldEquipment = availableItems.FirstOrDefault(i => filter?.Invoke(i.Item) != false);
                 if (!oldEquipment.IsEmpty)
                     return oldEquipment;
@@ -462,7 +449,9 @@ namespace BLTAdoptAHero
                 }
             }
 
-            UpgradeCivilian(adoptedHero, targetTier, replaceSameTier, cultureFilter, cultureFilterSpecified, restrictedItemIds);
+            UpgradeCivilian(adoptedHero, targetTier, replaceSameTier, cultureFilter, cultureFilterSpecified, restrictedItemIds, enforceTierCap);
+            return !previousBattle.SequenceEqual(adoptedHero.BattleEquipment.YieldEquipmentSlots().Select(e => e.element))
+                || !previousCivilian.SequenceEqual(adoptedHero.CivilianEquipment.YieldEquipmentSlots().Select(e => e.element));
         }
 
         public static bool HeroShouldUseHorse(Hero adoptedHero, HeroClassDef classDef)
@@ -488,7 +477,7 @@ namespace BLTAdoptAHero
         public static bool WeaponRequires(ItemObject w, ItemObject.ItemUsageSetFlags flag)
             => w.PrimaryWeapon?.ItemUsage != null && MBItem.GetItemUsageSetFlags(w.PrimaryWeapon.ItemUsage).HasFlag(flag);
 
-        private static void UpgradeCivilian(Hero adoptedHero, int targetTier, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, HashSet<string> restrictedItemIds = null)
+        private static void UpgradeCivilian(Hero adoptedHero, int targetTier, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, HashSet<string> restrictedItemIds = null, bool enforceTierCap = false)
         {
             restrictedItemIds ??= new HashSet<string>();
 
@@ -496,6 +485,13 @@ namespace BLTAdoptAHero
                 Equipment equipment, Hero hero, Func<ItemObject, bool> filter = null)
             {
                 var slot = equipment[equipmentIndex];
+                // Unsafe gear must not survive via the custom/high-tier preservation rule.
+                if (slot.Item != null && (!TaomEquipmentCompatibility.CanUse(hero, slot.Item)
+                    || enforceTierCap && (int)slot.Item.Tier > targetTier))
+                {
+                    equipment[equipmentIndex] = EquipmentElement.Invalid;
+                    slot = EquipmentElement.Invalid;
+                }
                 if (// Never replace custom items
                     !BLTCustomItemsCampaignBehavior.Current.IsRegistered(slot.ItemModifier)
                     && (// Always fill empty slots
@@ -511,7 +507,7 @@ namespace BLTAdoptAHero
                 {
                     var item = FindRandomTieredEquipment(targetTier, hero,
                         false, // never mounted in civilian clothes
-                        FindFlags.None, o
+                        enforceTierCap ? FindFlags.RequireAtMostTier : FindFlags.None, o
                         => o.ItemType == itemType
                             && filter?.Invoke(o) != false
                             && !restrictedItemIds.Contains(o.StringId ?? ""),
@@ -559,6 +555,7 @@ namespace BLTAdoptAHero
             AllowNonMerchandise = 1 << 1,
             RequireExactTier = 1 << 2,
             HeroIsMounted = 1 << 3,
+            RequireAtMostTier = 1 << 4,
         }
 
         public static ItemObject FindRandomTieredEquipment(int tier, Hero hero, bool mustBeUsableMounted, FindFlags flags = FindFlags.None, Func<ItemObject, bool> filter = null, CultureObject cultureFilter = null, bool cultureFilterSpecified = false)
@@ -577,46 +574,28 @@ namespace BLTAdoptAHero
                 )
                 .ToList();
 
-            // If culture filter is specified, find the highest tier available within that culture
-            if (cultureFilterSpecified)
-            {
-                // Group by tier and get the highest tier available
-                var tieredItems = items.Where(i => !restrictedItemIds.Contains(i.StringId ?? ""))
-                    .GroupBy(item => (int)item.Tier)                   
-                    .OrderByDescending(g => g.Key)
-                    .ToList();
-
-                // Return a random item from the highest tier group
-                return tieredItems.FirstOrDefault()?.SelectRandom();
-            }
-            else if (flags.HasFlag(FindFlags.RequireExactTier))
-            {
+            // Culture and race narrow the pool; neither may silently raise its tier.
+            if (flags.HasFlag(FindFlags.RequireExactTier))
                 return items.Where(item => (int)item.Tier == tier && !restrictedItemIds.Contains(item.StringId ?? "")).SelectRandom();
-            }
-            else
-            {
-                return SelectRandomItemNearestTier(items, tier);
-            }
+            return SelectRandomItemNearestTier(items, tier,
+                flags.HasFlag(FindFlags.RequireAtMostTier) || TaomEquipmentCompatibility.Enabled);
         }
 
-        public static ItemObject SelectRandomItemNearestTier(IEnumerable<ItemObject> items, int tier)
+        public static ItemObject SelectRandomItemNearestTier(IEnumerable<ItemObject> items, int tier, bool enforceTierCap = false)
         {
             var restrictedItemIds = BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds;
-            // This should order the tier groups to be
-            // (closest tier below the desired one), (closest tier above the desired one), etc...
-            var tieredItems = items.Where(i => !restrictedItemIds.Contains(i.StringId ?? "")).GroupBy(item => (int)item.Tier)
-                .OrderBy(t => 100 * Math.Abs(tier - t.Key) + t.Key)
-                .ToList();
-
-            return tieredItems
-                .FirstOrDefault()?
-                .SelectRandom();
+            var tieredItems = items.Where(i => !restrictedItemIds.Contains(i.StringId ?? "")
+                    && (!enforceTierCap || (int)i.Tier <= tier))
+                .GroupBy(item => (int)item.Tier)
+                .OrderBy(t => 100 * Math.Abs(tier - t.Key) + t.Key);
+            return tieredItems.FirstOrDefault()?.SelectRandom();
         }
 
         public static bool CanUseItem(Hero hero, ItemObject item, bool overrideAbility, bool mustBeUsableMounted)
         {
             var relevantSkill = item.RelevantSkill;
-            return (overrideAbility || relevantSkill == null || hero.GetSkillValue(relevantSkill) >= item.Difficulty)
+            return TaomEquipmentCompatibility.CanUse(hero, item)
+                   && (overrideAbility || relevantSkill == null || hero.GetSkillValue(relevantSkill) >= item.Difficulty)
                    && (!mustBeUsableMounted || IsItemUsableMounted(hero, item))
                    && (!hero.CharacterObject.IsFemale || !item.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByFemale))
                    && (hero.CharacterObject.IsFemale || !item.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByMale));
