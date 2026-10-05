@@ -53,6 +53,7 @@ namespace BLTAdoptAHero
 
         public static string AssignCustomReward(Hero hero, ItemObject item, ItemModifier itemModifier, EquipmentIndex slot)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("reward.assign");
             var element = new EquipmentElement(item, itemModifier);
             bool isCustom = BLTCustomItemsCampaignBehavior.Current.IsRegistered(itemModifier);
 

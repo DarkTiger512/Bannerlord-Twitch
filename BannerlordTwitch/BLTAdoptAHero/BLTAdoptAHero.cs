@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -76,6 +76,7 @@ namespace BLTAdoptAHero
 
         public override void OnMissionBehaviorInitialize(Mission mission)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("mission.behaviors.initialize");
             try
             {
                 mission.AddMissionBehavior(new BLTAdoptAHeroCommonMissionBehavior());
@@ -184,6 +185,7 @@ namespace BLTAdoptAHero
 
         protected override void OnBeforeInitialModuleScreenSetAsRoot()
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("adoption.harmony.startup");
             if (harmony == null)
             {
                 try

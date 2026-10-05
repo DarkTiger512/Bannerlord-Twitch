@@ -49,6 +49,7 @@ namespace BannerlordTwitch
             SetWindowText(Process.GetCurrentProcess().MainWindowHandle, "Bannerlord Game Window");
 
             MainThreadSync.InitMainThread();
+            FreezeDiagnostics.Start();
 
             // AssemblyHelper.Redirect("Microsoft.Extensions.Logging.Abstractions", Version.Parse("3.1.5.0"), "adb9793829ddae60");
             AssemblyHelper.Redirect("Microsoft.Owin", Version.Parse("4.2.2.0"), "31bf3856ad364e35");
@@ -209,6 +210,7 @@ namespace BannerlordTwitch
         protected override void OnApplicationTick(float dt)
         {
             base.OnApplicationTick(dt);
+            FreezeDiagnostics.Pulse(Mission.Current == null ? "campaign/menu" : "mission mode=" + Mission.Current.Mode + " state=" + Mission.Current.CurrentState + " loadingFinished=" + Mission.Current.IsLoadingFinished);
             MainThreadSync.RunQueued();
         }
 

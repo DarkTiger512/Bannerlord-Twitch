@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -96,6 +96,7 @@ namespace BLTAdoptAHero
 
         public override void OnAgentCreated(Agent agent)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTAdoptAHeroCustomMissionBehavior.OnAgentCreated agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             ForAgent(agent, l => l.onAgentCreated?.Invoke(agent));
         }
 

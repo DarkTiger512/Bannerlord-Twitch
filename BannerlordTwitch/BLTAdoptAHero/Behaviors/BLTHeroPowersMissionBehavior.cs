@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using BannerlordTwitch.Helpers;
 using BLTAdoptAHero.Annotations;
@@ -37,6 +37,7 @@ namespace BLTAdoptAHero
         private readonly HashSet<Hero> activeHeroes = new();
         public override void OnAgentCreated(Agent agent)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTHeroPowersMissionBehavior.OnAgentCreated agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             SafeCall(() =>
             {
                 var hero = agent.GetAdoptedHero();
@@ -54,6 +55,7 @@ namespace BLTAdoptAHero
         private readonly HashSet<Agent> prestigeHealthApplied = new();
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTHeroPowersMissionBehavior.OnAgentBuild agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             powerHandler.CallHandlersForAgent(agent, handlers => handlers.AgentBuild(agent));
             var hero = agent.GetAdoptedHero();
             if (hero != null && prestigeHealthApplied.Add(agent))

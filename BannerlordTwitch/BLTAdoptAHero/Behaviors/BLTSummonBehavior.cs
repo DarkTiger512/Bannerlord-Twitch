@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Helpers;
@@ -95,6 +95,7 @@ namespace BLTAdoptAHero
 
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTSummonBehavior.OnAgentBuild agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             SafeCall(() =>
             {
                 // We only use this for heroes in battle
@@ -340,6 +341,7 @@ namespace BLTAdoptAHero
         private static void SpawnRetinue(Hero adoptedHero, bool ownerIsMounted, FormationClass ownerFormationClass,
             HeroSummonState existingHero, bool onPlayerSide)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("retinue.spawn");
             var retinueTroops = BLTAdoptAHeroCampaignBehavior.Current.GetRetinue(adoptedHero).ToList();
             var retinue2Troops = BLTAdoptAHeroCampaignBehavior.Current.GetRetinue2(adoptedHero).ToList();
 
@@ -457,6 +459,7 @@ namespace BLTAdoptAHero
 
         public static Agent SpawnAgent(bool onPlayerSide, CharacterObject troop, PartyBase party, bool spawnWithHorse, bool isReinforcement = false, bool isAlarmed = true)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("retinue.SpawnTroop troop=" + troop?.StringId + " race=" + troop?.Race);
             var agent = Mission.Current.SpawnTroop(
                 new PartyAgentOrigin(party, troop)
                 , isPlayerSide: onPlayerSide

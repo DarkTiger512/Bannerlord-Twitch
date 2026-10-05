@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Helpers;
@@ -79,6 +79,7 @@ namespace BLTAdoptAHero
 
         public override void OnAgentCreated(Agent agent)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTAdoptAHeroCommonMissionBehavior.OnAgentCreated agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             SafeCall(() =>
             {
                 var hero = agent.GetAdoptedHero();
@@ -96,6 +97,7 @@ namespace BLTAdoptAHero
 
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("BLTAdoptAHeroCommonMissionBehavior.OnAgentBuild agent=" + agent?.Index + " troop=" + agent?.Character?.StringId);
             SafeCall(() =>
             {
                 var hero = agent.GetAdoptedHero();

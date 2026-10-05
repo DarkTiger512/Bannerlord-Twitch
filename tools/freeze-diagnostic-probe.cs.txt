@@ -1,0 +1,16 @@
+using System;
+using System.IO;
+using System.Threading;
+using BannerlordTwitch.Util;
+public class DiagnosticProbe {
+ private static string ReadShared(string path) { using(var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) using(var reader = new StreamReader(stream)) return reader.ReadToEnd(); }
+ public static int Main(string[] args) {
+  FreezeDiagnostics.Start(args[0]);
+  FreezeDiagnostics.Pulse("test-normal");
+  using(FreezeDiagnostics.Trace("simulated-blocked-callback")) { Thread.Sleep(12500); }
+  FreezeDiagnostics.Pulse("test-recovered"); Thread.Sleep(1800);
+  var text=string.Join("\n",Array.ConvertAll(Directory.GetFiles(args[0],"*.log"),ReadShared));
+  bool ok=text.Contains("stalled=True") && text.Contains("ACTIVE ") && text.Contains("simulated-blocked-callback") && text.Contains("context=test-recovered") && text.Contains("availablePhysicalBytes=") && text.Contains("commitLimitBytes=") && text.Contains("EXIT ");
+  Console.WriteLine(ok ? "PASS: stalled heartbeat, active callback, memory sampling and recovery" : "FAIL"); return ok?0:1;
+ }
+}

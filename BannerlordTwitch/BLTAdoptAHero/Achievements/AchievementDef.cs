@@ -110,6 +110,7 @@ namespace BLTAdoptAHero.Achievements
 
         public void Apply(Hero hero)
         {
+            using var diagnosticScope = BannerlordTwitch.Util.FreezeDiagnostics.Trace("achievement.apply");
             var results = new List<string> { "{=Qtv96c9S}Unlocked {NAME}".Translate(("NAME", Name)) };
 
             if (GoldGain > 0)
