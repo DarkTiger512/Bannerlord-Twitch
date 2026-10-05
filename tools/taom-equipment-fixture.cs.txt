@@ -15,7 +15,7 @@ namespace TaleWorlds.Core
     public class ItemObject
     {
         public enum ItemUsageSetFlags { RequiresNoShield, RequiresMount, RequiresNoMount }
-        public enum ItemTypeEnum { Invalid, OneHandedWeapon, TwoHandedWeapon, Polearm, Bow, Crossbow, Thrown, Shield, Horse, HorseHarness, BodyArmor }
+        public enum ItemTypeEnum { Invalid, OneHandedWeapon, TwoHandedWeapon, Polearm, Bow, Crossbow, Sling, Arrows, Bolts, SlingStones, Thrown, Shield, Horse, HorseHarness, BodyArmor, HeadArmor, LegArmor, HandArmor, Cape }
         public string StringId;
         public int Tier;
         public ItemTypeEnum ItemType;
@@ -27,7 +27,7 @@ namespace TaleWorlds.Core
         public CultureObject Culture;
         public HorseComponent HorseComponent;
         public ArmorComponent ArmorComponent;
-        public static ItemTypeEnum GetAmmoTypeForItemType(ItemTypeEnum type) => ItemTypeEnum.Invalid;
+        public static ItemTypeEnum GetAmmoTypeForItemType(ItemTypeEnum type) => type switch { ItemTypeEnum.Bow => ItemTypeEnum.Arrows, ItemTypeEnum.Crossbow => ItemTypeEnum.Bolts, ItemTypeEnum.Sling => ItemTypeEnum.SlingStones, ItemTypeEnum.Thrown => ItemTypeEnum.Thrown, _ => ItemTypeEnum.Invalid };
     }
     public class HorseComponent { public bool IsMount = true; public Monster Monster = new(); }
     public class Monster { public int FamilyType = 1; }
@@ -61,6 +61,7 @@ namespace TaleWorlds.CampaignSystem
     }
     public class Hero
     {
+        public CultureObject Culture;
         public CharacterObject CharacterObject = new();
         public Equipment BattleEquipment = new(), CivilianEquipment = new();
         public int Tier, Gold = 1000;
@@ -76,7 +77,7 @@ namespace BannerlordTwitch.Util
         public static T SelectRandom<T>(this IEnumerable<T> source) => source.FirstOrDefault();
         public static string Translate(this string text, params (string, object)[] args) => text;
         public static bool HasAnyFlag(this ItemFlags flags, ItemFlags other) => (flags & other) != 0;
-        public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => type == EquipmentType.Sword && item.ItemType == ItemObject.ItemTypeEnum.OneHandedWeapon;
+        public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => (type == EquipmentType.OneHandedSword && item.ItemType == ItemObject.ItemTypeEnum.OneHandedWeapon && !item.StringId.Contains("mace")) || (type == EquipmentType.Bow && item.ItemType == ItemObject.ItemTypeEnum.Bow) || (type == EquipmentType.Arrows && item.ItemType == ItemObject.ItemTypeEnum.Arrows);
         public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldEquipmentSlots(this Equipment e)
             => Enumerable.Range(0, 11).Select(i => (e[(EquipmentIndex)i], (EquipmentIndex)i));
         public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldFilledEquipmentSlots(this Equipment e) => e.YieldEquipmentSlots().Where(x => !x.element.IsEmpty);
@@ -84,11 +85,11 @@ namespace BannerlordTwitch.Util
         public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldFilledWeaponSlots(this Equipment e) => e.YieldWeaponSlots().Where(x => !x.element.IsEmpty);
     }
 }
-public enum EquipmentType { None, Sword, Stone }
-public class HeroClassDef { public bool Mounted, UseHorse, UseCamel; public string Name = "Test"; public EquipmentType[] SlotItems = { EquipmentType.Sword }; }
+public enum EquipmentType { None, OneHandedSword, Dagger, TwoHandedSword, OneHandedAxe, TwoHandedAxe, OneHandedMace, TwoHandedMace, OneHandedLance, TwoHandedLance, OneHandedGlaive, TwoHandedGlaive, Bow, Crossbow, Sling, ThrowingKnives, ThrowingAxes, ThrowingJavelins, Stone, Arrows, Bolts, Shield }
+public class HeroClassDef { public bool Mounted, UseHorse, UseCamel; public string Name = "Test"; public EquipmentType[] SlotItems = { EquipmentType.OneHandedSword }; }
 public static class SkillGroup
 {
-    public static (EquipmentIndex, ItemObject.ItemTypeEnum)[] ArmorIndexType = { (EquipmentIndex.Body, ItemObject.ItemTypeEnum.BodyArmor) };
+    public static (EquipmentIndex, ItemObject.ItemTypeEnum)[] ArmorIndexType = { (EquipmentIndex.Body, ItemObject.ItemTypeEnum.BodyArmor), (EquipmentIndex.Head, ItemObject.ItemTypeEnum.HeadArmor), (EquipmentIndex.Legs, ItemObject.ItemTypeEnum.LegArmor), (EquipmentIndex.Gloves, ItemObject.ItemTypeEnum.HandArmor), (EquipmentIndex.Cape, ItemObject.ItemTypeEnum.Cape) };
     public static (SkillObject skill, ItemObject.ItemTypeEnum itemType)[] SkillItemPairs = { (new(), ItemObject.ItemTypeEnum.OneHandedWeapon) };
     public static (SkillObject skill, ItemObject.ItemTypeEnum itemType)[] MeleeSkillItemPairs = SkillItemPairs;
 }
@@ -179,6 +180,49 @@ public static class Program
         var alternative = Item("elf-tier2-alternate", 1); Donor(2, alternative); TaomEquipmentCompatibility.Reset();
         EquipHero.Paid(fallback, new Settings { ReequipInsteadOfUpgrade = true }, _ => changed = true, _ => changed = false);
         Check(changed && fallback.BattleEquipment[EquipmentIndex.Body].Item == alternative && fallback.Tier == 1, "Non-human re-equip selects an alternative at the same tier");
+        Reset();
+        var home = new CultureObject(); var other = new CultureObject();
+        var homeT2 = Item("home-tier2", 1, ItemObject.ItemTypeEnum.OneHandedWeapon); homeT2.Culture = home;
+        var foreignT1 = Item("foreign-tier1", 0, ItemObject.ItemTypeEnum.OneHandedWeapon); foreignT1.Culture = other;
+        var homeT6 = Item("home-tier6", 5, ItemObject.ItemTypeEnum.OneHandedWeapon); homeT6.Culture = home;
+        Donor(1, homeT2, foreignT1, homeT6);
+        var starter = Hero(1); starter.Culture = home;
+        EquipHero.Adopt(starter, new Settings(), starter.Class);
+        Check(starter.Tier == 0 && starter.BattleEquipment[EquipmentIndex.WeaponItemBeginSlot].Item == homeT2, "Same-culture Tier 2 fills Tier 1 class slot without raising viewer tier");
+        CampaignHelpers.AllItems.Remove(homeT2);
+        Check(EquipHero.FindRandomTieredEquipment(0, starter, false) == foreignT1, "Large same-culture gap falls back to compatible foreign Tier 1");
+        CampaignHelpers.AllItems.Add(homeT2);
+        Check(EquipHero.FindRandomTieredEquipment(2, starter, false) == homeT2, "Same-culture lower tier preferred within one tier");
+        Check(EquipHero.FindRandomTieredEquipment(0, starter, false, EquipHero.FindFlags.RequireExactTier) == foreignT1, "Exact tier flag stays exact across cultures");
+        BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add(homeT2.StringId);
+        Check(EquipHero.FindRandomTieredEquipment(0, starter, false) == foreignT1, "Fallback cannot bypass restricted items");
+        CampaignHelpers.AllItems.Remove(foreignT1);
+        var trollSword = Item("troll-sword", 0, ItemObject.ItemTypeEnum.OneHandedWeapon); trollSword.Culture = other;
+        Donor(8, trollSword); TaomEquipmentCompatibility.Reset();
+        Check(EquipHero.FindRandomTieredEquipment(0, starter, false) == null, "Fallback rejects troll-only sword and distant Tier 6 gear");
+        Reset();
+        var mace = Item("mace", 0, ItemObject.ItemTypeEnum.OneHandedWeapon); Donor(1, mace);
+        var meleeStarter = Hero(1); EquipHero.Adopt(meleeStarter, new Settings(), meleeStarter.Class);
+        Check(meleeStarter.BattleEquipment[EquipmentIndex.Weapon0].Item == mace && meleeStarter.Tier == 0, "Last resort gives a Tier 1 mace for a missing sword");
+        mace.Tier = 1;
+        EquipHero.Adopt(meleeStarter, new Settings(), meleeStarter.Class);
+        Check(meleeStarter.BattleEquipment[EquipmentIndex.Weapon0].IsEmpty, "Broad weapon fallback stays at exact tier");
+        Reset();
+        var crossbow = Item("crossbow", 0, ItemObject.ItemTypeEnum.Crossbow);
+        var bolts = Item("bolts", 0, ItemObject.ItemTypeEnum.Bolts);
+        Donor(1, crossbow, bolts);
+        var archer = Hero(1); archer.Class.SlotItems = new[] { EquipmentType.Bow, EquipmentType.Arrows };
+        EquipHero.Adopt(archer, new Settings(), archer.Class);
+        Check(archer.BattleEquipment[EquipmentIndex.Weapon0].Item == crossbow && archer.BattleEquipment[EquipmentIndex.Weapon1].Item == bolts, "Missing bow gets crossbow with matching bolts");
+        CampaignHelpers.AllItems.Remove(bolts);
+        EquipHero.Adopt(archer, new Settings(), archer.Class);
+        Check(archer.BattleEquipment[EquipmentIndex.Weapon0].IsEmpty, "No unusable ranged fallback without matching ammunition");
+        var thrown = Item("javelin", 0, ItemObject.ItemTypeEnum.Thrown); Donor(1, thrown); TaomEquipmentCompatibility.Reset();
+        EquipHero.Adopt(archer, new Settings(), archer.Class);
+        Check(archer.BattleEquipment[EquipmentIndex.Weapon0].Item == thrown, "Ranged fallback can use throwing weapons without separate ammo");
+        archer.Class.SlotItems = new[] { EquipmentType.Shield, EquipmentType.None };
+        EquipHero.Adopt(archer, new Settings(), archer.Class);
+        Check(!archer.BattleEquipment.YieldFilledWeaponSlots().Any(), "Shield and empty class slots do not become weapons");
         Reset(); var dwarf = Item("dwarf", 0); var horse = Item("human-horse", 0, ItemObject.ItemTypeEnum.Horse); horse.HorseComponent = new(); Donor(0, horse); Donor(3, dwarf);
         var rider = Hero(3); rider.Class.Mounted = rider.Class.UseHorse = true;
         EquipHero.UpgradeEquipment(rider, 0, rider.Class, true);
@@ -195,6 +239,32 @@ public static class Program
         Check(!TaomEquipmentCompatibility.CanUse(Hero(3), dwarf), "Campaign change does not reuse the old catalogue");
         Reset(); HarmonyLib.AccessTools.Installed = false; CampaignHelpers.AllItems.Add(human);
         Check(EquipHero.FindRandomTieredEquipment(0, Hero(3), false) == human, "Without TAOM the ordinary item pool still works");
+        foreach (var (slot, type) in SkillGroup.ArmorIndexType)
+        {
+            Reset();
+            var ownCulture = new CultureObject(); var foreignCulture = new CultureObject();
+            var own = Item("own-armour", 1, type); own.Culture = ownCulture;
+            var foreignArmour = Item("foreign-armour", 0, type); foreignArmour.Culture = foreignCulture;
+            Donor(1, own, foreignArmour);
+            var wearer = Hero(1); wearer.Culture = ownCulture;
+            EquipHero.Adopt(wearer, new Settings(), wearer.Class);
+            Check(wearer.BattleEquipment[slot].Item == own && wearer.CivilianEquipment[slot].Item == own && wearer.Tier == 0,
+                $"{slot}: same-culture adjacent-tier armour preferred without tier inflation");
+            own.Tier = 5;
+            EquipHero.Adopt(wearer, new Settings(), wearer.Class);
+            Check(wearer.BattleEquipment[slot].Item == foreignArmour && wearer.CivilianEquipment[slot].Item == foreignArmour,
+                $"{slot}: any compatible foreign armour fills battle and civilian slots");
+            foreignArmour.IsCivilian = false;
+            EquipHero.Adopt(wearer, new Settings(), wearer.Class);
+            Check(wearer.BattleEquipment[slot].Item == foreignArmour && wearer.CivilianEquipment[slot].IsEmpty,
+                $"{slot}: civilian restrictions survive fallback");
+            CampaignHelpers.AllItems.Remove(foreignArmour);
+            var trollArmour = Item("troll-armour", 0, type); Donor(8, trollArmour);
+            var wrongSlot = Item("wrong-slot", 0, type == ItemObject.ItemTypeEnum.BodyArmor ? ItemObject.ItemTypeEnum.HeadArmor : ItemObject.ItemTypeEnum.BodyArmor);
+            Donor(1, wrongSlot); TaomEquipmentCompatibility.Reset();
+            EquipHero.Adopt(wearer, new Settings(), wearer.Class);
+            Check(wearer.BattleEquipment[slot].IsEmpty, $"{slot}: fallback rejects wrong race, wrong slot and distant tiers");
+        }
         Console.WriteLine($"{checks} checks passed.");
     }
 }

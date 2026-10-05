@@ -284,7 +284,7 @@ namespace BLTAdoptAHero
                     cultureFilter, cultureFilterSpecified);
 
                 // Try again but with lower tier
-                if (foundItem == null)
+                if (foundItem == null && !TaomEquipmentCompatibility.Enabled)
                 {
                     foundItem = FindRandomTieredEquipment(targetTier-1, adoptedHero, classDef?.Mounted == true, flags,
                     o => filter?.Invoke(o) != false
@@ -339,6 +339,47 @@ namespace BLTAdoptAHero
                     if (!weapon.IsEmpty)
                     {
                         adoptedHero.BattleEquipment[slot.index] = weapon;
+                    }
+                }
+                // Only after all requested weapon types have exhausted their normal fallbacks.
+                if (TaomEquipmentCompatibility.Enabled)
+                {
+                    var slots = adoptedHero.BattleEquipment.YieldWeaponSlots().Select(s => s.index).ToArray();
+                    bool IsAmmo(ItemObject.ItemTypeEnum type) => type is ItemObject.ItemTypeEnum.Arrows
+                        or ItemObject.ItemTypeEnum.Bolts or ItemObject.ItemTypeEnum.SlingStones;
+                    foreach (var (requested, index) in classDef.SlotItems.Zip(slots, (type, index) => (type, index)))
+                    {
+                        if (!adoptedHero.BattleEquipment[index].IsEmpty) continue;
+                        bool melee = requested is EquipmentType.Dagger or EquipmentType.OneHandedSword
+                            or EquipmentType.TwoHandedSword or EquipmentType.OneHandedAxe or EquipmentType.TwoHandedAxe
+                            or EquipmentType.OneHandedMace or EquipmentType.TwoHandedMace or EquipmentType.OneHandedLance
+                            or EquipmentType.TwoHandedLance or EquipmentType.OneHandedGlaive or EquipmentType.TwoHandedGlaive;
+                        bool ranged = requested is EquipmentType.Bow or EquipmentType.Crossbow or EquipmentType.Sling
+                            or EquipmentType.ThrowingKnives or EquipmentType.ThrowingAxes or EquipmentType.ThrowingJavelins or EquipmentType.Stone;
+                        if (!melee && !ranged) continue; // Shields, ammunition and None are not weapons to replace.
+
+                        var ammoSlot = slots.Where(i => i != index).Cast<EquipmentIndex?>().FirstOrDefault(i =>
+                        {
+                            var item = adoptedHero.BattleEquipment[i.Value].Item;
+                            return item == null || IsAmmo(item.ItemType) && !slots.Any(j =>
+                                adoptedHero.BattleEquipment[j].Item != null &&
+                                ItemObject.GetAmmoTypeForItemType(adoptedHero.BattleEquipment[j].Item.ItemType) == item.ItemType);
+                        });
+                        ItemObject FindAmmo(ItemObject weapon) => FindRandomTieredEquipment(targetTier, adoptedHero,
+                            classDef.Mounted, FindFlags.RequireExactTier, item =>
+                                item.ItemType == ItemObject.GetAmmoTypeForItemType(weapon.ItemType)
+                                && !restrictedItemIds.Contains(item.StringId ?? ""));
+                        var replacement = FindRandomTieredEquipment(targetTier, adoptedHero, classDef.Mounted,
+                            FindFlags.RequireExactTier, item => !restrictedItemIds.Contains(item.StringId ?? "") &&
+                            (melee ? item.ItemType is ItemObject.ItemTypeEnum.OneHandedWeapon
+                                or ItemObject.ItemTypeEnum.TwoHandedWeapon or ItemObject.ItemTypeEnum.Polearm
+                            : item.ItemType == ItemObject.ItemTypeEnum.Thrown ||
+                                (item.ItemType is ItemObject.ItemTypeEnum.Bow or ItemObject.ItemTypeEnum.Crossbow or ItemObject.ItemTypeEnum.Sling)
+                                && ammoSlot.HasValue && FindAmmo(item) != null));
+                        if (replacement == null) continue;
+                        adoptedHero.BattleEquipment[index] = new EquipmentElement(replacement);
+                        if (ranged && replacement.ItemType != ItemObject.ItemTypeEnum.Thrown)
+                            adoptedHero.BattleEquipment[ammoSlot.Value] = new EquipmentElement(FindAmmo(replacement));
                     }
                 }
             }
@@ -416,7 +457,8 @@ namespace BLTAdoptAHero
                 }
             }
 
-            // Always want armor obviously
+            // Armour uses the shared culture/nearby-tier fallback, then any compatible
+            // item for this slot. There is no narrower weapon subtype to relax here.
             foreach (var (index, itemType) in SkillGroup.ArmorIndexType)
             {
                 adoptedHero.BattleEquipment[index] = FindNewEquipmentByType(itemType);
@@ -561,24 +603,31 @@ namespace BLTAdoptAHero
         public static ItemObject FindRandomTieredEquipment(int tier, Hero hero, bool mustBeUsableMounted, FindFlags flags = FindFlags.None, Func<ItemObject, bool> filter = null, CultureObject cultureFilter = null, bool cultureFilterSpecified = false)
         {
             var restrictedItemIds = BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds;
+            var taom = TaomEquipmentCompatibility.Enabled;
             var items = CampaignHelpers.AllItems
                 .Where(item =>
                     (!item.NotMerchandise || flags.HasFlag(FindFlags.AllowNonMerchandise)) &&
                     CanUseItem(hero, item, flags.HasFlag(FindFlags.IgnoreAbility), mustBeUsableMounted) &&
-                    (filter?.Invoke(item) != false) &&
-                    // Apply culture filter logic:
-                    // - If cultureFilterSpecified is true and cultureFilter is null: only items with null culture
-                    // - If cultureFilterSpecified is true and cultureFilter is not null: only items matching that culture
-                    // - If cultureFilterSpecified is false: any culture (no filter)
-                    (!cultureFilterSpecified || item.Culture == cultureFilter)
-                )
+                    filter?.Invoke(item) != false &&
+                    !restrictedItemIds.Contains(item.StringId ?? ""))
                 .ToList();
 
-            // Culture and race narrow the pool; neither may silently raise its tier.
+            if (taom)
+            {
+                // Prefer the requested (otherwise hero's) culture within one tier.
+                // Cross-culture fallback still obeys race, skill, mount and item restrictions.
+                // Item fallback never changes the viewer's recorded progression tier.
+                var preferredCulture = cultureFilterSpecified ? cultureFilter : hero.Culture;
+                var candidates = items.Where(item => flags.HasFlag(FindFlags.RequireExactTier)
+                    ? (int)item.Tier == tier : Math.Abs((int)item.Tier - tier) <= 1).ToList();
+                return SelectRandomItemNearestTier(candidates.Where(item => item.Culture == preferredCulture), tier)
+                    ?? SelectRandomItemNearestTier(candidates, tier);
+            }
+
+            items = items.Where(item => !cultureFilterSpecified || item.Culture == cultureFilter).ToList();
             if (flags.HasFlag(FindFlags.RequireExactTier))
-                return items.Where(item => (int)item.Tier == tier && !restrictedItemIds.Contains(item.StringId ?? "")).SelectRandom();
-            return SelectRandomItemNearestTier(items, tier,
-                flags.HasFlag(FindFlags.RequireAtMostTier) || TaomEquipmentCompatibility.Enabled);
+                return items.Where(item => (int)item.Tier == tier).SelectRandom();
+            return SelectRandomItemNearestTier(items, tier, flags.HasFlag(FindFlags.RequireAtMostTier));
         }
 
         public static ItemObject SelectRandomItemNearestTier(IEnumerable<ItemObject> items, int tier, bool enforceTierCap = false)
