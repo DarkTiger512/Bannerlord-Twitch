@@ -77,7 +77,7 @@ namespace BannerlordTwitch.Util
         public static T SelectRandom<T>(this IEnumerable<T> source) => source.FirstOrDefault();
         public static string Translate(this string text, params (string, object)[] args) => text;
         public static bool HasAnyFlag(this ItemFlags flags, ItemFlags other) => (flags & other) != 0;
-        public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => (type == EquipmentType.OneHandedSword && item.ItemType == ItemObject.ItemTypeEnum.OneHandedWeapon && !item.StringId.Contains("mace")) || (type == EquipmentType.Bow && item.ItemType == ItemObject.ItemTypeEnum.Bow) || (type == EquipmentType.Arrows && item.ItemType == ItemObject.ItemTypeEnum.Arrows);
+        public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => (type == EquipmentType.OneHandedSword && item.ItemType == ItemObject.ItemTypeEnum.OneHandedWeapon && !item.StringId.Contains("mace")) || (type == EquipmentType.Bow && item.ItemType == ItemObject.ItemTypeEnum.Bow) || (type == EquipmentType.Arrows && item.ItemType == ItemObject.ItemTypeEnum.Arrows) || (type == EquipmentType.OneHandedMace && item.StringId.Contains("mace")) || (type == EquipmentType.ThrowingAxes && item.ItemType == ItemObject.ItemTypeEnum.Thrown) || (type == EquipmentType.Shield && item.ItemType == ItemObject.ItemTypeEnum.Shield);
         public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldEquipmentSlots(this Equipment e)
             => Enumerable.Range(0, 11).Select(i => (e[(EquipmentIndex)i], (EquipmentIndex)i));
         public static IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldFilledEquipmentSlots(this Equipment e) => e.YieldEquipmentSlots().Where(x => !x.element.IsEmpty);
@@ -265,6 +265,32 @@ public static class Program
             EquipHero.Adopt(wearer, new Settings(), wearer.Class);
             Check(wearer.BattleEquipment[slot].IsEmpty, $"{slot}: fallback rejects wrong race, wrong slot and distant tiers");
         }
+        Reset();
+        var gondor = new CultureObject(); var foreignCulture2 = new CultureObject();
+        var fallbackMace = Item("ordinary-mace", 0, ItemObject.ItemTypeEnum.OneHandedWeapon); fallbackMace.Culture = foreignCulture2;
+        var fallbackShield = Item("ordinary-shield", 0, ItemObject.ItemTypeEnum.Shield);
+        var fallbackAxes = Item("ordinary-axes", 0, ItemObject.ItemTypeEnum.Thrown);
+        // None of these items appears in ANY troop template: missing evidence must not forbid weapons.
+        CampaignHelpers.AllItems.AddRange(new[] { fallbackMace, fallbackShield, fallbackAxes });
+        var gondorian = Hero(1); gondorian.Culture = gondor;
+        gondorian.Class.Name = "Dwarf Warrior";
+        gondorian.Class.SlotItems = new[] { EquipmentType.OneHandedMace, EquipmentType.Shield, EquipmentType.ThrowingAxes, EquipmentType.ThrowingAxes };
+        EquipHero.Adopt(gondorian, new Settings(), gondorian.Class);
+        Check(gondorian.BattleEquipment.YieldFilledWeaponSlots().Count() == 4 && gondorian.Tier == 0,
+            "Gondor Dwarf Warrior gets mace, shield and throwing axes without same-race template evidence");
+        Check(gondorian.BattleEquipment[EquipmentIndex.Weapon0].Item == fallbackMace,
+            "Foreign culture ordinary weapon survives race filtering");
+        foreach (var marker in new[] { "wm_cave_troll_1h_mace_a", "olog_hammer", "giant_club", "ent_branch", "balrog_sword" })
+            Check(!EquipHero.CanUseItem(gondorian, Item(marker, 0, ItemObject.ItemTypeEnum.OneHandedWeapon), true, false),
+                "Creature-marked weapon remains protected: " + marker);
+        var ownTrollClub = Item("troll_club", 0, ItemObject.ItemTypeEnum.OneHandedWeapon);
+        Donor(8, ownTrollClub); TaomEquipmentCompatibility.Reset();
+        Check(EquipHero.CanUseItem(Hero(8), ownTrollClub, true, false), "Creature may still use its own authored weapon");
+        fallbackMace.RelevantSkill = new SkillObject(); fallbackMace.Difficulty = 101;
+        Check(!EquipHero.CanUseItem(gondorian, fallbackMace, false, false), "Shared weapon still checks skill requirements");
+        fallbackMace.Difficulty = 0; BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add(fallbackMace.StringId);
+        EquipHero.Adopt(gondorian, new Settings(), gondorian.Class);
+        Check(gondorian.BattleEquipment[EquipmentIndex.Weapon0].IsEmpty, "Shared ordinary weapon still respects restricted item IDs");
         Console.WriteLine($"{checks} checks passed.");
     }
 }

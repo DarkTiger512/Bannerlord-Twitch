@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -9,9 +10,9 @@ using TaleWorlds.Core;
 namespace BLTAdoptAHero.Util
 {
     /// <summary>
-    /// Conservative compatibility evidence from loaded, authored loadouts. Culture is not race:
-    /// human Easterlings and elves must not be classified by Race > 0 or by culture names.
-    /// No guessing from item names and no fallback to another race's armour/mounts.
+    /// Ordinary handheld equipment is shared across races. Authored same-race loadouts
+    /// constrain fitted armour, mounts and explicitly creature-marked handheld items.
+    /// A class name or missing troop usage is not evidence that a weapon is unusable.
     /// </summary>
     internal static class TaomEquipmentCompatibility
     {
@@ -47,11 +48,32 @@ namespace BLTAdoptAHero.Util
             : catalogues.GetValue(Campaign.Current, _ => new Catalogue());
         internal static bool Enabled => Current?.Enabled == true;
 
+        private static bool IsSharedHandheld(ItemObject item) => item.ItemType is
+            ItemObject.ItemTypeEnum.OneHandedWeapon or ItemObject.ItemTypeEnum.TwoHandedWeapon
+            or ItemObject.ItemTypeEnum.Polearm or ItemObject.ItemTypeEnum.Bow
+            or ItemObject.ItemTypeEnum.Crossbow or ItemObject.ItemTypeEnum.Sling
+            or ItemObject.ItemTypeEnum.Thrown or ItemObject.ItemTypeEnum.Arrows
+            or ItemObject.ItemTypeEnum.Bolts or ItemObject.ItemTypeEnum.SlingStones
+            or ItemObject.ItemTypeEnum.Shield;
+
+        // TAOM has no universal weapon race-compatibility flag. Known creature ID markers
+        // remain same-race-only; RestrictedItemIds can cover additional custom items.
+        // This is a naming guard, not a complete size/skeleton compatibility guarantee.
+        private static bool IsCreatureMarked(ItemObject item)
+        {
+            var id = (item.StringId ?? "").ToLowerInvariant();
+            return id.Contains("troll") || id.Contains("olog") || id.Contains("giant")
+                || id.Split(new[] { '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Any(token => token == "ent" || token == "ents" || token == "balrog");
+        }
+
         internal static bool CanUse(Hero hero, ItemObject item)
         {
             if (hero?.CharacterObject == null || item == null) return false;
             var catalogue = Current;
-            return catalogue?.Enabled != true || catalogue.Allows(hero.CharacterObject.Race, item);
+            if (catalogue?.Enabled != true) return true;
+            if (IsSharedHandheld(item) && !IsCreatureMarked(item)) return true;
+            return catalogue.Allows(hero.CharacterObject.Race, item);
         }
     }
 }
