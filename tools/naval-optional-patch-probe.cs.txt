@@ -1,0 +1,32 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
+[HarmonyPatch]
+public static class MissingOptionalTarget {
+ static IEnumerable<MethodBase> TargetMethods() { yield break; }
+ static bool Prefix() { return true; }
+}
+[HarmonyPatch]
+public static class GuardedOptionalTarget {
+ [HarmonyPrepare] static bool Prepare() { return false; }
+ static IEnumerable<MethodBase> TargetMethods() { yield break; }
+ static bool Prefix() { return true; }
+}
+public static class Probe {
+ public static void Main() {
+  AppDomain.CurrentDomain.AssemblyResolve += (s,e) => {
+   var p=System.IO.Path.Combine(@"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client",new AssemblyName(e.Name).Name+".dll");
+   return System.IO.File.Exists(p) ? Assembly.Load(System.IO.File.ReadAllBytes(p)) : null;
+  };
+  Run();
+ }
+ static void Run() {
+  Console.WriteLine(typeof(Harmony).Assembly.FullName);
+  Console.WriteLine(typeof(Harmony).Assembly.Location);
+  try { new Harmony("blt.audit.missingoptional").CreateClassProcessor(typeof(MissingOptionalTarget)).Patch(); Console.WriteLine("SKIPPED WITHOUT ERROR"); }
+  catch(Exception e) { Console.WriteLine("Expected old failure: " + e.Message); }
+  new Harmony("blt.audit.guardedoptional").CreateClassProcessor(typeof(GuardedOptionalTarget)).Patch();
+  Console.WriteLine("PASS: Installed Harmony safely skips missing optional target with Prepare guard");
+ }
+}

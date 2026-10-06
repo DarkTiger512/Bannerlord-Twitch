@@ -1,0 +1,25 @@
+using System; using System.Threading; using System.Threading.Tasks; using BannerlordTwitch.Util;
+namespace BannerlordTwitch.Util { public static class FreezeDiagnostics { public static IDisposable Trace(string x) { return null; } } public static class Log { public static void Exception(string x, Exception e) {} } }
+class Probe {
+ static void Check(bool b,string s) { if(!b) throw new Exception(s); Console.WriteLine("PASS "+s); }
+ static int Main() {
+  MainThreadSync.InitMainThread();
+  Exception failed=null;
+  var thread=new Thread(()=> { try {
+   MainThreadSync.RunQueued();
+   var ran=false;
+   using(var h=MainThreadSync.Run(()=>ran=true)) Check(ran && h.WaitOne(0),"Actual tick thread executes inline after startup-thread change");
+   Check(MainThreadSync.RunWaitAsync(()=>{}).IsCompleted,"Async dispatch on tick thread completes inline");
+  } catch(Exception e) {failed=e;} }); thread.Start(); thread.Join(); if(failed!=null) throw failed;
+  var failure=MainThreadSync.RunWaitAsync(()=>{throw new InvalidOperationException("expected");});
+  var success=MainThreadSync.RunWaitAsync(()=>{});
+  MainThreadSync.RunQueued(); MainThreadSync.RunQueued();
+  Check(failure.IsFaulted,"Queued async exception completes task instead of leaving it waiting");
+  Check(success.IsCompleted && !success.IsFaulted,"Queue progresses after failed work");
+  EventWaitHandle bad=null; bool second=false;
+  var enqueue=new Thread(()=>{bad=MainThreadSync.Run(()=>{throw new Exception("expected");}); MainThreadSync.Run(()=>second=true);}); enqueue.Start(); enqueue.Join();
+  MainThreadSync.RunQueued(); MainThreadSync.RunQueued();
+  Check(bad.WaitOne(0) && second,"Legacy queued failure releases waiter and next action runs"); bad.Dispose();
+  return 0;
+ }
+}

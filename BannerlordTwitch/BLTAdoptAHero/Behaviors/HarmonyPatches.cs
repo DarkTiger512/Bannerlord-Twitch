@@ -1284,10 +1284,20 @@ namespace BLTAdoptAHero
 
         private static readonly DefaultMobilePartyAIModel StockModel = new DefaultMobilePartyAIModel();
 
+        // Harmony treats an empty target list as an invalid attribute patch. Skip
+        // this entire patch class when the optional DLC method is unavailable.
+        [HarmonyPrepare]
+        static bool Prepare() => ResolveTarget() != null;
+
+        private static MethodInfo ResolveTarget()
+        {
+            var type = AccessTools.TypeByName(ModelType);
+            return type == null ? null : AccessTools.Method(type, "GetPatrolRadius");
+        }
+
         static IEnumerable<MethodBase> TargetMethods()
         {
-            Type? type = AccessTools.TypeByName(ModelType);
-            MethodInfo? method = type != null ? AccessTools.Method(type, "GetPatrolRadius") : null;
+            MethodInfo? method = ResolveTarget();
             if (method != null) yield return method;
         }
 

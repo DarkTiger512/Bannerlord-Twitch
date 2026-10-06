@@ -18,12 +18,19 @@ namespace BannerlordTwitch.Util
 
         internal static void RunQueued()
         {
+            // Module construction can run on a different thread from application ticks.
+            // Only the thread actually draining this queue is the game-thread owner.
+            Volatile.Write(ref MainThreadId, Thread.CurrentThread.ManagedThreadId);
             var st = new Stopwatch();
             st.Start();
             while (actions.TryDequeue(out var action))
             {
-                action.action();
-                action.completeEvent?.Set();
+                using (FreezeDiagnostics.Trace("main-thread.queued-action"))
+                {
+                    try { action.action(); }
+                    catch (Exception ex) { Log.Exception("Queued game-thread action", ex); }
+                    finally { action.completeEvent?.Set(); }
+                }
                 if (st.ElapsedMilliseconds > 2)
                 {
                     // if (st.ElapsedMilliseconds > 10)
@@ -38,7 +45,7 @@ namespace BannerlordTwitch.Util
         public static EventWaitHandle Run(Action action)
         {
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
-            if (Thread.CurrentThread.ManagedThreadId == MainThreadId)
+            if (Thread.CurrentThread.ManagedThreadId == Volatile.Read(ref MainThreadId))
             {
                 action();
                 waitHandle.Set();
@@ -51,18 +58,20 @@ namespace BannerlordTwitch.Util
             return waitHandle;
         }
 
-        public static async Task RunWaitAsync(Action action)
+        public static Task RunWaitAsync(Action action)
         {
-            if (Thread.CurrentThread.ManagedThreadId == MainThreadId)
+            if (Thread.CurrentThread.ManagedThreadId == Volatile.Read(ref MainThreadId))
             {
-                action();
+                try { action(); return Task.CompletedTask; }
+                catch (Exception ex) { return Task.FromException(ex); }
             }
-            else
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            actions.Enqueue((() =>
             {
-                var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                actions.Enqueue((action, waitHandle));
-                await Task.Run(() => waitHandle.WaitOne());
-            }
+                try { action(); completion.TrySetResult(true); }
+                catch (Exception ex) { completion.TrySetException(ex); }
+            }, null));
+            return completion.Task;
         }
     }
 }
