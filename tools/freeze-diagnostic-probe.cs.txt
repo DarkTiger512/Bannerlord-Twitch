@@ -6,11 +6,21 @@ public class DiagnosticProbe {
  private static string ReadShared(string path) { using(var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) using(var reader = new StreamReader(stream)) return reader.ReadToEnd(); }
  public static int Main(string[] args) {
   FreezeDiagnostics.Start(args[0]);
-  FreezeDiagnostics.Pulse("test-normal");
-  using(FreezeDiagnostics.Trace("simulated-blocked-callback")) { Thread.Sleep(12500); }
+  if (args.Length > 1 && args[1] == "--menu") {
+   FreezeDiagnostics.Pulse("campaign/menu"); Thread.Sleep(23000);
+   bool noCapture = Directory.GetFiles(args[0], "*.dmp*").Length == 0;
+   Console.WriteLine(noCapture ? "PASS: menu stall does not trigger capture" : "FAIL: menu capture");
+   return noCapture ? 0 : 1;
+  }
+  FreezeDiagnostics.Pulse("mission mode=Battle test");
+  using(FreezeDiagnostics.Trace("simulated-blocked-callback")) { Thread.Sleep(65000); }
   FreezeDiagnostics.Pulse("test-recovered"); Thread.Sleep(1800);
+  foreach (var dump in Directory.GetFiles(args[0], "*.dmp")) {
+   using (var reader = new BinaryReader(File.OpenRead(dump)))
+    if (reader.ReadUInt32() != 0x504d444d) throw new Exception("Invalid minidump signature");
+  }
   var text=string.Join("\n",Array.ConvertAll(Directory.GetFiles(args[0],"*.log"),ReadShared));
-  bool ok=text.Contains("stalled=True") && text.Contains("ACTIVE ") && text.Contains("simulated-blocked-callback") && text.Contains("context=test-recovered") && text.Contains("availablePhysicalBytes=") && text.Contains("commitLimitBytes=") && text.Contains("EXIT ");
-  Console.WriteLine(ok ? "PASS: stalled heartbeat, active callback, memory sampling and recovery" : "FAIL"); return ok?0:1;
+  bool ok=text.Contains("stalled=True") && text.Contains("ACTIVE ") && text.Contains("simulated-blocked-callback") && text.Contains("context=test-recovered") && text.Contains("availablePhysicalBytes=") && text.Contains("commitLimitBytes=") && text.Contains("EXIT ") && text.Contains("THREAD nativeId=") && Directory.GetFiles(args[0], "*.dmp").Length == 2;
+  Console.WriteLine(ok ? "PASS: stalled heartbeat, active callback, memory sampling, thread records, two valid bounded captures and recovery" : "FAIL"); return ok?0:1;
  }
 }

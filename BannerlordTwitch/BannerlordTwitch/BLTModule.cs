@@ -209,9 +209,12 @@ namespace BannerlordTwitch
 
         protected override void OnApplicationTick(float dt)
         {
+            FreezeDiagnostics.Phase("application.base-tick");
             base.OnApplicationTick(dt);
             FreezeDiagnostics.Pulse(Mission.Current == null ? "campaign/menu" : "mission mode=" + Mission.Current.Mode + " state=" + Mission.Current.CurrentState + " loadingFinished=" + Mission.Current.IsLoadingFinished);
+            FreezeDiagnostics.Phase("application.queued-actions");
             MainThreadSync.RunQueued();
+            FreezeDiagnostics.Phase("application.tick-returned");
         }
 
         public override void OnGameEnd(Game game)

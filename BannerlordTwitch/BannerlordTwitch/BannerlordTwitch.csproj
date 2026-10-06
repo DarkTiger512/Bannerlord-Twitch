@@ -664,4 +664,9 @@
     <Error Condition="!Exists('..\packages\Fody.6.8.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.6.8.1\build\Fody.targets'))" />
     <Error Condition="!Exists('..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props'))" />
   </Target>
+  <Target Name="BuildDiagnosticCaptureHelper" AfterTargets="CopyModuleContent" BeforeTargets="DeployToGameDirectory;Package">
+    <Csc Sources="$(SolutionDir)..\tools\diagnostic-dump-helper.cs"
+         OutputAssembly="$(TargetDir)BLT.Diagnostics.exe" TargetType="Exe" Platform="x64"
+         References="System.dll;System.Core.dll" />
+  </Target>
 </Project>
