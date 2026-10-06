@@ -1,6 +1,6 @@
 # TAOM 5.5.9 — extensive freeze diagnostics 2
 
-This is a diagnostic prerelease, not a confirmed freeze fix. It retains the optional naval-patch guard and main-thread queue fixes from 5.5.8. In the latest streamer log all recorded BLT scopes returned before application ticks stopped; that evidence does not identify the blocking code.
+Diagnostics were introduced in 5.5.9-diagnostics.2 and are retained in 5.5.10-candidate.2. See `TAOM-PRELOAD-STALL.md` for the targeted preload-wait mitigation and its limits. This is not a confirmed in-game freeze fix. It retains the optional naval-patch guard and main-thread queue fixes from 5.5.8. In the latest streamer log all recorded BLT scopes returned before application ticks stopped; that evidence does not identify the blocking code.
 
 ## Streamer: install, reproduce, send files
 

@@ -1,0 +1,79 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using BLTAdoptAHero.Util;
+using BLTAdoptAHero.Behaviors;
+using HarmonyLib;
+#if TAOM
+namespace TAOM { public class SubModule {} }
+#endif
+namespace TaleWorlds.MountAndBlade { public class Mission { public static Mission Current; } }
+namespace TaleWorlds.Engine {
+ public class MetaMesh {
+  public int PendingChecks; public string Name; public int Calls; public int Owner = Thread.CurrentThread.ManagedThreadId;
+  public string GetName() => Name;
+  public int CheckResources() { if(Thread.CurrentThread.ManagedThreadId != Owner) throw new Exception("Wrong thread"); Calls++; return PendingChecks-- > 0 ? 1 : 0; }
+ }
+ public class PhysicsShape {
+  public static PhysicsShape GetFromResource(string name, bool dynamic) => name == "missing_body" ? null : new PhysicsShape();
+ }
+}
+namespace TaleWorlds.MountAndBlade.View {
+ public class PreloadHelper {
+  private readonly HashSet<(TaleWorlds.Engine.MetaMesh,bool,bool)> _uniqueMetaMeshes = new HashSet<(TaleWorlds.Engine.MetaMesh,bool,bool)>();
+  private readonly HashSet<string> _uniqueDynamicPhysicsShapeName = new HashSet<string>();
+  public int OriginalCalls;
+  public void Add(TaleWorlds.Engine.MetaMesh mesh) { _uniqueMetaMeshes.Add((mesh,false,false)); }
+  public void Add(string name) { _uniqueDynamicPhysicsShapeName.Add(name); }
+  public int EntryCount => _uniqueMetaMeshes.Count + _uniqueDynamicPhysicsShapeName.Count;
+  [MethodImpl(MethodImplOptions.NoInlining)] public void WaitForMeshesToBeLoaded() { OriginalCalls++; }
+ }
+}
+namespace BannerlordTwitch.Util {
+ public static class Log { public static void Info(string value) { Console.WriteLine(value); } }
+ public static class FreezeDiagnostics {
+  public static readonly List<string> Events = new List<string>();
+  public static void Mark(string value) { Events.Add(value); }
+  public static void Phase(string value) {}
+  public static IDisposable Trace(string value) => new Scope();
+  private class Scope : IDisposable { public void Dispose() {} }
+ }
+}
+public class PreloadProbe {
+ static void Check(bool ok,string name) { if(!ok) throw new Exception(name); Console.WriteLine("PASS "+name); }
+ public static void Main() {
+  AppDomain.CurrentDomain.AssemblyResolve += (s,e) => {
+   var p=System.IO.Path.Combine(@"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client",new AssemblyName(e.Name).Name+".dll");
+   return System.IO.File.Exists(p)?Assembly.Load(System.IO.File.ReadAllBytes(p)):null;
+  };
+  Run();
+ }
+ [MethodImpl(MethodImplOptions.NoInlining)] static void Run() {
+  long time=0; int polls=0;
+  Check(ResourcePreloadWait.Run(()=>0,()=>time,()=>time++,10),"ready immediately");
+  Check(ResourcePreloadWait.Run(()=>++polls<3?1:0,()=>time,()=>time++,10)&&polls==3,"transient resource completes");
+  time=0;polls=0;
+  Check(!ResourcePreloadWait.Run(()=>{polls++;return 1;},()=>time,()=>time++,10)&&time==10&&polls==11,"persistent pending terminates at deadline");
+  time=0;
+  Check(ResourcePreloadWait.Run(()=>0,()=>100,()=>time++,10)&&time==0,"ready result wins at deadline");
+  new Harmony("blt.test.preload").CreateClassProcessor(typeof(TaomPreloadWaitPatch)).Patch();
+  var helper=new TaleWorlds.MountAndBlade.View.PreloadHelper();
+#if TAOM
+  helper.WaitForMeshesToBeLoaded();Check(helper.OriginalCalls==1,"outside mission uses original");
+  TaleWorlds.MountAndBlade.Mission.Current = new TaleWorlds.MountAndBlade.Mission();
+  var mesh=new TaleWorlds.Engine.MetaMesh {Name="transient_mesh",PendingChecks=2};helper.Add(mesh);helper.Add("ready_body");
+  helper.WaitForMeshesToBeLoaded();Check(helper.OriginalCalls==1&&mesh.Calls==3,"Harmony patch checks meshes on owner thread and returns when ready");
+  helper.Add(new TaleWorlds.Engine.MetaMesh {Name="missing_mesh",PendingChecks=int.MaxValue});helper.Add("missing_body");
+  var watch=System.Diagnostics.Stopwatch.StartNew();helper.WaitForMeshesToBeLoaded();watch.Stop();
+  Check(watch.ElapsedMilliseconds>=15000&&watch.ElapsedMilliseconds<20000,"actual production deadline bounds stuck mesh and physics");
+  var events=string.Join("\n",BannerlordTwitch.Util.FreezeDiagnostics.Events);
+  Check(events.Contains("PRELOAD_TIMEOUT")&&events.Contains("mesh=missing_mesh")&&events.Contains("physics=missing_body"),"timeout names unresolved mesh and physics");
+  Check(helper.EntryCount==4,"resource collections preserved");
+#else
+  TaleWorlds.MountAndBlade.Mission.Current = new TaleWorlds.MountAndBlade.Mission();helper.WaitForMeshesToBeLoaded();
+  Check(helper.OriginalCalls==1,"TAOM absent leaves original untouched");
+#endif
+ }
+}

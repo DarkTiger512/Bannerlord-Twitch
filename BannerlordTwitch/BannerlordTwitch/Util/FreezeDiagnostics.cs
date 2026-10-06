@@ -39,7 +39,7 @@ namespace BannerlordTwitch.Util
                 heartbeat = Stopwatch.GetTimestamp();
                 previousSample = heartbeat;
                 using (var process = Process.GetCurrentProcess()) previousCpu = process.TotalProcessorTime.Ticks;
-                Mark("START build=5.5.9-diagnostics.2 pid=" + Process.GetCurrentProcess().Id + " logicalProcessors=" + Environment.ProcessorCount);
+                Mark("START build=5.5.10-candidate.2 pid=" + Process.GetCurrentProcess().Id + " logicalProcessors=" + Environment.ProcessorCount);
                 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a =>
                     a.GetName().Name.StartsWith("TAOM") || a.GetName().Name.StartsWith("BLT") ||
                     a.GetName().Name == "0Harmony" || a.GetName().Name == "BannerlordTwitch"))
