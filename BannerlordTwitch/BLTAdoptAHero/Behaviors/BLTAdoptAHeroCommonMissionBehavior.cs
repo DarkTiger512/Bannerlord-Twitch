@@ -101,6 +101,8 @@ namespace BLTAdoptAHero
                 var hero = agent.GetAdoptedHero();
                 if (hero != null)
                 {
+                    bool onPlayerSide = agent.Team?.IsValid == true && Mission.PlayerTeam?.IsValid == true && agent.Team.IsFriendOf(Mission.PlayerTeam);
+                    Behaviors.ImmortalEncounterBehavior.Current?.MarkMissionParticipant(hero, onPlayerSide);
                     Behaviors.CursedArtifactBehavior.Current?.MarkMissionParticipant(agent);
                     GetHeroMissionState(hero).LastAgentState = AgentState.Active;
 

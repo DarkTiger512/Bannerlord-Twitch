@@ -22,6 +22,9 @@ namespace BLTAdoptAHero.Util
         public string HeroId { get; set; }
         public string PartyId { get; set; }
         public string MapEventId { get; set; }
+        public bool CompletionPending { get; set; }
+        public bool PlayerWon { get; set; }
+        public int RewardGold { get; set; }
         public double StartedDay { get; set; }
         public HashSet<string> ParticipantHeroIds { get; set; } = new(StringComparer.Ordinal);
         public HashSet<string> RewardedHeroIds { get; set; } = new(StringComparer.Ordinal);
@@ -36,6 +39,31 @@ namespace BLTAdoptAHero.Util
         public string PartyId { get; set; }
         public string TargetKingdomId { get; set; }
         public double StartedDay { get; set; }
+    }
+
+    public sealed class ImmortalBattleTracking
+    {
+        private object battle;
+        private int playerSide = -1;
+        public void Bind(object value, int side)
+        {
+            if (value == null || side < 0 || (battle != null && !Matches(value))) return;
+            battle = value;
+            playerSide = side;
+        }
+        public bool Matches(object value) => battle != null && ReferenceEquals(battle, value);
+        public bool PlayerWon(object value, int winnerSide) => Matches(value) && winnerSide >= 0 && winnerSide == playerSide;
+        public bool Complete(ImmortalEncounterState state, object value, int winnerSide, int reward)
+        {
+            if (state == null || state.CompletionPending || !Matches(value)
+                || state.Phase is not (RandomEventLifecycle.BattlePending or RandomEventLifecycle.Active)) return false;
+            state.PlayerWon = PlayerWon(value, winnerSide);
+            state.RewardGold = RandomEventPolicy.ClampReward(reward);
+            state.CompletionPending = true;
+            state.Phase = RandomEventLifecycle.Resolved;
+            return true;
+        }
+        public void Clear() { battle = null; playerSide = -1; }
     }
 
     public static class RandomEventPolicy
@@ -84,6 +112,17 @@ namespace BLTAdoptAHero.Util
             if (state == null || string.IsNullOrWhiteSpace(heroId)) return false;
             state.RewardedHeroIds ??= new HashSet<string>(StringComparer.Ordinal);
             return state.RewardedHeroIds.Add(heroId);
+        }
+
+        public static bool DeferImmortalCleanup(ImmortalEncounterState state)
+            => state != null && (state.CompletionPending || state.Phase is RandomEventLifecycle.BattlePending or RandomEventLifecycle.Active);
+
+        public static bool TryGrantImmortalReward(ImmortalEncounterState state, string heroId, Func<bool> grant)
+        {
+            if (state?.CompletionPending != true || !state.PlayerWon
+                || state.ParticipantHeroIds?.Contains(heroId) != true || state.RewardedHeroIds?.Contains(heroId) == true) return false;
+            if (!grant()) return false;
+            return RecordReward(state, heroId);
         }
 
         public static bool CrusadeResolved(bool clanEliminated, bool atWar, bool hasViableForces)

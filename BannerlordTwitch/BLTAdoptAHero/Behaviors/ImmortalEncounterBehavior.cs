@@ -30,6 +30,9 @@ namespace BLTAdoptAHero.Behaviors
         private double lastSuccessfulTriggerDay = -100000;
         private bool cleaningUp;
         private bool healthCancellationPending;
+        private readonly ImmortalBattleTracking battleTracking = new();
+        private float rewardRetryDelay;
+        private bool rewardFailureNotified;
 
         public bool BattleActive => state?.Phase is RandomEventLifecycle.BattlePending or RandomEventLifecycle.Active;
 
@@ -38,6 +41,7 @@ namespace BLTAdoptAHero.Behaviors
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
             CampaignEvents.TickEvent.AddNonSerializedListener(this, OnCampaignTick);
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, RegisterDialogs);
+            CampaignEvents.MapEventStarted.AddNonSerializedListener(this, OnMapEventStarted);
             CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
             CampaignEvents.MobilePartyDestroyed.AddNonSerializedListener(this, OnPartyDestroyed);
             CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
@@ -67,6 +71,8 @@ namespace BLTAdoptAHero.Behaviors
         public void MarkMissionParticipant(Hero hero, bool onPlayerSide)
         {
             if (!BattleActive || !onPlayerSide || hero?.IsAdopted() != true) return;
+            BindBattle(MobileParty.MainParty?.MapEvent);
+            if (!battleTracking.Matches(MobileParty.MainParty?.MapEvent)) return;
             if (RandomEventPolicy.RecordParticipant(state, hero.StringId))
                 Diagnostic($"registered player-side participant {hero.StringId}");
         }
@@ -86,7 +92,7 @@ namespace BLTAdoptAHero.Behaviors
         private bool Eligible(out string reason)
         {
             var cfg = BLTAdoptAHeroModule.EventConfig;
-            if (state != null && RandomEventPolicy.IsActive(state.Phase)) { reason = "an Immortal Encounter is already active"; return false; }
+            if (state != null && (RandomEventPolicy.IsActive(state.Phase) || state.CompletionPending)) { reason = "an Immortal Encounter is already active"; return false; }
             if (Hero.MainHero?.IsAlive != true) { reason = "the main hero is not alive"; return false; }
             if (!PlayerHealthyEnough()) { reason = "the player must have more than 20% health"; return false; }
             if (Hero.MainHero.Level < (cfg?.ImmortalEncounterMinimumPlayerLevel ?? 10)) { reason = "the main hero level is too low"; return false; }
@@ -199,12 +205,24 @@ namespace BLTAdoptAHero.Behaviors
                 state.Phase = RandomEventLifecycle.BattlePending;
                 PlayerEncounter.StartBattle();
                 state.Phase = RandomEventLifecycle.Active;
+                BindBattle(MobileParty.MainParty?.MapEvent);
             }
             catch (Exception ex) { Abort($"battle start failed: {ex.Message}"); }
         }
 
         private void OnCampaignTick(float dt)
         {
+            // Reward/cleanup after the engine has finished its battle-end callbacks and UI.
+            if (state?.CompletionPending == true)
+            {
+                if (Mission.Current != null || PlayerEncounter.Current != null) return;
+                rewardRetryDelay -= dt;
+                if (rewardRetryDelay > 0) return;
+                rewardRetryDelay = 1f;
+                if (state.PlayerWon && !RewardParticipants()) return;
+                Complete(state.PlayerWon, state.PlayerWon ? "player victory" : "loss or retreat");
+                return;
+            }
             if (!healthCancellationPending || Mission.Current != null
                 || Campaign.Current?.ConversationManager?.IsConversationInProgress == true) return;
             healthCancellationPending = false;
@@ -219,32 +237,80 @@ namespace BLTAdoptAHero.Behaviors
             Complete(false, "challenge refused");
         }
 
-        private void OnMapEventEnded(MapEvent mapEvent)
+        private void OnMapEventStarted(MapEvent mapEvent, PartyBase attacker, PartyBase defender) => BindBattle(mapEvent);
+
+        private void BindBattle(MapEvent mapEvent)
         {
             if (!BattleActive || mapEvent == null || !mapEvent.InvolvedParties.Any(p => p.MobileParty?.StringId == state.PartyId)) return;
-            bool playerWon = mapEvent.Winner != null && MobileParty.MainParty?.Party?.MapEventSide == mapEvent.Winner;
-            if (playerWon) RewardParticipants();
-            Complete(playerWon, playerWon ? "player victory" : "loss or retreat");
+            var side = MobileParty.MainParty?.Party?.MapEventSide;
+            if (side == mapEvent.AttackerSide || side == mapEvent.DefenderSide)
+                battleTracking.Bind(mapEvent, (int)side.MissionSide);
         }
 
-        private void RewardParticipants()
+        private void OnMapEventEnded(MapEvent mapEvent)
         {
-            int reward = RandomEventPolicy.ClampReward(BLTAdoptAHeroModule.EventConfig.ImmortalEncounterGoldReward);
+            if (!BattleActive || mapEvent == null) return;
+            BindBattle(mapEvent);
+            if (!battleTracking.Complete(state, mapEvent, (int)(mapEvent.Winner?.MissionSide ?? BattleSideEnum.None),
+                BLTAdoptAHeroModule.EventConfig?.ImmortalEncounterGoldReward ?? 100000)) return;
+            Log.Info($"[Immortal Encounter] battle ended: playerWon={state.PlayerWon}, participants={state.ParticipantHeroIds.Count}, reward={state.RewardGold}");
+        }
+
+        private bool RewardParticipants()
+        {
+            bool finished = true;
             foreach (string heroId in state.ParticipantHeroIds.ToList())
             {
-                if (!RandomEventPolicy.RecordReward(state, heroId)) continue;
+                if (state.RewardedHeroIds.Contains(heroId)) continue;
                 var hero = MBObjectManager.Instance.GetObject<Hero>(heroId);
-                if (hero?.IsAlive == true) BLTAdoptAHeroCampaignBehavior.Current?.ChangeHeroGold(hero, reward);
+                if (hero?.IsDead == true) continue;
+                try
+                {
+                    bool paid = RandomEventPolicy.TryGrantImmortalReward(state, heroId, () =>
+                    {
+                        var bank = BLTAdoptAHeroCampaignBehavior.Current;
+                        if (hero?.IsAlive != true || bank == null) return false;
+                        bank.ChangeHeroGold(hero, state.RewardGold);
+                        return true;
+                    });
+                    if (paid) Log.Info($"[Immortal Encounter] paid {state.RewardGold} gold to participant {heroId}");
+                    else finished = false;
+                }
+                catch (Exception ex)
+                {
+                    finished = false;
+                    if (!rewardFailureNotified) Log.Error($"[Immortal Encounter] payout pending: {ex}");
+                }
             }
+            if (!finished && !rewardFailureNotified)
+                Log.LogFeedEvent("Immortal Encounter rewards are pending and will be retried automatically.");
+            rewardFailureNotified = !finished;
+            return finished;
         }
 
-        private void OnPartyDestroyed(MobileParty party, PartyBase _) { if (!cleaningUp && party?.StringId == state?.PartyId) Complete(false, "temporary party destroyed"); }
-        private void OnHeroKilled(Hero victim, Hero _, KillCharacterAction.KillCharacterActionDetail __, bool ___) { if (!cleaningUp && victim?.StringId == state?.HeroId) Complete(false, "the Immortal died"); }
-        private void OnGameLoadFinished() { if (state != null && RandomEventPolicy.IsActive(state.Phase)) Abort("active encounter UI cannot be resumed safely after loading"); }
+        private void OnPartyDestroyed(MobileParty party, PartyBase _)
+        {
+            if (!cleaningUp && party?.StringId == state?.PartyId && !RandomEventPolicy.DeferImmortalCleanup(state))
+                Complete(false, "temporary party destroyed");
+        }
+        private void OnHeroKilled(Hero victim, Hero _, KillCharacterAction.KillCharacterActionDetail __, bool ___)
+        {
+            if (!cleaningUp && victim?.StringId == state?.HeroId && !RandomEventPolicy.DeferImmortalCleanup(state))
+                Complete(false, "the Immortal died");
+        }
+        private void OnGameLoadFinished()
+        {
+            battleTracking.Clear();
+            if (state != null && !state.CompletionPending && RandomEventPolicy.IsActive(state.Phase))
+                Abort("active encounter UI cannot be resumed safely after loading");
+        }
 
         private void Complete(bool victory, string reason)
         {
             healthCancellationPending = false;
+            battleTracking.Clear();
+            rewardRetryDelay = 0;
+            rewardFailureNotified = false;
             Diagnostic($"completed ({reason})");
             if (state != null) state.Phase = RandomEventLifecycle.Resolved;
             CleanupObjects();
@@ -255,6 +321,7 @@ namespace BLTAdoptAHero.Behaviors
         private void Abort(string reason)
         {
             healthCancellationPending = false;
+            battleTracking.Clear();
             Log.Error($"[Immortal Encounter] aborted: {reason}");
             if (state != null) state.Phase = RandomEventLifecycle.Failed;
             CleanupObjects();
