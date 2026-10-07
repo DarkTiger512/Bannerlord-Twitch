@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using BannerlordTwitch.Util;
 using HarmonyLib;
@@ -47,36 +48,29 @@ namespace BannerlordTwitch
 
             await MainThreadSync.RunWaitAsync(() =>
             {
+                var navigation = new List<string>(toc);
                 if (addTOC)
                 {
-                    toc.InsertRange(0, new[]
+                    navigation.InsertRange(0, new[]
                     {
-                        "<div class=\"toc-container\">",
-                        "<h2 class=\"toc-title\">Table of Contents</h2>"
+                        "<nav class=\"toc-container\" aria-label=\"Browse guide\">",
+                        "<h2 class=\"toc-title\">Browse guide</h2>"
                     });
-                    toc.Add("</div>");
-                    content.InsertRange(0, toc);
+                    navigation.Add("</nav>");
                 }
-
-                content.InsertRange(0, new[]
-                {
-                    "<!DOCTYPE html><html>",
-                    "<head>",
-                    "<meta charset=\"utf-8\"/>",
-                    "<link rel=\"stylesheet\" href=\"style.css\">",
-                    "</head>",
-                    "<body>",
-                    "<div class=\"content\">",
-                    $"<h1>{title}</h1>",
-                    $"<p>{introduction}</p>"
-                });
-
-                content.Add("</div></html></body>");
 
                 try
                 {
                     Directory.CreateDirectory(DocumentationRootDir);
-                    File.WriteAllLines(DocumentationPath, content);
+                    string moduleRoot = Path.GetDirectoryName(CSSFullPath);
+                    string html = File.ReadAllText(Path.Combine(moduleRoot, "Bannerlord-Twitch-Documentation.html"))
+                        .Replace("{{TITLE}}", WebUtility.HtmlEncode(title))
+                        .Replace("{{INTRO}}", introduction ?? string.Empty)
+                        .Replace("{{NAV}}", addTOC ? string.Join("\n", navigation) : string.Empty)
+                        .Replace("{{CONTENT}}", string.Join("\n", content));
+                    File.WriteAllText(DocumentationPath, html);
+                    File.Copy(Path.Combine(moduleRoot, "Bannerlord-Twitch-Documentation.js"),
+                        Path.Combine(DocumentationRootDir, "guide.js"), true);
                     string targetCSSFilePath = Path.Combine(DocumentationRootDir, "style.css");
                     if (File.Exists(targetCSSFilePath))
                         File.Delete(targetCSSFilePath);
@@ -85,6 +79,7 @@ namespace BannerlordTwitch
                 catch (Exception e)
                 {
                     Log.Error($"Couldn't write documentation: {e.Message}");
+                    throw;
                 }
             });
         }
@@ -133,7 +128,7 @@ namespace BannerlordTwitch
         {
             this.content.Add(
                 css != null
-                    ? $"<{tag} class={css}>{content}</{tag}>"
+                    ? $"<{tag} class=\"{css}\">{content}</{tag}>"
                     : $"<{tag}>{content}</{tag}>"
                 );
             return this;
@@ -286,7 +281,7 @@ namespace BannerlordTwitch
 
         public IDocumentationGenerator MakeAnchor(string tag, Action content)
         {
-            this.content.Add($"<a name=\"{tag}\">");
+            this.content.Add($"<a id=\"{WebUtility.HtmlEncode(tag)}\">");
             content();
             this.content.Add("</a>");
             return this;
@@ -294,7 +289,7 @@ namespace BannerlordTwitch
 
         public IDocumentationGenerator MakeAnchor(string tag, string content)
         {
-            this.content.Add($"<a name=\"{tag}\">{content}</a>");
+            this.content.Add($"<a id=\"{WebUtility.HtmlEncode(tag)}\">{content}</a>");
             return this;
         }
 
