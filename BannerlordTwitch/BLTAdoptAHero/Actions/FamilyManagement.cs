@@ -61,6 +61,10 @@ namespace BLTAdoptAHero.Actions
         }
         public override Type HandlerConfigType => typeof(Settings);
 
+        internal static int BabyCommandLimit =>
+            (BannerlordTwitch.Rewards.ActionManager.GetCommandConfig(nameof(FamilyManagement),
+                new Guid("9557f67a-aef7-4098-949e-be84b9570df8")) as Settings)?.MakeKidsLimit ?? 3;
+
         protected override void ExecuteInternal(Hero adoptedHero, ReplyContext context, object config,
         Action<string> onSuccess, Action<string> onFailure)
         {

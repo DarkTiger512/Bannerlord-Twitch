@@ -1,29 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using BannerlordTwitch;
-using BannerlordTwitch.Annotations;
-using BannerlordTwitch.Helpers;
-using BannerlordTwitch.Localization;
 using BannerlordTwitch.SaveSystem;
 using BannerlordTwitch.Util;
-using BLTAdoptAHero;
-using BLTAdoptAHero.Achievements;
-using BLTAdoptAHero.UI;
-using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
-using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using TaleWorlds.CampaignSystem.Party;
-using Helpers;
-using TaleWorlds.LinQuick;
 
 namespace BLTAdoptAHero.Behaviors
 {
@@ -31,11 +10,73 @@ namespace BLTAdoptAHero.Behaviors
     {
         public Dictionary<Hero, (Hero heir, bool flag)> heirList = new();
         public HashSet<Hero> _heirs = new();
+        public Dictionary<Hero, PendingOffspring> PendingOffspringOperations = new();
+
+        public sealed class PendingOffspring
+        {
+            public int Version { get; set; } = 1;
+            public Hero Mother { get; set; }
+            public Hero Father { get; set; }
+            public Hero Child { get; set; }
+            public int GoldCost { get; set; }
+            public bool CreationStarted { get; set; }
+            public bool CreationComplete { get; set; }
+            public bool BirthStarted { get; set; }
+            public bool BirthComplete { get; set; }
+            public bool AdulthoodStarted { get; set; }
+            public bool AdulthoodComplete { get; set; }
+        }
+
+        // Only populated while native creation runs on the campaign thread.
+        internal PendingOffspring CreatingOffspring;
+
+        public bool IsPendingOffspring(Hero hero) => hero != null &&
+            PendingOffspringOperations.Values.Any(p => p.Child == hero);
+
+        public bool IsUnavailableForAdoption(Hero hero) => IsPendingOffspring(hero) ||
+            heirList.Values.Any(p => p.heir == hero);
+
+        public bool CanReserve(Hero owner, Hero heir) => owner != null && heir != null &&
+            owner != heir && heir.IsAlive && !heir.IsDisabled && !heir.IsAdopted() &&
+            heir.Clan != null && heir.Clan == owner.Clan &&
+            heir.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge &&
+            !heirList.Any(p => p.Key != owner && p.Value.heir == heir);
+
+        public Hero GetValidHeir(Hero owner)
+        {
+            if (owner == null || !heirList.TryGetValue(owner, out var entry)) return null;
+            if (CanReserve(owner, entry.heir)) return entry.heir;
+            RemoveReservation(owner);
+            return null;
+        }
+
+        public bool TryReserve(Hero owner, Hero heir)
+        {
+            if (!CanReserve(owner, heir)) return false;
+            RemoveReservation(owner);
+            heirList[owner] = (heir, owner.IsClanLeader);
+            _heirs.Add(heir);
+            return true;
+        }
+
+        public void RemoveReservation(Hero owner)
+        {
+            if (owner == null || !heirList.TryGetValue(owner, out var entry)) return;
+            heirList.Remove(owner);
+            if (!heirList.Values.Any(p => p.heir == entry.heir)) _heirs.Remove(entry.heir);
+        }
+
         public override void RegisterEvents()
         {
+            CampaignEvents.HeroCreated.AddNonSerializedListener(this, (hero, bornNaturally) =>
+            {
+                if (CreatingOffspring != null && hero.Mother == CreatingOffspring.Mother &&
+                    hero.Father == CreatingOffspring.Father && CreatingOffspring.Child == null)
+                    CreatingOffspring.Child = hero;
+            });
             CampaignEvents.OnGameLoadFinishedEvent.AddNonSerializedListener(this, () =>
             {
-                _heirs = heirList.Values.Select(v => v.heir).ToHashSet();
+                _heirs = heirList.Values.Where(v => v.heir != null).Select(v => v.heir).ToHashSet();
             });
 
             CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, (victim, killer, actionDetail, showNotification) =>
@@ -43,32 +84,33 @@ namespace BLTAdoptAHero.Behaviors
                 if (_heirs.Contains(victim))
                 {
                     _heirs.Remove(victim);
-                    var key = heirList.FirstOrDefault(h => h.Value.heir == victim).Key;
-                    heirList.Remove(key);
-                    Log.ShowInformation($"{key.Name}'s heir has died. Select a new one");
+                    foreach (var key in heirList.Where(h => h.Value.heir == victim).Select(h => h.Key).ToList())
+                    {
+                        RemoveReservation(key);
+                        Log.ShowInformation($"{key.Name}'s heir has died. Select a new one");
+                    }
                 }
             });
 
             CampaignEvents.HeroComesOfAgeEvent.AddNonSerializedListener(this, hero =>
             {
+                var pending = PendingOffspringOperations.Values.FirstOrDefault(p => p.Child == hero);
+                if (pending != null)
+                {
+                    // Natural aging or another mod may mature a retained child before retry.
+                    // Do not replay an event whose complete listener chain we did not observe.
+                    pending.AdulthoodStarted = true;
+                    return;
+                }
                 var father = hero.Father;
                 var mother = hero.Mother;
                 if (father == null && mother == null) return;
-                if (father != null && father.IsAdopted() && !heirList.ContainsKey(father))
+                if (father != null && father.IsAdopted() && GetValidHeir(father) == null && TryReserve(father, hero))
                 {
-                    heirList[father] = (hero, father.IsClanLeader);
-                    _heirs.Add(hero);
+                    return;
                 }
-                else 
-                {
-                    
-                    if (mother != null && mother.IsAdopted() && !heirList.ContainsKey(mother))
-                    {
-                        heirList[mother] = (hero, mother.IsClanLeader);
-                        _heirs.Add(hero);
-                    }
-                }
-                
+                if (mother != null && mother.IsAdopted() && GetValidHeir(mother) == null)
+                    TryReserve(mother, hero);
             });
 
             CampaignEvents.OnClanLeaderChangedEvent.AddNonSerializedListener(this, (Hero leader, Hero newLeader) =>
@@ -96,6 +138,9 @@ namespace BLTAdoptAHero.Behaviors
         {
             using var scopedJsonSync = new ScopedJsonSync(dataStore, nameof(BLTHeirBehavior));
             scopedJsonSync.SyncDataAsJson("HeirData", ref heirList);
+            scopedJsonSync.SyncDataAsJson("PendingOffspringV1", ref PendingOffspringOperations);
+            heirList ??= new();
+            PendingOffspringOperations ??= new();
         }
     }
 }

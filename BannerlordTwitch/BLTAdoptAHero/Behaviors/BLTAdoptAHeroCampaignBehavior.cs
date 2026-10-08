@@ -2005,6 +2005,8 @@ namespace BLTAdoptAHero
                     h.Name != null &&
                     // Not the player of course
                     h != Hero.MainHero
+                    // Reserved and unfinished heirs must not be taken by normal adoption.
+                    && Campaign.Current.GetCampaignBehavior<BLTHeirBehavior>()?.IsUnavailableForAdoption(h) != true
                     // Don't want notables ever
                     && !h.IsNotable
                     // Only of age characters can be used
