@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><NuGetAudit>false</NuGetAudit></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/HeirCommand.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/AdoptHeirService.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/NativeOffspringAdapter.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Behaviors/BLTHeirBehavior.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/Settings/ForgeCommandDefaults.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/ScopedJsonSync.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/MBObjectBaseConverter.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/MBGUIDConverter.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/DictionaryToArrayConverter.cs" />
+    <Reference Include="Newtonsoft.Json"><HintPath>../../BannerlordTwitch/packages/Newtonsoft.Json.13.0.3/lib/net6.0/Newtonsoft.Json.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>
