@@ -50,7 +50,7 @@ Run from the repository root:
 dotnet run --project tools/forge-tests/ForgeTests.csproj
 dotnet run --project BannerlordTwitch/BLTAdoptAHero.Tests/BLTAdoptAHero.Tests.csproj -p:NuGetAudit=false
 node tools/verify-enchantment-profile.mjs
-node tools/verify-forge-parity.mjs DT/shared-forging taom
+node tools/verify-forge-parity.mjs main taom
 ```
 
 The integration fixture links production handlers, asset generation, purchase service, modifier behavior, enchantment policy, profile merge policy, and the existing JSON save serializer against engine stubs. It exercises culture discovery and ambiguity, generation methods, restrictions, candidate limits, unique identity, pricing, style reversal, enchantment preservation, old-save compatibility, rollback, profile preservation and campaign isolation. Engine stubs cannot verify native visuals, combat speed, actual game serialization, or third-party event behavior.
