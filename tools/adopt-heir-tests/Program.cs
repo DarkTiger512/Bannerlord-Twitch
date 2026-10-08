@@ -14,7 +14,7 @@ static class Program
  static void Fails(Action action,string text){try{action();throw new Exception("Expected failure: "+text);}catch(InvalidOperationException e){Check(e.Message.Contains(text,StringComparison.OrdinalIgnoreCase),e.Message);}}
  static (Hero owner,Hero spouse,BLTHeirBehavior behavior) Setup(bool female=false)
  {
-  CampaignEvents.Reset();Campaign.Current=new();CampaignEventDispatcher.Instance=new();HeroCreator.Created=0;HeroCreator.FailAfterCreate=false;Mission.Current=null;FamilyManagement.BabyCommandLimit=3;
+  CampaignEvents.Reset();Campaign.Current=new();CampaignEventDispatcher.Instance=new();HeroCreator.Created=0;HeroCreator.FailAfterCreate=false;HeroCreator.FailBeforeEvent=false;Mission.Current=null;FamilyManagement.BabyCommandLimit=3;
   BLTAdoptAHeroCampaignBehavior.Current=new();
   var b=new BLTHeirBehavior();Campaign.Current.Behaviors.Add(b);Campaign.Current.Behaviors.Add(new AgingCampaignBehavior());b.RegisterEvents();
   var clan=new Clan();var h=new Hero{Adopted=true,IsFemale=female,Clan=clan,Name="Viewer",IsActive=true};
@@ -28,6 +28,7 @@ static class Program
    var(h,s,b)=Setup(female);Campaign.Current.Models.AgeModel.HeroComesOfAge=30;h.SetBirthDay(CampaignTime.YearsFromNow(-40));s.SetBirthDay(CampaignTime.YearsFromNow(-40));s.Adopted=true;
    AdoptHeirService.Execute(h,200);var child=b.GetValidHeir(h);
    Check(child!=null&&child.Age==30&&child.IsActive,"modded adulthood");
+   Check(child.InitialSkill==1,"zero-skill wanderer save/load protection");
    Check(child.Mother==(female?h:s)&&child.Father==(female?s:h),"native parentage");
    Check(b.GetValidHeir(s)==null&&b._heirs.SetEquals(new[]{child}),"exclusive caller reservation");
    Check(BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h)==800&&h.Adopted&&!child.Adopted,"future heir only, cost");
@@ -37,6 +38,18 @@ static class Program
    var saved=new Store(true);b.SyncData(saved);var loaded=new BLTHeirBehavior();loaded.SyncData(saved.Load());Check(loaded.GetValidHeir(h)==child,"heir identity survives JSON persistence");
    Check(loaded.IsUnavailableForAdoption(child),"reserved child unavailable for ordinary adoption");
    Check(loaded.TryReserve(s,child)==false,"double reservation rejected");loaded.RemoveReservation(h);Check(!loaded._heirs.Contains(child),"exact cleanup");
+  }
+  {
+   var(h,s,b)=Setup(true);h.CharacterObject.Race=s.CharacterObject.Race=7;s.Clan=new();
+   h.Children.Add(new Hero{Clan=h.Clan,IsAlive=false});h.Children.Add(new Hero{Clan=new()});FamilyManagement.BabyCommandLimit=1;
+   TaleWorlds.Core.MBRandom.RandomFloat=.9f;AdoptHeirService.Execute(h,0);TaleWorlds.Core.MBRandom.RandomFloat=.3f;
+   var child=b.GetValidHeir(h);Check(child.CharacterObject.Race==7&&!child.IsFemale,"same modded race and model gender probability");
+   Check(child.Clan==h.Clan&&child.Clan!=s.Clan,"female caller clan overrides native father clan");
+   Check(HeroCreator.Created==1,"dead and other-clan children do not count against family limit");
+  }
+  {
+   var(h,s,b)=Setup();Campaign.Current.Behaviors.RemoveAll(x=>x is AgingCampaignBehavior);
+   Fails(()=>AdoptHeirService.Execute(h,0),"unsupported");Check(HeroCreator.Created==0,"unsupported aging API fails before birth");
   }
   foreach(var scenario in new[]{"pregnant","limit","race","spouse","minor","prisoner","mission","battle","poor","negative","templates"})
   {
@@ -48,6 +61,7 @@ static class Program
   {
    var(h,s,b)=Setup();Campaign.Current.Models.EquipmentSelectionModel.Missing=true;
    Fails(()=>AdoptHeirService.Execute(h,100),"equipment");var child=h.Children.Single();Check(child.Age==0,"failed equipment restores birthday");
+   Check(child.InitialSkill==1,"retained newborn survives zero-skill load rule");
    var saved=new Store(true);b.SyncData(saved);var loaded=new BLTHeirBehavior();loaded.SyncData(saved.Load());
    Check(loaded.PendingOffspringOperations[h].Child==child&&loaded.PendingOffspringOperations[h].BirthComplete,"pending child and phase persistence");
    Campaign.Current.Behaviors.Remove(b);Campaign.Current.Behaviors.Add(loaded);loaded.RegisterEvents();Campaign.Current.Models.EquipmentSelectionModel.Missing=false;
@@ -63,9 +77,9 @@ static class Program
    Fails(()=>AdoptHeirService.Execute(h,0),"interrupted");
    Check(CampaignEventDispatcher.Instance.Adults==1,"external adulthood cannot be replayed on retry");
   }
-  foreach(var stage in new[]{"creation","birth","adult"})
+  foreach(var stage in new[]{"beforecreated","creation","birth","adult"})
   {
-   var(h,s,b)=Setup();HeroCreator.FailAfterCreate=stage=="creation";CampaignEventDispatcher.Instance.FailBirth=stage=="birth";CampaignEventDispatcher.Instance.FailAdult=stage=="adult";
+   var(h,s,b)=Setup();HeroCreator.FailBeforeEvent=stage=="beforecreated";HeroCreator.FailAfterCreate=stage=="creation";CampaignEventDispatcher.Instance.FailBirth=stage=="birth";CampaignEventDispatcher.Instance.FailAdult=stage=="adult";
    try{AdoptHeirService.Execute(h,50);throw new Exception("Expected native exception");}catch(Exception e) when(e.Message.Contains("listener")){}
    Check(b.PendingOffspringOperations[h].Child==h.Children.Single(),"child captured during "+stage+" failure");
    var births=CampaignEventDispatcher.Instance.Births;var adults=CampaignEventDispatcher.Instance.Adults;

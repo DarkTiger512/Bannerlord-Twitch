@@ -4,7 +4,7 @@
 
 The command keeps an existing valid heir, uses native names/gender/appearance/culture, and obeys the configured `FamilyManagement.MakeKidsLimit` (default 3 living children in your clan). `AdoptHeir.GoldCost` defaults to 0. Configure it on the command in BLT settings. The default command is added only when its ID, handler and name do not conflict with administrator configuration; existing renamed/disabled commands are retained.
 
-Use it on the campaign map with living adult opposite-sex spouses who are free and outside battle. An existing pregnancy is left untouched and blocks new creation. Mixed-race parents are rejected because the installed native offspring method requires matching races. Missing native templates or aging support fail without charging. Native skills, equipment, education and placement use the installed game's models; no TOAM culture or race names are hardcoded.
+Use it on the campaign map with living adult opposite-sex spouses who are free and outside battle. An existing pregnancy is left untouched and blocks new creation. Mixed-race parents are rejected because the installed native offspring method requires matching races. Missing native templates or aging support fail without charging. Native skills, equipment, education and placement use the installed game's models; zero-skill wanderers receive BLT's minimum one-point protection against removal on load; no TOAM culture or race names are hardcoded.
 
 ## Recovery and persistence
 

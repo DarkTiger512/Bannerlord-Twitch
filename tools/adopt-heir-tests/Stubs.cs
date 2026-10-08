@@ -47,7 +47,7 @@ namespace TaleWorlds.CampaignSystem {
  public class Clan { public object Home=new(); public List<Hero> Heroes=new(); }
  public class Party { public object MapEvent; }
  public class Hero : TaleWorlds.ObjectSystem.MBObjectBase {
-  public string Name="Child"; public string FirstName=>Name; public List<Hero> Siblings=new(); public HeroDeveloper HeroDeveloper=new(); public int GetSkillValue(object skill)=>1; public bool IsFemale, IsPregnant, IsPrisoner, IsDisabled, Adopted, IsClanLeader, IsActive;
+  public string Name="Child"; public string FirstName=>Name; public List<Hero> Siblings=new(); public HeroDeveloper HeroDeveloper; public int InitialSkill=1; public bool IsWanderer; public Hero(){HeroDeveloper=new(){Owner=this};} public int GetSkillValue(object skill)=>InitialSkill; public bool IsFemale, IsPregnant, IsPrisoner, IsDisabled, Adopted, IsClanLeader, IsActive;
   public bool IsAlive=true; public bool IsDead=>!IsAlive;
   public Clan Clan; public Hero Mother,Father,Spouse; public Party PartyBelongedTo;
   public List<Hero> Children=new(); public CharacterObject CharacterObject=new();
@@ -57,7 +57,7 @@ namespace TaleWorlds.CampaignSystem {
  }
  public class AgeModel { public int HeroComesOfAge=18; }
  public class PregnancyModel { public float DeliveringFemaleOffspringProbability=.5f; }
- public class CreationModel { public bool Missing; public CharacterObject GetCharacterTemplateForOffspring(Hero m,Hero f,bool female)=>Missing?null:new(); }
+ public class CreationModel { public bool Missing; public CharacterObject GetCharacterTemplateForOffspring(Hero m,Hero f,bool female)=>Missing?null:new(){Race=m.CharacterObject.Race}; }
  public class EquipmentModel { public bool Missing; public object GetEquipmentForHeroComeOfAge(Hero h,TaleWorlds.Core.Equipment.EquipmentType type)=>Missing?null:new(); }
  public class Models { public AgeModel AgeModel=new(); public PregnancyModel PregnancyModel=new(); public CreationModel HeroCreationModel=new(); public EquipmentModel EquipmentSelectionModel=new(); }
  public class Campaign {
@@ -65,17 +65,17 @@ namespace TaleWorlds.CampaignSystem {
   public T GetCampaignBehavior<T>() where T:class=>Behaviors.OfType<T>().FirstOrDefault();
  }
  public static class HeroCreator {
-  public static int Created; public static bool FailAfterCreate;
+  public static int Created; public static bool FailAfterCreate,FailBeforeEvent;
   public static Hero DeliverOffSpring(Hero m,Hero f,bool female){
-   Created++;var h=new Hero{Mother=m,Father=f,IsFemale=female,Clan=f.Clan,BirthDay=new(){Years=0}};
-   m.Children.Add(h);f.Children.Add(h);Campaign.Current.GetCampaignBehavior<CampaignBehaviors.AgingCampaignBehavior>().Add(h);
+   Created++;var h=new Hero{Mother=m,Father=f,IsFemale=female,IsWanderer=true,InitialSkill=0,Clan=f.Clan,BirthDay=new(){Years=0}};
+   h.CharacterObject.Race=m.CharacterObject.Race;m.Children.Add(h);f.Children.Add(h);if(FailBeforeEvent)throw new Exception("creation listener");Campaign.Current.GetCampaignBehavior<CampaignBehaviors.AgingCampaignBehavior>().Add(h);
    CampaignEvents.HeroCreated.Fire(h,true);if(FailAfterCreate)throw new Exception("creation listener");return h;
   }
  }
  public class CampaignEventDispatcher {
   public static CampaignEventDispatcher Instance=new(); public int Births, Adults; public bool FailBirth,FailAdult;
   public void OnGivenBirth(Hero mother,List<Hero> children,int stillborn){Births++;if(FailBirth)throw new Exception("birth listener");}
-  public void OnHeroComesOfAge(Hero h){Adults++;if(FailAdult)throw new Exception("adult listener");h.IsActive=true;CampaignEvents.HeroComesOfAgeEvent.Fire(h);}
+  public void OnHeroComesOfAge(Hero h){Adults++;if(FailAdult)throw new Exception("adult listener");h.InitialSkill=0;h.IsActive=true;CampaignEvents.HeroComesOfAgeEvent.Fire(h);}
  }
 }
 namespace TaleWorlds.CampaignSystem.CampaignBehaviors {
@@ -110,7 +110,7 @@ namespace TaleWorlds.Localization { }
 namespace TaleWorlds.Library { public static class MBMath { public static int ClampInt(int v,int min,int max)=>Math.Clamp(v,min,max); } }
 namespace TaleWorlds.Core { public struct EquipmentElement { public string GetModifiedItemName()=>"custom sword"; } }
 namespace TaleWorlds.CampaignSystem {
- public class HeroDeveloper { public void ClearHero(){} public void SetInitialSkillLevel(object skill,int v){} public void InitializeHeroDeveloper(){} }
+ public class HeroDeveloper { public Hero Owner; public void ClearHero(){} public void SetInitialSkillLevel(object skill,int v){Owner.InitialSkill=v;} public void InitializeHeroDeveloper(){} }
 }
 namespace TaleWorlds.CampaignSystem.Actions {
  public static class ChangeClanLeaderAction { public static Hero NewLeader; public static void ApplyWithSelectedNewLeader(Clan clan,Hero h){if(h==null||clan==null)throw new Exception("null leader");NewLeader=h;} }
