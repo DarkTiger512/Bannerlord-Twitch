@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { cleanName, parseCommands, profilePath } from './command-profile.mjs';
 
-const [classic = 'DT/shared-forging', taom = 'taom'] = process.argv.slice(2);
+const [classic = 'main', taom = 'taom'] = process.argv.slice(2);
 const read = (ref, path) => execFileSync('git', ['show', `${ref}:${path}`], { encoding: 'utf8' }).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
 const shared = [
   'BLTAdoptAHero/Actions/ForgeWeapon.cs', 'BLTAdoptAHero/Actions/ReforgeWeapon.cs',
