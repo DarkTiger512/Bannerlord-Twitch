@@ -20,7 +20,7 @@ const commands = ref => parseCommands(read(ref, profilePath)).filter(c => c.Hand
 assert.deepEqual(commands(classic), commands(taom), 'AdoptHeir command configuration differs');
 assert.equal(commands(classic).length, 1);
 assert.equal(cleanName(commands(classic)[0].Name), 'adoptheir');
-assert.equal(commands(classic)[0].HandlerConfig.GoldCost, 0);
+assert.equal(Number(commands(classic)[0].HandlerConfig.GoldCost), 0);
 for (const ref of [classic, taom]) {
   const project = read(ref, 'BannerlordTwitch/BLTAdoptAHero/BLTAdoptAHero.csproj');
   for (const file of ['Actions\\AdoptHeir.cs', 'Util\\AdoptHeirService.cs', 'Util\\NativeOffspringAdapter.cs']) assert(project.includes(file), `Missing compiled source: ${ref}/${file}`);
