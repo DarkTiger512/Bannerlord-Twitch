@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgePolicy.cs" Link="ForgePolicy.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeAssets.cs" Link="ForgeAssets.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeService.cs" Link="ForgeService.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/EnchantmentPolicy.cs" Link="EnchantmentPolicy.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Behaviors/BLTCustomItemsCampaignBehavior.cs" Link="CustomBehavior.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/ForgeWeapon.cs" Link="ForgeWeapon.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/ReforgeWeapon.cs" Link="ReforgeWeapon.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/ScopedJsonSync.cs" Link="ScopedJsonSync.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/MBObjectBaseConverter.cs" Link="MBObjectBaseConverter.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/MBGUIDConverter.cs" Link="MBGUIDConverter.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/DictionaryToArrayConverter.cs" Link="DictionaryToArrayConverter.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/Settings/ForgeCommandDefaults.cs" Link="ForgeCommandDefaults.cs" />
+    <Reference Include="Newtonsoft.Json"><HintPath>../../BannerlordTwitch/packages/Newtonsoft.Json.13.0.3/lib/net6.0/Newtonsoft.Json.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>
