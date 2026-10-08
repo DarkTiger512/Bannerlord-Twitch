@@ -45,6 +45,7 @@ namespace BLTAdoptAHero
             public string CustomName { get; set; }
 
             public List<EnchantmentEntry> Enchantments { get; set; } = new();
+            public ForgeMetadata Forge { get; set; }
 
             public void Apply(ItemModifier toModifier)
             {
@@ -159,6 +160,66 @@ namespace BLTAdoptAHero
 
         public int GetEnchantmentLevel(ItemModifier modifier) =>
             customItemModifiers.TryGetValue(modifier, out var data) ? data.Enchantments?.Count ?? 0 : 0;
+
+        public ForgeMetadata GetForgeMetadata(ItemModifier modifier) =>
+            modifier != null && customItemModifiers.TryGetValue(modifier, out var data) ? data.Forge?.Copy() : null;
+
+        public void SetInitialForgeMetadata(ItemModifier modifier, ForgeMetadata metadata)
+        {
+            var data = customItemModifiers[modifier];
+            if (data.Forge != null) throw new InvalidOperationException("Forge metadata already initialized.");
+            data.Forge = metadata.Copy();
+        }
+
+        public void RemoveNewForgeModifier(ItemModifier modifier)
+        {
+            if (modifier == null || !customItemModifiers.Remove(modifier)) return;
+            MBObjectManager.Instance.UnregisterObject(modifier);
+        }
+
+        public void Reforge(Hero hero, EquipmentElement item, ForgeStyle style, ForgeQuality quality, ForgeSettings settings, int cost)
+        {
+            var campaign = BLTAdoptAHeroCampaignBehavior.Current;
+            if (!campaign.GetCustomItems(hero).Any(i => i.IsEqualTo(item)) || campaign.IsItemBeingAuctioned(item))
+                throw new InvalidOperationException("Weapon ownership changed or the weapon is being auctioned.");
+            var data = customItemModifiers[item.ItemModifier];
+            var previous = data.Forge;
+            var next = previous?.Copy() ?? new ForgeMetadata
+            {
+                NativeCrafted = item.Item.WeaponDesign != null,
+                BaseItemId = item.Item.StringId,
+                TemplateId = item.Item.WeaponDesign?.Template?.StringId,
+                CultureId = item.Item.Culture?.StringId,
+                BaselineDamage = data.Damage,
+                BaselineSpeed = data.Speed
+            };
+            if (next.Version != 1) throw new InvalidOperationException("This weapon requires a newer forge version.");
+            var contributions = ForgeService.Contributions(item.Item, style, quality, settings);
+            int damage = data.Damage, speed = data.Speed;
+            int newDamage = checked(damage - next.AppliedDamage + contributions.damage);
+            int newSpeed = checked(speed - next.AppliedSpeed + contributions.speed);
+            if (newDamage == damage && newSpeed == speed)
+                throw new InvalidOperationException("This choice would not change the weapon's stats. No gold charged.");
+            next.Style = style;
+            next.Quality = quality;
+            next.AppliedDamage = contributions.damage;
+            next.AppliedSpeed = contributions.speed;
+            campaign.CommitEnchantmentPurchase(hero, cost, () =>
+            {
+                item.ItemModifier.SetDamageModifier(newDamage);
+                item.ItemModifier.SetSpeedModifier(newSpeed);
+                data.Damage = newDamage;
+                data.Speed = newSpeed;
+                data.Forge = next;
+            }, () =>
+            {
+                data.Damage = damage;
+                data.Speed = speed;
+                data.Forge = previous;
+                item.ItemModifier.SetDamageModifier(damage);
+                item.ItemModifier.SetSpeedModifier(speed);
+            });
+        }
 
         public (EnchantmentEntry change, bool success, int level) Enchant(ItemModifier modifier,
             EnchantmentStat stat, int gain, int failurePercent, int roll, Hero hero, int cost)

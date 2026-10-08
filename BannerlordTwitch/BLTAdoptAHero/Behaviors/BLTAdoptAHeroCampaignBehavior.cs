@@ -118,6 +118,7 @@ namespace BLTAdoptAHero
         public override void RegisterEvents()
         {
             TroopTreeIndex.Reset();
+            BLTAdoptAHero.Util.ForgeAssets.Reset();
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, _ => TroopTreeIndex.BuildIndex());
             // We put all initialization that relies on loading being complete into this listener
             CampaignEvents.OnGameLoadFinishedEvent.AddNonSerializedListener(this, () =>

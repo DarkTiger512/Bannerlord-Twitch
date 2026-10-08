@@ -854,6 +854,28 @@ Commands:
   Name: smithweapon
   RespondInOverlay: false
   RespondInTwitch: true
+- Documentation: 'Forge a cultured weapon; use !forge for choices and prices.'
+  Enabled: false
+  Handler: ForgeWeapon
+  HandlerConfig: null
+  Help: '!forge <type> [culture] [style] [quality], or !forge random'
+  HideHelp: false
+  ID: 82462d68-06c8-44ac-8895-23a095438bf2
+  ModeratorOnly: false
+  Name: forge
+  RespondInOverlay: false
+  RespondInTwitch: true
+- Documentation: 'Guaranteed custom weapon style and quality changes; use !reforge for previews.'
+  Enabled: false
+  Handler: ReforgeWeapon
+  HandlerConfig: null
+  Help: '!reforge #N upgrade or swift|balanced|heavy'
+  HideHelp: false
+  ID: 49750970-75ef-44cc-8aab-980b158e62da
+  ModeratorOnly: false
+  Name: reforge
+  RespondInOverlay: false
+  RespondInTwitch: true
 - Documentation: Reforge a custom weapon up to +5. Use !enchant for weapons and !enchant <number> for configured costs and risks.
   Enabled: true
   Handler: EnchantWeapon

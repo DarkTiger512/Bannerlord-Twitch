@@ -265,6 +265,12 @@
     <Compile Include="Util\SmartTroopPolicy.cs" />
     <Compile Include="Util\EnchantmentPolicy.cs" />
     <Compile Include="Actions\EnchantWeapon.cs" />
+    <Compile Include="Actions\ForgeWeapon.cs" />
+    <Compile Include="Actions\ReforgeWeapon.cs" />
+    <Compile Include="GlobalConfigs\GlobalForgeConfig.cs" />
+    <Compile Include="Util\ForgePolicy.cs" />
+    <Compile Include="Util\ForgeAssets.cs" />
+    <Compile Include="Util\ForgeService.cs" />
     <Compile Include="Util\TournamentHelpers.cs" />
     <Compile Include="Util\TroopTreeIndex.cs" />
     <Compile Include="Util\UIExtensions.cs" />

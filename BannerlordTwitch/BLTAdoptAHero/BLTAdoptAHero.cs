@@ -62,6 +62,7 @@ namespace BLTAdoptAHero
             ActionManager.RegisterAll(typeof(BLTAdoptAHeroModule).Assembly);
 
             GlobalCommonConfig.Register();
+            GlobalForgeConfig.Register();
             GlobalEventConfig.Register();
             GlobalTournamentConfig.Register();
             GlobalHeroClassConfig.Register();
