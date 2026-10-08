@@ -1025,6 +1025,18 @@ Commands:
   Name: leaderboard
   RespondInOverlay: true
   RespondInTwitch: false
+- Documentation: Create a new adult child with your spouse and reserve them as your future heir.
+  Enabled: true
+  Handler: AdoptHeir
+  HandlerConfig:
+    GoldCost: 0
+  Help: '!adoptheir creates your future heir; your current hero stays active.'
+  HideHelp: false
+  ID: 12c172aa-3db4-40e2-95c0-6e342d1136ad
+  ModeratorOnly: false
+  Name: adoptheir
+  RespondInOverlay: false
+  RespondInTwitch: true
 - Documentation: ''
   Enabled: true
   Handler: HeirCommand

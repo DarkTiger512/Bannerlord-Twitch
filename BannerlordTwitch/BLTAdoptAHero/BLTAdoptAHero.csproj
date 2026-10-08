@@ -130,6 +130,9 @@
     <Compile Include="Actions\GoldIncomeFeature.cs" />
     <Compile Include="Actions\PartyManagement.cs" />
     <Compile Include="Actions\HeirCommand.cs" />
+    <Compile Include="Actions\AdoptHeir.cs" />
+    <Compile Include="Util\AdoptHeirService.cs" />
+    <Compile Include="Util\NativeOffspringAdapter.cs" />
     <Compile Include="Actions\Leaderboard.cs" />
     <Compile Include="Actions\ItemStats.cs" />
     <Compile Include="Actions\HeroToHeroGold.cs" />

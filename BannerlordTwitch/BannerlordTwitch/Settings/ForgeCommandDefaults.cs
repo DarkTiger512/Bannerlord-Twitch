@@ -9,7 +9,7 @@ namespace BannerlordTwitch
         internal static bool AddMissing(ICollection<Command> commands, IEnumerable<Command> defaults)
         {
             bool added = false;
-            foreach (var command in defaults.Where(c => c.Handler == "ForgeWeapon" || c.Handler == "ReforgeWeapon"))
+            foreach (var command in defaults.Where(c => c.Handler == "ForgeWeapon" || c.Handler == "ReforgeWeapon" || c.Handler == "AdoptHeir"))
             {
                 if (commands.Any(c => c.ID == command.ID || c.Handler == command.Handler
                     || string.Equals(c.Name.ToString(), command.Name.ToString(), StringComparison.OrdinalIgnoreCase))) continue;

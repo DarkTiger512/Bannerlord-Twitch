@@ -115,7 +115,7 @@ namespace BannerlordTwitch
             settings.SimTesting ??= new();
 
             // Add only the new feature commands. Existing commands, including renamed or
-            // disabled ones, are authoritative; never reset a profile to install forging.
+            // disabled ones, are authoritative; never reset a profile to install new features.
             var defaults = YamlHelpers.Deserialize<Settings>(File.ReadAllText(DefaultSettingsFileName));
             bool addedCommands = ForgeCommandDefaults.AddMissing(settings.Commands, defaults.Commands);
 

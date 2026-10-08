@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -88,9 +88,9 @@ namespace BLTAdoptAHero
 
         void IRewardHandler.Enqueue(ReplyContext context, object config)
         {
-            (_, string message) = ExecuteInternal(context.UserName, (Settings)config, context.Args);
-            if (message != null)
-                ActionManager.NotifyComplete(context, message);
+            (bool success, string message) = ExecuteInternal(context.UserName, (Settings)config, context.Args);
+            if (success) ActionManager.NotifyComplete(context, message);
+            else ActionManager.NotifyCancelled(context, message);
         }
 
         void ICommandHandler.Execute(ReplyContext context, object config)
@@ -104,11 +104,14 @@ namespace BLTAdoptAHero
         {
             Hero adoptedHero = BLTAdoptAHeroCampaignBehavior.Current.GetAdoptedHero(userName);
             Hero ancestor = BLTAdoptAHeroCampaignBehavior.Current.GetAdoptedHero(userName) ?? BLTAdoptAHeroCampaignBehavior.Current.GetRetiredHero(userName);
+            if (ancestor == null) return (false, "No current or retired hero was found.");
+            if (adoptedHero != null && adoptedHero.Clan == null) return (false, "Your hero must belong to a clan to select an heir.");
             Hero heirHero = null;
             bool leader = false;
             var behavior = Campaign.Current.GetCampaignBehavior<BLTHeirBehavior>();
             if (behavior == null) return (false, "BLTHeirBehavior not initialized");
-            if (behavior.heirList.TryGetValue(ancestor, out var value))
+            heirHero = behavior.GetValidHeir(ancestor);
+            if (heirHero != null && behavior.heirList.TryGetValue(ancestor, out var value))
             {
                 heirHero = value.heir;
                 leader = value.flag;
@@ -119,26 +122,24 @@ namespace BLTAdoptAHero
                 if (string.IsNullOrWhiteSpace(contextArgs))
                 {
                     Hero newHeir = adoptedHero.Clan.Heroes
-                    .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero)) && !h.IsAdopted())
+                    .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero)) && behavior.CanReserve(adoptedHero, h) && !behavior.IsPendingOffspring(h))
                     .SelectRandom();
                     if (newHeir == null)
                         return (false, "No suitable heir found in adopted hero's clan.");
 
-                    behavior.heirList.Add(adoptedHero, (newHeir, adoptedHero.IsClanLeader));
-                    behavior._heirs.Add(newHeir);
+                    if (!behavior.TryReserve(adoptedHero, newHeir)) return (false, "That hero is already reserved or unavailable.");
                     return (true, $"Assigned heir to {newHeir.FirstName}");
                 }
                 else
                 {
                     Hero newHeir = adoptedHero.Clan.Heroes
-                   .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero) || h.Spouse == adoptedHero) && !h.IsAdopted())
+                   .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero) || h.Spouse == adoptedHero) && behavior.CanReserve(adoptedHero, h) && !behavior.IsPendingOffspring(h))
                    .FirstOrDefault(c => c.Name.ToString().IndexOf(contextArgs, StringComparison.OrdinalIgnoreCase) >= 0);
 
                     if (newHeir == null)
                         return (false, $"No hero named '{contextArgs}' found to adopt as heir.");
 
-                    behavior.heirList.Add(adoptedHero, (newHeir, adoptedHero.IsClanLeader));
-                    behavior._heirs.Add(newHeir);
+                    if (!behavior.TryReserve(adoptedHero, newHeir)) return (false, "That hero is already reserved or unavailable.");
                     return (true, $"Assigned heir to {newHeir.FirstName}");
                 }
             }
@@ -148,14 +149,11 @@ namespace BLTAdoptAHero
                 {
 
                     Hero newHeir = adoptedHero.Clan.Heroes
-                    .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero) || h.Spouse == adoptedHero) && !h.IsAdopted())
+                    .Where(h => h.IsAlive && h.Age >= Campaign.Current.Models.AgeModel.HeroComesOfAge && (h.Father == adoptedHero || h.Mother == adoptedHero || h.Siblings.Contains(adoptedHero) || h.Spouse == adoptedHero) && behavior.CanReserve(adoptedHero, h) && !behavior.IsPendingOffspring(h))
                     .FirstOrDefault(c => c.Name.ToString().IndexOf(contextArgs, StringComparison.OrdinalIgnoreCase) >= 0);
                     if (newHeir == null)
                         return (false, $"No hero named '{contextArgs}' found to adopt as heir.");
-                    behavior.heirList.Remove(adoptedHero);
-                    behavior.heirList.Add(adoptedHero, (newHeir,adoptedHero.IsClanLeader));
-                    behavior._heirs.Remove(heirHero);
-                    behavior._heirs.Add(newHeir);
+                    if (!behavior.TryReserve(adoptedHero, newHeir)) return (false, "That hero is already reserved or unavailable.");
                     return (true, $"Assigned heir to {newHeir.FirstName}");
                 }
                 else
@@ -170,7 +168,6 @@ namespace BLTAdoptAHero
                 {
                     return (false, "{=E7wqQ2kg}You can't adopt a hero: no available hero matching the requirements was found!".Translate());
                 }
-                heirHero = null;
                 if (settings.OverrideAge)
                 {
                     newHero.SetBirthDay(CampaignTime.YearsFromNow(-Math.Max(Campaign.Current.Models.AgeModel.HeroComesOfAge, settings.StartingAgeRange.RandomInRange())));
@@ -199,9 +196,9 @@ namespace BLTAdoptAHero
                     newHero.HeroDeveloper.SetInitialSkillLevel(CampaignHelpers.AllSkillObjects.First(), 1);
                 }
                 
-                if (ancestor.IsClanLeader && heirHero.Clan == ancestor.Clan || behavior.heirList.FirstOrDefault(h => h.Key == ancestor).Value.flag == true)
+                if (newHero.Clan == ancestor.Clan && (ancestor.IsClanLeader || leader))
                 {
-                    ChangeClanLeaderAction.ApplyWithSelectedNewLeader(heirHero.Clan, heirHero);
+                    ChangeClanLeaderAction.ApplyWithSelectedNewLeader(newHero.Clan, newHero);
                 }
 
                 HeroClassDef classDef = null;
@@ -247,9 +244,7 @@ namespace BLTAdoptAHero
                     Log.Info("{=K7nuJVCN}{OldName} is now known as {NewName}!".Translate(("OldName", oldName), ("NewName", newHero.Name)));
 
                 // Cleanup lists
-                behavior._heirs.Remove(heirHero);
-                var key = behavior.heirList.FirstOrDefault(h => h.Key == ancestor).Key;
-                behavior.heirList.Remove(key);
+                behavior.RemoveReservation(ancestor);
 
                 return inherited.Any()
                     ? (true, "{=PAc5S0GY}{OldName} is now known as {NewName}, they have {NewGold} (inheriting {Inherited})!"
