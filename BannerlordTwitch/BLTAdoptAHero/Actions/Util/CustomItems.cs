@@ -131,241 +131,35 @@ namespace BLTAdoptAHero.Actions.Util
         };
 
         public static ItemObject CreateCraftedWeapon(Hero hero, EquipmentType weaponType, int desiredTier)
-        {
-            // var equipmentTypes = weaponTypes.ToList();
-            var equipmentWeaponClass = EquipmentTypeHelpers.GetWeaponClass(weaponType);
-            var validTemplates = CraftingTemplate.All
-                .Where(t => t.WeaponDescriptions?.Any(w => w.WeaponClass == equipmentWeaponClass) == true)
-                .ToList();
-
-            if (!validTemplates.Any())
-            {
-                // Log.Error($"Failed to create Tier {desiredTier + 1} {weaponType} for {hero.Name}: no matching templates for these weapon classes");
-                return null;
-            }
-
-            int itr = 0;
-            var itemsOfCorrectType = new List<ItemObject>();
-            do
-            {
-                var crafting = CampaignHelpers.NewCrafting(validTemplates.SelectRandom(), hero.Culture);
-                crafting.Init();
-                crafting.Randomize();
-
-                var generatedItem = (ItemObject)AccessTools.Field(typeof(Crafting), "_craftedItemObject").GetValue(crafting);
-                if (generatedItem.IsEquipmentType(weaponType))
-                {
-                    itemsOfCorrectType.Add(generatedItem);
-
-                    // We can stop immediately if we found one of the best tier
-                    if (generatedItem.Tier == ItemObject.ItemTiers.Tier6)
-                    {
-                        break;
-                    }
-                }
-                // SetItemName(generatedItem, new ($"{crafting.CurrentCraftingTemplate.TemplateName} (Tournament Prize of {hero.FirstName})"));
-            } while (++itr < 500);
-
-            if (!itemsOfCorrectType.Any() && itr >= 500)
-            {
-                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} in {itr} iterations");
-                return null;
-            }
-
-            var bestItem = itemsOfCorrectType.OrderByDescending(item => item.Tier).First();
-
-            Log.Info($"Created {bestItem.Tier} ({bestItem.Tierf:0.00}) {bestItem.WeaponComponent?.PrimaryWeapon.WeaponClass} {bestItem.Name} for {hero.Name} in {itr} iterations");
-
-            bestItem.StringId = Guid.NewGuid().ToString();
-            GiveUniqueCraftedIdentity(bestItem);
-            CompleteCraftedItem(bestItem);
-
-            return MBObjectManager.Instance.RegisterObject(bestItem);
-        }
+            => CreateCulturedCraftedWeapon(hero, weaponType, desiredTier, hero.Culture);
 
         public static ItemObject CreateCulturedCraftedWeapon(Hero hero, EquipmentType weaponType, int desiredTier, CultureObject culture)
         {
-            var equipmentWeaponClass = EquipmentTypeHelpers.GetWeaponClass(weaponType);
-            var validTemplates = CraftingTemplate.All
-                .Where(t => t.WeaponDescriptions?.Any(w => w.WeaponClass == equipmentWeaponClass) == true)
-                .ToList();
-
-            if (!validTemplates.Any())
-            {
-                return null;
-            }
-
-            int itr = 0;
-            var itemsOfCorrectType = new List<ItemObject>();
-            do
-            {
-                var crafting = CampaignHelpers.NewCrafting(validTemplates.SelectRandom(), culture ?? hero.Culture);
-                crafting.Init();
-                crafting.Randomize();
-
-                var generatedItem = (ItemObject)AccessTools.Field(typeof(Crafting), "_craftedItemObject").GetValue(crafting);
-                if (generatedItem.IsEquipmentType(weaponType))
-                {
-                    itemsOfCorrectType.Add(generatedItem);
-
-                    // We can stop immediately if we found one of the best tier
-                    if (generatedItem.Tier == ItemObject.ItemTiers.Tier6)
-                    {
-                        break;
-                    }
-                }
-            } while (++itr < 500);
-
-            if (!itemsOfCorrectType.Any() && itr >= 500)
-            {
-                Log.Error($"Failed to create crafted {weaponType} for {hero.Name} with culture {culture?.Name} in {itr} iterations");
-                return null;
-            }
-
-            var bestItem = itemsOfCorrectType.OrderByDescending(item => item.Tier).First();
-
-            Log.Info($"Created {bestItem.Tier} ({bestItem.Tierf:0.00}) {bestItem.WeaponComponent?.PrimaryWeapon.WeaponClass} {bestItem.Name} for {hero.Name} with culture {culture?.Name} in {itr} iterations");
-
-            bestItem.StringId = Guid.NewGuid().ToString();
-            GiveUniqueCraftedIdentity(bestItem);
-            CompleteCraftedItem(bestItem);
-
-            return MBObjectManager.Instance.RegisterObject(bestItem);
-        }
-
-        private static void SetItemName(ItemObject item, TextObject name) => AccessTools.Property(typeof(ItemObject), nameof(ItemObject.Name)).SetValue(item, name);
-
-        private static readonly System.Reflection.PropertyInfo WeaponDesignProp =
-            AccessTools.Property(typeof(ItemObject), "WeaponDesign");
-
-        private static void GiveUniqueCraftedIdentity(ItemObject item)
-        {
-            if (item == null || WeaponDesignProp == null) return;
-
             try
             {
-                var design = item.WeaponDesign;
-                if (design?.Template == null || design.UsedPieces == null) return;
-
-                // Already identified somehow - leave it alone.
-                if (!string.IsNullOrEmpty(design.HashedCode)) return;
-
-                string id = item.StringId ?? "";
-                if (id.Length == 0) return;
-
-                var identified = new WeaponDesign(design.Template, design.WeaponName, design.UsedPieces, id);
-                WeaponDesignProp.SetValue(item, identified);
+                var settings = GlobalForgeConfig.Get();
+                settings.Validate();
+                // Preserve legacy reward signatures, but honor the caller's requested tier.
+                var legacySettings = new BLTAdoptAHero.Util.ForgeSettings
+                {
+                    CandidateBudget = settings.CandidateBudget,
+                    TargetTier = Math.Max(0, Math.Min(6, desiredTier)),
+                    AllowHiddenParts = settings.AllowHiddenParts,
+                    RestrictedPartIds = settings.RestrictedPartIds
+                };
+                var assets = BLTAdoptAHero.Util.ForgeAssets.Current;
+                if (!assets.ForType(weaponType).Any()) return null;
+                var result = assets.Generate(hero, weaponType, culture ?? hero.Culture,
+                    BLTAdoptAHero.Util.ForgeStyle.Balanced, legacySettings, false);
+                BLTAdoptAHero.Util.NativeForgeAdapter.PrepareIdentity(result.Item);
+                BLTAdoptAHero.Util.NativeForgeAdapter.Register(result.Item);
+                return result.Item;
             }
             catch (Exception ex)
             {
-                // Never let this break item creation - an unidentified weapon (the
-                // pre-existing behaviour) is far better than a failed craft.
-                Log.Error($"Failed to assign unique crafted identity to {item.StringId ?? "?"}: {ex.Message}");
+                Log.Error($"Crafting {weaponType} for {hero.Name} failed: {ex}");
+                return null;
             }
         }
-
-        private static void CompleteCraftedItem(ItemObject item)
-        {
-            //ItemObject.InitAsPlayerCraftedItem(ref item);
-            MBObjectManager.Instance.RegisterObject(item);
-            CampaignEventDispatcher.Instance.OnNewItemCrafted(item, null, false);
-        }
     }
-        // The vanilla tier calculation for weapons:
-
-        // private static float CalculateTierMeleeWeapon(WeaponComponent weaponComponent)
-        // {
-        //     float highestComponentValue = float.MinValue;
-        //     float secondHighestComponentValue = float.MinValue;
-        //     foreach (var weaponComponentData in weaponComponent.Weapons)
-        //     {
-        //         float thrustValue = weaponComponentData.ThrustDamage * GetFactor(weaponComponentData.ThrustDamageType) * MathF.Pow(weaponComponentData.ThrustSpeed * 0.01f, 1.5f);
-        //         float swingValue = weaponComponentData.SwingDamage * GetFactor(weaponComponentData.SwingDamageType) * MathF.Pow(weaponComponentData.SwingSpeed * 0.01f, 1.5f);
-        //         float damageTypeValue = Math.Max(thrustValue, swingValue * 1.1f);
-        //         if (weaponComponentData.WeaponFlags.HasAnyFlag(WeaponFlags.NotUsableWithOneHand))
-        //         {
-        //             damageTypeValue *= 0.8f;
-        //         }
-        //         
-        //         if (weaponComponentData.WeaponClass is WeaponClass.ThrowingKnife or WeaponClass.ThrowingAxe)
-        //         {
-        //             damageTypeValue *= 1.2f;
-        //         }
-        //         else if (weaponComponentData.WeaponClass is WeaponClass.Javelin)
-        //         {
-        //             damageTypeValue *= 0.6f;
-        //         }
-        //         
-        //         float lengthValue = weaponComponentData.WeaponLength * 0.01f;
-        //         float finalComponentValue = 0.06f * (damageTypeValue * (1f + lengthValue)) - 3.5f;
-        //         if (finalComponentValue > secondHighestComponentValue)
-        //         {
-        //             if (finalComponentValue >= highestComponentValue)
-        //             {
-        //                 secondHighestComponentValue = highestComponentValue;
-        //                 highestComponentValue = finalComponentValue;
-        //             }
-        //             else
-        //             {
-        //                 secondHighestComponentValue = finalComponentValue;
-        //             }
-        //         }
-        //     }
-        //
-        //     highestComponentValue = MathF.Clamp(highestComponentValue, -1.5f, 7.5f);
-        //     if (weaponComponent.Weapons.Count <= 1)
-        //     {
-        //         return highestComponentValue;
-        //     }
-        //     
-        //     secondHighestComponentValue = MathF.Clamp(secondHighestComponentValue, -1.5f, 7.5f);
-        //
-        //     return highestComponentValue * MathF.Pow(1f + (secondHighestComponentValue + 1.5f) / (highestComponentValue + 2.5f), 0.2f);
-        // }
-        //
-        // private static float CalculateTierCraftedWeapon(WeaponDesign craftingData)
-        // {
-        //     var craftingPieces = craftingData
-        //         .UsedPieces
-        //         .Select(e => e.CraftingPiece)
-        //         .Where(c => c.IsValid)
-        //         .ToList();
-        //
-        //     if(!craftingPieces.Any())
-        //     {
-        //         return 0.1f;
-        //     }   
-        //
-        //     float averagePieceTier = (float) craftingPieces.Average(p => p.PieceTier);
-        //
-        //     var valuableMaterials = craftingPieces
-        //         .SelectMany(p => p.MaterialsUsed)
-        //         .Where(m => m.Item1 is >= CraftingMaterials.Iron1 and <= CraftingMaterials.Iron6)
-        //         .ToList()
-        //         ;
-        //
-        //     if (valuableMaterials.Sum(m => m.Item2) > 0)
-        //     {
-        //         int materialsValue = valuableMaterials.Sum(m => (int)m.Item1 * m.Item2);
-        //         return 0.4f * (1.25f * averagePieceTier) + 0.6f * (1.3f * materialsValue / (valuableMaterials.Count + 0.6f) - 1.3f);
-        //     }
-        //     else
-        //     {
-        //         return averagePieceTier;
-        //     }
-        // }
-        //
-        // private static float GetFactor(DamageTypes swingDamageType)
-        // {
-        //     if (swingDamageType == DamageTypes.Blunt)
-        //     {
-        //         return 1.3f;
-        //     }
-        //     if (swingDamageType != DamageTypes.Pierce)
-        //     {
-        //         return 1f;
-        //     }
-        //     return 1.15f;
-        // }
-    //}
 }

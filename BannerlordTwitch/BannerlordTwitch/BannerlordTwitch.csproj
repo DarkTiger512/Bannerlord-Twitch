@@ -420,6 +420,7 @@
     <Compile Include="Settings\RewardSpec.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="Settings\ConfigurationVersioning.cs" />
+    <Compile Include="Settings\ForgeCommandDefaults.cs" />
     <Compile Include="Settings\SettingsHelpers.cs" />
     <Compile Include="Settings\SimTestingConfig.cs" />
     <Compile Include="Settings\SimTestingItem.cs" />

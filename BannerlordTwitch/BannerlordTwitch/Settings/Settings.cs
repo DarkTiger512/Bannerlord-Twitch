@@ -63,8 +63,8 @@ namespace BannerlordTwitch
             
             var settings = ReadCurrentConfiguration(File.ReadAllText(SaveFilePath),
                 () => File.ReadAllText(DefaultSettingsFileName), out bool reset);
-            SettingsPostLoad(settings);
-            if (reset) Save(settings);
+            bool addedCommands = SettingsPostLoad(settings);
+            if (reset || addedCommands) Save(settings);
             
             return settings;
         }
@@ -85,7 +85,8 @@ namespace BannerlordTwitch
             var profilePath = FileSystem.GetConfigPath($"Bannerlord-Twitch-v4-p{ActiveProfile}.yaml");
             string yaml = FileSystem.FileExists(profilePath) ? FileSystem.GetFileContentString(profilePath) : null;
             var settings = ReadCurrentConfiguration(yaml, () => File.ReadAllText(DefaultSettingsFileName), out bool reset);
-            SettingsPostLoad(settings);
+            bool addedCommands = SettingsPostLoad(settings);
+            if (!reset && addedCommands) Save(settings);
             if (reset)
             {
                 Save(settings);
@@ -106,18 +107,24 @@ namespace BannerlordTwitch
         }
 #endif
 
-        private static void SettingsPostLoad(Settings settings)
+        private static bool SettingsPostLoad(Settings settings)
         {
             settings.Commands ??= new();
             settings.Rewards ??= new();
             settings.GlobalConfigs ??= new();
             settings.SimTesting ??= new();
 
+            // Add only the new feature commands. Existing commands, including renamed or
+            // disabled ones, are authoritative; never reset a profile to install forging.
+            var defaults = YamlHelpers.Deserialize<Settings>(File.ReadAllText(DefaultSettingsFileName));
+            bool addedCommands = ForgeCommandDefaults.AddMissing(settings.Commands, defaults.Commands);
+
             ActionManager.ConvertSettings(settings.Commands);
             ActionManager.ConvertSettings(settings.Rewards);
             ActionManager.EnsureGlobalSettings(settings.GlobalConfigs);
 
             SettingsHelpers.CallInDepth<ILoaded>(settings, config => config.OnLoaded(settings));
+            return addedCommands;
         }
 
         private static void SettingsPreSave(Settings settings)
