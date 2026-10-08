@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BannerlordTwitch.Helpers;
 using BLTAdoptAHero.Actions;
 using BLTAdoptAHero.Behaviors;
 using TaleWorlds.CampaignSystem;
@@ -91,6 +92,7 @@ namespace BLTAdoptAHero.Util
                 child.Mother != pending.Mother || child.Father != pending.Father)
                 throw new InvalidOperationException("The pending child is unavailable or no longer eligible. No gold charged.");
             child.Clan = owner.Clan;
+            EnsureWandererSkills(child);
 
             if (!pending.BirthComplete)
             {
@@ -101,6 +103,7 @@ namespace BLTAdoptAHero.Util
                 pending.BirthComplete = true;
             }
             NativeOffspringAdapter.GrowUp(child, pending);
+            EnsureWandererSkills(child);
             blt.SetIsCreatedHero(child, true);
             // Native listeners can alter campaign state; recheck before committing.
             if (!owner.IsAlive || owner.IsDisabled || !owner.IsAdopted() || owner.Clan != child.Clan ||
@@ -119,6 +122,15 @@ namespace BLTAdoptAHero.Util
             }
             behavior.PendingOffspringOperations.Remove(owner);
             return reply;
+        }
+
+        private static void EnsureWandererSkills(Hero child)
+        {
+            // Protect both retained newborns and completed adults against zero-skill removal on load.
+            if (!child.IsWanderer) return;
+            var skills = CampaignHelpers.AllSkillObjects.ToList();
+            if (skills.Count > 0 && skills.All(s => child.GetSkillValue(s) == 0))
+                child.HeroDeveloper.SetInitialSkillLevel(skills[0], 1);
         }
     }
 }
