@@ -171,6 +171,10 @@ namespace BLTAdoptAHero.Util
                     fallback |= culture != null && !matched;
                     var actual = matched ? culture : pieces.Where(p => p.IsValid && p.CraftingPiece.Culture != null)
                         .GroupBy(p => p.CraftingPiece.Culture).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key as CultureObject;
+                    // Native crafting persistence dereferences Item.Culture.StringId, even for neutral parts.
+                    // Keep the part fallback flag, but always assign a campaign culture to the item.
+                    actual ??= culture ?? hero.Culture ?? CampaignHelpers.MainCultures.FirstOrDefault();
+                    if (actual == null) throw new InvalidOperationException("No campaign culture is available for this crafted weapon. No gold charged.");
                     var design = new WeaponDesign(template, template.TemplateName, pieces, null);
                     ItemObject item = null;
                     Crafting.GenerateItem(design, template.TemplateName, actual, template.ItemModifierGroup, ref item, null);
@@ -205,6 +209,8 @@ namespace BLTAdoptAHero.Util
 
         internal static void Register(ItemObject item)
         {
+            if (item.Culture == null)
+                throw new InvalidOperationException("The crafted weapon has no campaign culture. No gold charged.");
             MBObjectManager.Instance.RegisterObject(item);
             CampaignEventDispatcher.Instance.OnNewItemCrafted(item, null, false);
         }
