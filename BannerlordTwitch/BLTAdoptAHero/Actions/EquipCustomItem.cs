@@ -135,7 +135,11 @@ namespace BLTAdoptAHero.Actions
                 {
                     slotsEquipped = EquipCustomItemToAllSlots(adoptedHero, itemToEquip.Value);
                     if (slotsEquipped == 0)
-                        throw new InvalidOperationException("No class or current loadout slot supports this weapon. Check your class weapon choices. No gold charged.");
+                        {
+                        var allowed = adoptedHero.GetClass()?.IndexedSlots.Select(s => s.type)
+                            ?? adoptedHero.BattleEquipment.YieldFilledWeaponSlots().Select(s => s.element.Item.GetEquipmentType());
+                        throw new InvalidOperationException($"Cannot equip {itemToEquip.Value.Item.GetEquipmentType()}. Class/loadout slots: {string.Join(", ", allowed.Where(t => t != EquipmentType.None).Distinct())}. No gold charged.");
+                    }
                 }, () =>
                 {
                     foreach (var slot in previous) adoptedHero.BattleEquipment[slot.index] = slot.element;
@@ -237,8 +241,15 @@ namespace BLTAdoptAHero.Actions
 
         private bool IsItemCompatibleWithSlot(ItemObject item, EquipmentType slotType)
         {
-            return item != null && slotType != EquipmentType.None && slotType != EquipmentType.Num
-                && item.IsEquipmentType(slotType);
+            if (item == null || slotType == EquipmentType.None || slotType == EquipmentType.Num) return false;
+            // Manual equip historically allowed thrusting and swinging polearms in the same handed slot.
+            // Keep that behavior; the stricter generator matcher distinguishes lances from glaives.
+            var weaponClass = item.PrimaryWeapon?.WeaponClass;
+            if (slotType is EquipmentType.OneHandedLance or EquipmentType.OneHandedGlaive)
+                return weaponClass == WeaponClass.OneHandedPolearm;
+            if (slotType is EquipmentType.TwoHandedLance or EquipmentType.TwoHandedGlaive)
+                return weaponClass is WeaponClass.TwoHandedPolearm or WeaponClass.LowGripPolearm;
+            return item.IsEquipmentType(slotType);
         }
     }
 }
