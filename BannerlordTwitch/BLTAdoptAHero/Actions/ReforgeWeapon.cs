@@ -18,12 +18,14 @@ namespace BLTAdoptAHero
         private static bool Eligible(EquipmentElement item) => ForgeAssets.IsWeapon(item.Item)
             && BLTCustomItemsCampaignBehavior.Current.IsRegistered(item.ItemModifier);
 
+        public override Type HandlerConfigType => typeof(ForgeCommandSettings);
+
         protected override void ExecuteInternal(Hero hero, ReplyContext context, object config, Action<string> onSuccess, Action<string> onFailure)
         {
             string purchaseReply;
             try
             {
-                var settings = GlobalForgeConfig.Get();
+                var settings = (config as ForgeCommandSettings)?.Resolve() ?? GlobalForgeConfig.Get();
                 settings.Validate();
                 var args = ForgePolicy.Tokens(context.Args);
                 var campaign = BLTAdoptAHeroCampaignBehavior.Current;

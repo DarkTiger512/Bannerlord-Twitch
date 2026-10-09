@@ -217,6 +217,7 @@ namespace BLTAdoptAHero
     public class HeroClassDef { public List<BannerlordTwitch.Helpers.EquipmentType> Weapons = new(); public bool Mounted; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedWeapons => Weapons.Select((type, i) => ((EquipmentIndex)i, type)); }
     public abstract class HeroCommandHandlerBase
     {
+        public virtual Type HandlerConfigType => null;
         protected abstract void ExecuteInternal(Hero hero, BannerlordTwitch.ReplyContext context, object config, Action<string> success, Action<string> failure);
         public string Test(Hero hero, string args) { string result = null; ExecuteInternal(hero, new() { Args = args }, null, s => result = s, s => result = s); return result; }
     }
@@ -243,4 +244,6 @@ namespace BLTAdoptAHero
     }
 }
 
-namespace BannerlordTwitch { public sealed class Command { public Guid ID { get; set; } = Guid.NewGuid(); public string Handler, Name; public bool Enabled; public object HandlerConfig; } }
+namespace BannerlordTwitch { public sealed class Command { public Guid ID { get; set; } = Guid.NewGuid(); public string Handler, Name, Help, Documentation; public bool Enabled; public object HandlerConfig; } }
+
+namespace BannerlordTwitch.Util { public static class YamlHelpers { public static T ConvertObject<T>(object value) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Newtonsoft.Json.JsonConvert.SerializeObject(value)); } }
