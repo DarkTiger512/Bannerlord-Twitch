@@ -21,7 +21,7 @@ namespace BLTAdoptAHero
             string purchaseReply;
             try
             {
-                var settings = (config as ForgeCommandSettings)?.Resolve() ?? GlobalForgeConfig.Get();
+                var settings = config as ForgeSettings ?? new ForgeCommandSettings();
                 settings.Validate();
                 var args = ForgePolicy.Tokens(context.Args);
                 if (args.Count == 0)

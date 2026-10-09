@@ -119,6 +119,9 @@ namespace BannerlordTwitch
             var defaults = YamlHelpers.Deserialize<Settings>(File.ReadAllText(DefaultSettingsFileName));
             bool addedCommands = ForgeCommandDefaults.AddMissing(settings.Commands, defaults.Commands);
             addedCommands |= LegacyWeaponCommandMigration.Migrate(settings.Commands);
+            var oldForgeConfig = settings.GlobalConfigs.FirstOrDefault(c => c.Id == "Adopt A Hero - Forge Config");
+            addedCommands |= LegacyWeaponCommandMigration.Localize(settings.Commands, oldForgeConfig?.Config);
+            addedCommands |= oldForgeConfig != null;
 
             ActionManager.ConvertSettings(settings.Commands);
             ActionManager.ConvertSettings(settings.Rewards);
