@@ -28,7 +28,7 @@ namespace BLTAdoptAHero.Util
 
     public class ForgeSettings
     {
-        [Category("Prices"), DisplayName("Standard weapon cost"), Description("BLT gold charged for a new Standard weapon. Standard adds no quality damage bonus. Set to 0 to make it free. Used by forge.")]
+        [Category("Prices"), DisplayName("Standard weapon cost"), Description("BLT gold charged for a new Standard weapon. Standard includes its configured damage and speed point bonuses. Set to 0 to make it free. Used by forge.")]
         public int StandardCost { get; set; } = 500000;
         [Category("Prices"), DisplayName("Fine weapon cost"), Description("BLT gold charged for a new Fine weapon, including its quality bonus. Must be at least the Standard price. Used by forge.")]
         public int FineCost { get; set; } = 750000;
@@ -50,6 +50,18 @@ namespace BLTAdoptAHero.Util
         public double FineDamagePercent { get; set; } = 5;
         [Category("Weapon balance"), DisplayName("Masterwork extra damage (%)"), Description("Total extra damage for Masterwork quality, measured from the original weapon damage. Enter 10 for +10%, not an additional 10% on top of Fine. Must be at least the Fine bonus and no more than 25.")]
         public double MasterworkDamagePercent { get; set; } = 10;
+        [Category("Weapon balance"), DisplayName("Standard extra damage (points)"), Description("Flat damage points added for Standard quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int StandardDamageBonus { get; set; } = 20;
+        [Category("Weapon balance"), DisplayName("Standard extra speed (points)"), Description("Flat speed points added for Standard quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int StandardSpeedBonus { get; set; } = 10;
+        [Category("Weapon balance"), DisplayName("Fine extra damage (points)"), Description("Flat damage points added for Fine quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int FineDamageBonus { get; set; } = 40;
+        [Category("Weapon balance"), DisplayName("Fine extra speed (points)"), Description("Flat speed points added for Fine quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int FineSpeedBonus { get; set; } = 20;
+        [Category("Weapon balance"), DisplayName("Masterwork extra damage (points)"), Description("Flat damage points added for Masterwork quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int MasterworkDamageBonus { get; set; } = 60;
+        [Category("Weapon balance"), DisplayName("Masterwork extra speed (points)"), Description("Flat speed points added for Masterwork quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
+        public int MasterworkSpeedBonus { get; set; } = 30;
         [Category("Advanced"), DisplayName("Allow hidden crafting parts"), Description("Allow BLT to use weapon pieces that the game or a mod hides from the normal smithing screen. Hidden means unavailable in that screen, not invisible on the weapon. Leave off unless you want these extra parts; some mods hide parts they do not intend players to use.")]
         public bool AllowHiddenParts { get; set; }
         [Category("Advanced"), DisplayName("Blocked crafting part IDs"), Description("Weapon pieces BLT must never use when crafting. Add their exact internal part IDs, not their display names. Leave empty unless you need to exclude a specific unwanted or broken mod part. This does not block whole weapons.")]
@@ -72,7 +84,10 @@ namespace BLTAdoptAHero.Util
 
         public void Validate()
         {
-            if (StandardCost < 0 || FineCost < StandardCost || MasterworkCost < FineCost || UpgradeCost < 0
+            if (StandardDamageBonus < 0 || FineDamageBonus < StandardDamageBonus || MasterworkDamageBonus < FineDamageBonus
+                || MasterworkDamageBonus > 100 || StandardSpeedBonus < 0 || FineSpeedBonus < StandardSpeedBonus
+                || MasterworkSpeedBonus < FineSpeedBonus || MasterworkSpeedBonus > 50
+                || StandardCost < 0 || FineCost < StandardCost || MasterworkCost < FineCost || UpgradeCost < 0
                 || StyleCost < 0 || CultureSurcharge < 0 || CandidateBudget < 1 || CandidateBudget > 128
                 || TargetTier < 0 || TargetTier > 6 || !Finite(StylePercent) || StylePercent < 0 || StylePercent > 25
                 || !Finite(FineDamagePercent) || FineDamagePercent < 0 || !Finite(MasterworkDamagePercent)
@@ -121,7 +136,12 @@ namespace BLTAdoptAHero.Util
                 : quality == ForgeQuality.Masterwork ? settings.MasterworkDamagePercent : 0;
             double stylePercent = style == ForgeStyle.Swift ? -settings.StylePercent : style == ForgeStyle.Heavy ? settings.StylePercent : 0;
             int Round(double value) => checked((int)Math.Round(value, MidpointRounding.AwayFromZero));
-            return (Round(damage * (qualityPercent + stylePercent) / 100), Round(speed * -stylePercent / 100));
+            int qualityDamage = quality == ForgeQuality.Masterwork ? settings.MasterworkDamageBonus
+                : quality == ForgeQuality.Fine ? settings.FineDamageBonus : settings.StandardDamageBonus;
+            int qualitySpeed = quality == ForgeQuality.Masterwork ? settings.MasterworkSpeedBonus
+                : quality == ForgeQuality.Fine ? settings.FineSpeedBonus : settings.StandardSpeedBonus;
+            return (checked(qualityDamage + Round(damage * (qualityPercent + stylePercent) / 100)),
+                checked(qualitySpeed + Round(speed * -stylePercent / 100)));
         }
 
         public static string PurchaseError(bool mission, bool prisoner, bool auction, int gold, int cost)

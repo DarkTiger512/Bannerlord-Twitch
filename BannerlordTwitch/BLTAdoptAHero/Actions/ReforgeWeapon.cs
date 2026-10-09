@@ -60,9 +60,12 @@ namespace BLTAdoptAHero
                     if (quality < ForgeQuality.Masterwork)
                     {
                         var delta = ForgeService.Contributions(item.Item, style, quality + 1, settings);
-                        upgrade = $"Upgrade to {quality + 1}: {settings.UpgradeCost:N0} gold, damage {delta.damage - (metadata?.AppliedDamage ?? 0):+0;-0;0}.";
+                        upgrade = $"Upgrade to {quality + 1}: {settings.UpgradeCost:N0} gold, damage {delta.damage - (metadata?.AppliedDamage ?? 0):+0;-0;0}, speed {delta.speed - (metadata?.AppliedSpeed ?? 0):+0;-0;0}.";
                     }
-                    onSuccess($"{item.GetModifiedItemName()}: {style}, {quality}. {upgrade} Style {settings.StyleCost:N0} gold: {string.Join("; ", options)}. Enchantments preserved. " + Usage);
+                    var configured = ForgeService.Contributions(item.Item, style, quality, settings);
+                    string refresh = metadata != null && (configured.damage != metadata.AppliedDamage || configured.speed != metadata.AppliedSpeed)
+                        ? $" Refresh current balance free: !reforge #{index} {style.ToString().ToLowerInvariant()}." : "";
+                    onSuccess($"{item.GetModifiedItemName()}: {style}, {quality}. {upgrade} Style {settings.StyleCost:N0} gold: {string.Join("; ", options)}. Enchantments preserved.{refresh} " + Usage);
                     return;
                 }
                 int cost;
@@ -75,9 +78,16 @@ namespace BLTAdoptAHero
                 else
                 {
                     if (!ForgePolicy.TryEnum(args[1], out ForgeStyle next)) throw new ArgumentException(Usage);
-                    if (style == next) throw new ArgumentException("Already that style. No gold charged.");
-                    style = next;
                     cost = settings.StyleCost;
+                    if (style == next)
+                    {
+                        var current = ForgeService.Contributions(item.Item, style, quality, settings);
+                        if (metadata == null || (current.damage == metadata.AppliedDamage && current.speed == metadata.AppliedSpeed))
+                            throw new ArgumentException("Already that style. No gold charged.");
+                        // Apply changed balance settings to an existing forged weapon without charging for a style change.
+                        cost = 0;
+                    }
+                    style = next;
                 }
                 var error = ForgeService.Guard(hero, cost, item);
                 if (error != null) throw new InvalidOperationException(error);
