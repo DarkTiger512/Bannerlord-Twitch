@@ -37,10 +37,11 @@ namespace TaleWorlds.ObjectSystem
 namespace TaleWorlds.Core
 {
     public class BasicCultureObject : MBObjectBase { public TaleWorlds.Localization.TextObject Name; }
-    public enum WeaponClass { Dagger, OneHandedSword, TwoHandedSword, OneHandedAxe, TwoHandedAxe, Mace, TwoHandedMace, OneHandedPolearm, TwoHandedPolearm, Bow, Crossbow, Sling, Arrow, Bolt, SlingStone, ThrowingKnife, ThrowingAxe, Javelin, Stone }
+    public enum WeaponClass { Dagger, OneHandedSword, TwoHandedSword, OneHandedAxe, TwoHandedAxe, Mace, TwoHandedMace, OneHandedPolearm, TwoHandedPolearm, LowGripPolearm, Bow, Crossbow, Sling, Arrow, Bolt, SlingStone, ThrowingKnife, ThrowingAxe, Javelin, Stone }
     public enum EquipmentIndex { Weapon0, Weapon1, Weapon2, Weapon3, ExtraWeaponSlot, NumAllWeaponSlots, Horse = 10 }
     public class WeaponComponentData
     {
+        public WeaponClass WeaponClass;
         public int SwingDamage = 100, ThrustDamage = 50, MissileDamage, SwingSpeed = 80, ThrustSpeed = 70;
         public bool IsMeleeWeapon = true, IsRangedWeapon, IsAmmo, IsShield;
     }
