@@ -464,7 +464,7 @@ namespace BLTAdoptAHero
                 var replacement = FindNewEquipmentByType(itemType);
                 if (replacement.IsEmpty && TaomEquipmentCompatibility.Enabled)
                 {
-                    var fallback = FindLastResortArmor(targetTier, adoptedHero, itemType,
+                    var fallback = FindLastResortEquipment(targetTier, adoptedHero, itemType,
                         restrictedItemIds, enforceTierCap);
                     replacement = fallback == null ? previousBattle[(int)index] : new(fallback);
                 }
@@ -492,9 +492,26 @@ namespace BLTAdoptAHero
                     adoptedHero.BattleEquipment[EquipmentIndex.Horse] = horse;
 
                     int horseType = horse.Item.HorseComponent.Monster.FamilyType;
-                    adoptedHero.BattleEquipment[EquipmentIndex.HorseHarness] = FindNewEquipmentByType(
-                        ItemObject.ItemTypeEnum.HorseHarness, h => horseType == h.ArmorComponent?.FamilyType
-                        );
+                    bool FitsMount(ItemObject item) => item.ItemType == ItemObject.ItemTypeEnum.HorseHarness
+                        && horseType == item.ArmorComponent?.FamilyType;
+                    var harness = FindNewEquipmentByType(ItemObject.ItemTypeEnum.HorseHarness, FitsMount);
+                    if (harness.IsEmpty && TaomEquipmentCompatibility.Enabled)
+                    {
+                        var fallback = FindLastResortEquipment(targetTier, adoptedHero,
+                            ItemObject.ItemTypeEnum.HorseHarness, restrictedItemIds, enforceTierCap, FitsMount);
+                        if (fallback != null) harness = new(fallback);
+                        else
+                        {
+                            var previous = previousBattle[(int)EquipmentIndex.HorseHarness];
+                            if (previous.Item != null && FitsMount(previous.Item)
+                                && CanUseItemIgnoringRace(adoptedHero, previous.Item, false, false)
+                                && !restrictedItemIds.Contains(previous.Item.StringId ?? "")
+                                && !BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Contains(previous.Item.StringId ?? "")
+                                && (!enforceTierCap || (int)previous.Item.Tier <= targetTier))
+                                harness = previous;
+                        }
+                    }
+                    adoptedHero.BattleEquipment[EquipmentIndex.HorseHarness] = harness;
                 }
             }
 
@@ -565,7 +582,7 @@ namespace BLTAdoptAHero
                     if (item == null && TaomEquipmentCompatibility.Enabled
                         && SkillGroup.ArmorIndexType.Any(s => s.itemType == itemType))
                     {
-                        item = FindLastResortArmor(targetTier, hero, itemType,
+                        item = FindLastResortEquipment(targetTier, hero, itemType,
                             restrictedItemIds, enforceTierCap, filter);
                         if (item == null) equipment[equipmentIndex] = previousSlot;
                     }
@@ -659,9 +676,9 @@ namespace BLTAdoptAHero
             => TaomEquipmentCompatibility.CanUse(hero, item)
                 && CanUseItemIgnoringRace(hero, item, overrideAbility, mustBeUsableMounted);
 
-        // Only the final armour fallback may bypass the race catalogue. Keep weapon,
-        // mount, skill, gender and configured restriction policies unchanged.
-        private static ItemObject FindLastResortArmor(int tier, Hero hero, ItemObject.ItemTypeEnum itemType,
+        // Final armour and saddle searches may bypass rider race. Saddle callers must
+        // still require the mount's family. Weapons and mounts retain their normal policy.
+        private static ItemObject FindLastResortEquipment(int tier, Hero hero, ItemObject.ItemTypeEnum itemType,
             HashSet<string> restrictedItemIds, bool enforceTierCap, Func<ItemObject, bool> filter = null)
         {
             var candidates = CampaignHelpers.AllItems.Where(item => item.ItemType == itemType

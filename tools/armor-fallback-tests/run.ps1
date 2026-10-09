@@ -6,7 +6,7 @@ function Extract([string]$signature) {
     while($depth -gt 0) { if($source[$end] -eq '{'){$depth++}; if($source[$end] -eq '}'){$depth--}; $end++ }
     $source.Substring($start,$end-$start)
 }
-$members=@('public static bool UpgradeEquipment(', 'private static void UpgradeCivilian(', 'public static bool HeroShouldUseHorse(', 'public enum MountFamilyType', '[Flags]', 'public static ItemObject FindRandomTieredEquipment(', 'public static ItemObject SelectRandomItemNearestTier(', 'private static ItemObject FindLastResortArmor(', 'private static bool CanUseItemIgnoringRace(') | ForEach-Object { Extract $_ }
+$members=@('public static bool UpgradeEquipment(', 'private static void UpgradeCivilian(', 'public static bool HeroShouldUseHorse(', 'public enum MountFamilyType', '[Flags]', 'public static ItemObject FindRandomTieredEquipment(', 'public static ItemObject SelectRandomItemNearestTier(', 'private static ItemObject FindLastResortEquipment(', 'private static bool CanUseItemIgnoringRace(') | ForEach-Object { Extract $_ }
 $start=$source.IndexOf('public static bool CanUseItem(')
 $end=$source.IndexOf(';',$start)+1
 $members += $source.Substring($start,$end-$start)

@@ -168,6 +168,54 @@ public static partial class EquipHero
         }
         Reset(); var weapon=Item("troll_sword",5,ItemObject.ItemTypeEnum.OneHandedWeapon); Donor(8,weapon);
         Check(!EquipHero.CanUseItem(Hero(77),weapon,false,false), "Creature weapon race restrictions unchanged");
+        foreach (var family in new[] { 1, 2 })
+        {
+            Reset();
+            var mount=Item("mount",5,ItemObject.ItemTypeEnum.Horse);
+            mount.HorseComponent=new() { Monster=new() { FamilyType=family } };
+            Donor(77,mount);
+            var saddle=Item("foreign-saddle",5,ItemObject.ItemTypeEnum.HorseHarness);
+            saddle.ArmorComponent=new() { FamilyType=family };
+            Donor(8,saddle);
+            var wrong=Item("wrong-family",5,ItemObject.ItemTypeEnum.HorseHarness);
+            wrong.ArmorComponent=new() { FamilyType=family == 1 ? 2 : 1 };
+            Donor(8,wrong);
+            var rider=Hero(77); rider.Class.Mounted=true;
+            rider.Class.UseHorse=family == 1; rider.Class.UseCamel=family == 2;
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true,new CultureObject(),true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].Item==saddle,
+                $"Mount family {family}: exact-tier saddle ignores rider race/culture but fits mount");
+            saddle.Tier=0;
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].Item==saddle,
+                $"Mount family {family}: distant-tier saddle fallback and repeat re-equip work");
+            var modifier=new object(); rider.BattleEquipment[EquipmentIndex.HorseHarness]=new(saddle) { ItemModifier=modifier };
+            CampaignHelpers.AllItems.Remove(saddle);
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].Item==saddle
+                && rider.BattleEquipment[EquipmentIndex.HorseHarness].ItemModifier==modifier,
+                $"Mount family {family}: previous fitting saddle and modifier survive missing assets");
+            rider.BattleEquipment[EquipmentIndex.HorseHarness]=new(wrong);
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].IsEmpty,
+                $"Mount family {family}: wrong-family old saddle is never restored");
+            CampaignHelpers.AllItems.Add(saddle); saddle.Tier=5;
+            BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add(saddle.StringId);
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].IsEmpty,
+                $"Mount family {family}: blocked saddle is not selected");
+            BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Clear();
+            rider.BattleEquipment[EquipmentIndex.HorseHarness]=new(saddle);
+            CampaignHelpers.AllItems.Remove(saddle);
+            var newMount=Item("new-family-mount",5,ItemObject.ItemTypeEnum.Horse);
+            newMount.HorseComponent=new() { Monster=new() { FamilyType=family == 1 ? 2 : 1 } };
+            Donor(77,newMount); TaomEquipmentCompatibility.Reset();
+            CampaignHelpers.AllItems.Remove(mount);
+            rider.Class.UseHorse=family != 1; rider.Class.UseCamel=family != 2;
+            EquipHero.UpgradeEquipment(rider,5,rider.Class,true);
+            Check(rider.BattleEquipment[EquipmentIndex.HorseHarness].Item==wrong,
+                $"Mount family {family}: switching mount family selects its fitting saddle");
+        }
         Console.WriteLine($"{checks} checks passed.");
     }
 }
