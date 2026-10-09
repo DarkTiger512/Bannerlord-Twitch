@@ -309,6 +309,13 @@ Check(equip.TestConfigured(pikeHero, "1", equipSettings).Contains("Cannot equip"
 pikeWeapon.PrimaryWeapon.WeaponClass = WeaponClass.OneHandedPolearm;
 pikeWeapon.Type = EquipmentType.OneHandedGlaive;
 Check(equip.TestConfigured(pikeHero, "1", equipSettings).Contains("Equipped"), "swinging one-handed polearm fits one-handed lance slot");
+pikeWeapon.PrimaryWeapon.WeaponClass = WeaponClass.TwoHandedPolearm;
+pikeWeapon.Name = "Two Handed Polearm";
+pikeWeapon.AlternateModes.Add(new WeaponComponentData { WeaponClass = WeaponClass.OneHandedPolearm });
+Check(equip.TestConfigured(pikeHero, "1", equipSettings).Contains("Equipped"), "two-handed named primary mode does not hide valid one-handed secondary mode");
+pikeWeapon.AlternateModes.Clear();
+reply = equip.TestConfigured(pikeHero, "1", equipSettings);
+Check(reply.Contains("Cannot equip") && reply.Contains("native modes: TwoHandedPolearm"), "genuine two-handed-only weapon is rejected with its native modes");
 pikeWeapon.PrimaryWeapon = null;
 Check(equip.TestConfigured(pikeHero, "1", equipSettings).Contains("Cannot equip"), "missing weapon data fails safely for polearm slot");
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");

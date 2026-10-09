@@ -51,6 +51,8 @@ namespace TaleWorlds.Core
         public BasicCultureObject Culture;
         public WeaponDesign WeaponDesign;
         public WeaponComponentData PrimaryWeapon = new();
+        public List<WeaponComponentData> AlternateModes = new();
+        public IEnumerable<WeaponComponentData> Weapons => (PrimaryWeapon == null ? Enumerable.Empty<WeaponComponentData>() : new[] { PrimaryWeapon }).Concat(AlternateModes);
         public bool IsCraftedByPlayer, NotMerchandise, Usable = true, Compatible = true;
         public float Weight = 2, Tierf = 5;
         public BannerlordTwitch.Helpers.EquipmentType Type;
@@ -184,6 +186,7 @@ namespace BannerlordTwitch.Helpers
             EquipmentType.ThrowingKnives => WeaponClass.ThrowingKnife, EquipmentType.ThrowingAxes => WeaponClass.ThrowingAxe, EquipmentType.ThrowingJavelins => WeaponClass.Javelin,
             _ => Enum.TryParse(type.ToString(), out WeaponClass parsed) ? parsed : WeaponClass.Stone
         };
+        public static bool AnyWeaponMatches(this ItemObject item, Func<WeaponComponentData, bool> predicate) => item.Weapons?.Any(predicate) == true;
         public static bool IsEquipmentType(this ItemObject item, EquipmentType type) => item.Type == type;
         public static EquipmentType GetEquipmentType(this ItemObject item) => item.Type;
     }
