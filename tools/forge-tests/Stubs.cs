@@ -219,7 +219,7 @@ namespace BLTAdoptAHero
     {
         public virtual Type HandlerConfigType => null;
         protected abstract void ExecuteInternal(Hero hero, BannerlordTwitch.ReplyContext context, object config, Action<string> success, Action<string> failure);
-        public string Test(Hero hero, string args) { string result = null; ExecuteInternal(hero, new() { Args = args }, null, s => result = s, s => result = s); return result; }
+        public string Test(Hero hero, string args) { string result = null; ExecuteInternal(hero, new() { Args = args }, GlobalForgeConfig.Config, s => result = s, s => result = s); return result; }
     }
     public class GlobalForgeConfig : ForgeSettings { public static GlobalForgeConfig Config = new(); public static GlobalForgeConfig Get() => Config; }
     public static class BLTAdoptAHeroModule { public static Common CommonConfig = new(); public class Common { public HashSet<string> RestrictedItemIds = new(); public int CustomItemLimit = 10; } }

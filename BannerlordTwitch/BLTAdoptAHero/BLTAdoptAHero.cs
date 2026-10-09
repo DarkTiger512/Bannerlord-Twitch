@@ -62,7 +62,7 @@ namespace BLTAdoptAHero
             ActionManager.RegisterAll(typeof(BLTAdoptAHeroModule).Assembly);
 
             GlobalCommonConfig.Register();
-            GlobalForgeConfig.Register();
+            // Forging is configured on its commands, rather than in Global Configs.
             GlobalEventConfig.Register();
             GlobalTournamentConfig.Register();
             GlobalHeroClassConfig.Register();
