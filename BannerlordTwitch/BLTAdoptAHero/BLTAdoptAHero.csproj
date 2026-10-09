@@ -252,6 +252,7 @@
     <Compile Include="Actions\ReforgeWeapon.cs" />
     <Compile Include="GlobalConfigs\GlobalForgeConfig.cs" />
     <Compile Include="Util\ForgePolicy.cs" />
+    <Compile Include="Util\ForgeCommandSettings.cs" />
     <Compile Include="Util\ForgeAssets.cs" />
     <Compile Include="Util\ForgeService.cs" />
     <Compile Include="Util\TournamentHelpers.cs" />

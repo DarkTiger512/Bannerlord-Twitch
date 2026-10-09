@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,20 +28,35 @@ namespace BLTAdoptAHero.Util
 
     public class ForgeSettings
     {
+        [Category("Prices"), DisplayName("Standard weapon cost") ]
         public int StandardCost { get; set; } = 500000;
+        [Category("Prices"), DisplayName("Fine weapon cost") ]
         public int FineCost { get; set; } = 750000;
+        [Category("Prices"), DisplayName("Masterwork weapon cost") ]
         public int MasterworkCost { get; set; } = 1000000;
+        [Category("Prices"), DisplayName("Quality upgrade cost") ]
         public int UpgradeCost { get; set; } = 250000;
+        [Category("Prices"), DisplayName("Style change cost") ]
         public int StyleCost { get; set; } = 100000;
+        [Category("Prices"), DisplayName("Culture extra cost") ]
         public int CultureSurcharge { get; set; }
+        [Category("Advanced"), DisplayName("Crafting attempts (1–128)") ]
         public int CandidateBudget { get; set; } = 64;
+        [Category("Weapon balance"), DisplayName("Weapon target tier (0–6, internal numbering)") ]
         public int TargetTier { get; set; } = 5;
+        [Category("Weapon balance"), DisplayName("Swift / Heavy trade-off (%)") ]
         public double StylePercent { get; set; } = 5;
+        [Category("Weapon balance"), DisplayName("Fine extra damage (%)") ]
         public double FineDamagePercent { get; set; } = 5;
+        [Category("Weapon balance"), DisplayName("Masterwork extra damage (%)") ]
         public double MasterworkDamagePercent { get; set; } = 10;
+        [Category("Advanced"), DisplayName("Allow hidden crafting parts") ]
         public bool AllowHiddenParts { get; set; }
+        [Category("Advanced"), DisplayName("Blocked crafting part IDs") ]
         public List<string> RestrictedPartIds { get; set; } = new();
+        [Category("Advanced"), DisplayName("Culture aliases") ]
         public Dictionary<string, string> CultureAliases { get; set; } = new();
+        [Category("Advanced"), DisplayName("Weapon type aliases") ]
         public Dictionary<string, string> TypeAliases { get; set; } = new()
         {
             ["longsword"] = "TwoHandedSword", ["sword"] = "OneHandedSword",

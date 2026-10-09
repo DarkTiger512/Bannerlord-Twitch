@@ -118,6 +118,7 @@ namespace BannerlordTwitch
             // disabled ones, are authoritative; never reset a profile to install new features.
             var defaults = YamlHelpers.Deserialize<Settings>(File.ReadAllText(DefaultSettingsFileName));
             bool addedCommands = ForgeCommandDefaults.AddMissing(settings.Commands, defaults.Commands);
+            addedCommands |= LegacyWeaponCommandMigration.Migrate(settings.Commands);
 
             ActionManager.ConvertSettings(settings.Commands);
             ActionManager.ConvertSettings(settings.Rewards);

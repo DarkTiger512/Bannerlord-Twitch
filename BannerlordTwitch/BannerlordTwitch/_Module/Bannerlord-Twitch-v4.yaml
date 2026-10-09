@@ -855,7 +855,7 @@ Commands:
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: 'Forge a cultured weapon; use !forge for choices and prices.'
-  Enabled: false
+  Enabled: true
   Handler: ForgeWeapon
   HandlerConfig: null
   Help: '!forge <type> [culture] [style] [quality], or !forge random'
@@ -866,7 +866,7 @@ Commands:
   RespondInOverlay: false
   RespondInTwitch: true
 - Documentation: 'Guaranteed custom weapon style and quality changes; use !reforge for previews.'
-  Enabled: false
+  Enabled: true
   Handler: ReforgeWeapon
   HandlerConfig: null
   Help: '!reforge #N upgrade or swift|balanced|heavy'

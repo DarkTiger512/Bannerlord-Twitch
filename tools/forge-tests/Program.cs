@@ -200,4 +200,23 @@ Check(commands.Count == 2 && commands[0].Handler == "OtherHandler", "command nam
 commands = new() { new() { Name = "privateforge", Handler = "OtherHandler", ID = defaultForge.ID } };
 BannerlordTwitch.ForgeCommandDefaults.AddMissing(commands, defaults);
 Check(commands.Count == 2 && commands[0].Name == "privateforge", "command ID collision preserved");
+var legacyWeapon = new BannerlordTwitch.Command { Handler="SmithItem", Name="myweapon", Enabled=false,
+    HandlerConfig=new Dictionary<string, object> { ["Type"]="Weapon", ["GoldCost"]=123456, ["CultureGoldCost"]=42, ["ItemPower"]=1.25 } };
+var legacyId=legacyWeapon.ID;
+var armorCommand=new BannerlordTwitch.Command { Handler="SmithItem", Name="smitharmor", HandlerConfig=new Dictionary<string, object> { ["Type"]="Armor" } };
+var mountCommand=new BannerlordTwitch.Command { Handler="SmithItem", Name="buymount", HandlerConfig=new Dictionary<string, object> { ["Type"]="Mount" } };
+var oldConfig=legacyWeapon.HandlerConfig;
+Check(BannerlordTwitch.LegacyWeaponCommandMigration.Migrate(new[]{legacyWeapon,armorCommand,mountCommand}), "legacy weapon migration runs");
+Check(legacyWeapon.Handler=="ForgeWeapon" && legacyWeapon.Name=="myweapon" && legacyWeapon.ID==legacyId && !legacyWeapon.Enabled, "migration preserves identity, name and disabled state");
+Check(armorCommand.Handler=="SmithItem" && mountCommand.Handler=="SmithItem", "armour and mount commands remain legacy");
+var migrated=(Dictionary<string,object>)legacyWeapon.HandlerConfig;
+Check((int)migrated["StandardCost"]==123456 && (int)migrated["FineCost"]==373456 && (int)migrated["MasterworkCost"]==623456 && (int)migrated["CultureSurcharge"]==42, "migration carries purchase prices");
+Check(ReferenceEquals(migrated["LegacySmithSettings"],oldConfig), "legacy power/name settings retained for reference");
+Check(!BannerlordTwitch.LegacyWeaponCommandMigration.Migrate(new[]{legacyWeapon}), "weapon migration is idempotent");
+var perCommand=new ForgeCommandSettings { UseGlobalSettings=false, StandardCost=123 };
+Check(ReferenceEquals(perCommand.Resolve(),perCommand), "per-command forging overrides used");
+perCommand.UseGlobalSettings=true;
+Check(ReferenceEquals(perCommand.Resolve(),GlobalForgeConfig.Config), "shared forge settings used when selected");
+Check(new ForgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings) && new ReforgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings), "both commands expose editable settings");
+Check(typeof(ForgeSettings).GetProperties().Where(p=>p.CanWrite).All(p=>Attribute.IsDefined(p,typeof(System.ComponentModel.DisplayNameAttribute))), "all forge settings have readable editor labels");
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");

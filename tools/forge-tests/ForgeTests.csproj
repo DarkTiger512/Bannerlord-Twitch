@@ -8,6 +8,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgePolicy.cs" Link="ForgePolicy.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeCommandSettings.cs" Link="ForgeCommandSettings.cs" />
+    <Compile Include="../../BannerlordTwitch/BannerlordTwitch/Settings/LegacyWeaponCommandMigration.cs" Link="LegacyWeaponCommandMigration.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeAssets.cs" Link="ForgeAssets.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeService.cs" Link="ForgeService.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/EnchantmentPolicy.cs" Link="EnchantmentPolicy.cs" />
