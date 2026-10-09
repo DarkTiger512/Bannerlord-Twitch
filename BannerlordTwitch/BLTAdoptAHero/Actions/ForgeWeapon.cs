@@ -16,6 +16,15 @@ namespace BLTAdoptAHero
     {
         public override Type HandlerConfigType => typeof(ForgeCommandSettings);
 
+        private static void ReplyAvailability(ReplyContext context, Action<string> onSuccess, string reply,
+            string emptyMessage = "No forge weapon types are available in this campaign.")
+        {
+            if (string.IsNullOrWhiteSpace(reply)) reply = emptyMessage;
+            // Leave room for Twitch's username and bot prefix. Send the full list to the overlay only.
+            if (reply.Length > 350) Log.LogFeedResponse(context.UserName, reply);
+            else onSuccess(reply);
+        }
+
         protected override void ExecuteInternal(Hero hero, ReplyContext context, object config, Action<string> onSuccess, Action<string> onFailure)
         {
             string purchaseReply;
@@ -32,12 +41,12 @@ namespace BLTAdoptAHero
                 var assets = ForgeAssets.Current;
                 if (args.Count == 1 && args[0].Equals("cultures", StringComparison.OrdinalIgnoreCase))
                 {
-                    onSuccess(string.Join(", ", assets.Cultures.Select(c => $"{c.Name} ({c.StringId})")));
+                    ReplyAvailability(context, onSuccess, string.Join(", ", assets.Cultures.Select(c => $"{c.Name} ({c.StringId})")), "No forge cultures are available in this campaign.");
                     return;
                 }
                 if (args.Count == 1 && args[0].Equals("types", StringComparison.OrdinalIgnoreCase))
                 {
-                    onSuccess(string.Join(", ", ForgeAssets.WeaponTypes.Where(assets.Available))
+                    ReplyAvailability(context, onSuccess, string.Join(", ", ForgeAssets.WeaponTypes.Where(assets.Available))
                         + ". Template IDs: " + string.Join(", ", assets.Templates.Select(t => t.StringId)));
                     return;
                 }

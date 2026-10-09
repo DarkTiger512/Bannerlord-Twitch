@@ -318,4 +318,16 @@ reply = equip.TestConfigured(pikeHero, "1", equipSettings);
 Check(reply.Contains("Cannot equip") && reply.Contains("native modes: TwoHandedPolearm"), "genuine two-handed-only weapon is rejected with its native modes");
 pikeWeapon.PrimaryWeapon = null;
 Check(equip.TestConfigured(pikeHero, "1", equipSettings).Contains("Cannot equip"), "missing weapon data fails safely for polearm slot");
+int overlayCount = Log.OverlayReplies.Count;
+reply = forge.Test(hero, "cultures");
+Check(reply != null && reply.Contains("Elven Kingdom") && Log.OverlayReplies.Count == overlayCount, "short culture list follows normal reply route");
+var manyCultures = Enumerable.Range(1, 40).Select(i => Culture($"mod_culture_{i}", $"Modded Culture {i}")).ToArray();
+CampaignHelpers.AllCultures.AddRange(manyCultures);
+ForgeAssets.Reset();
+reply = forge.Test(hero, "cultures");
+Check(reply == null && Log.OverlayReplies.Count == overlayCount + 1, "long culture list goes only to overlay, without chat pagination");
+Check(Log.OverlayReplies.Last().user == "Viewer" && Log.OverlayReplies.Last().message.Contains("mod_culture_1")
+    && Log.OverlayReplies.Last().message.Contains("mod_culture_40"), "overlay receives complete untruncated culture list and viewer name");
+foreach (var culture in manyCultures) CampaignHelpers.AllCultures.Remove(culture);
+ForgeAssets.Reset();
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");
