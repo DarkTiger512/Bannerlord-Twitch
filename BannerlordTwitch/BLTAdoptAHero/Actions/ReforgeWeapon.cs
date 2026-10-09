@@ -18,7 +18,7 @@ namespace BLTAdoptAHero
         private static bool Eligible(EquipmentElement item) => ForgeAssets.IsWeapon(item.Item)
             && BLTCustomItemsCampaignBehavior.Current.IsRegistered(item.ItemModifier);
 
-        public override Type HandlerConfigType => typeof(ForgeCommandSettings);
+        public override Type HandlerConfigType => typeof(ReforgeCommandSettings);
 
         protected override void ExecuteInternal(Hero hero, ReplyContext context, object config, Action<string> onSuccess, Action<string> onFailure)
         {

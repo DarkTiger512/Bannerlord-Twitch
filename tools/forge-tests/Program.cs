@@ -255,7 +255,7 @@ Check(Convert.ToInt32(((Dictionary<string,object>)legacyWeapon.HandlerConfig)["S
 Check(!((Dictionary<string,object>)fromShared.HandlerConfig).ContainsKey("UseGlobalSettings"), "obsolete shared switch removed");
 Check(!BannerlordTwitch.LegacyWeaponCommandMigration.Localize(new[]{fromShared,fromCommand,emptyCommand,legacyWeapon},shared), "command-only migration idempotent");
 Check(typeof(ForgeCommandSettings).GetProperty("UseGlobalSettings")==null, "command editor has no shared settings switch");
-Check(new ForgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings) && new ReforgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings), "both commands expose editable settings");
+Check(new ForgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings) && new ReforgeWeapon().HandlerConfigType==typeof(ReforgeCommandSettings), "both commands expose editable settings");
 Check(typeof(ForgeSettings).GetProperties().Where(p=>p.CanWrite).All(p=>Attribute.IsDefined(p,typeof(System.ComponentModel.DisplayNameAttribute))), "all forge settings have readable editor labels");
 // Exercise the actual equipcustom handler, including the invalid selection from the stream log.
 var equip = new BLTAdoptAHero.Actions.EquipCustomItemAction();
@@ -330,4 +330,14 @@ Check(Log.OverlayReplies.Last().user == "Viewer" && Log.OverlayReplies.Last().me
     && Log.OverlayReplies.Last().message.Contains("mod_culture_40"), "overlay receives complete untruncated culture list and viewer name");
 foreach (var culture in manyCultures) CampaignHelpers.AllCultures.Remove(culture);
 ForgeAssets.Reset();
+var forgeGuide = new RecordingDocumentation();
+var forgeGuideSettings = new ForgeCommandSettings { StandardCost = 123456, MasterworkDamageBonus = 33 };
+forgeGuideSettings.GenerateDocumentation(forgeGuide);
+string forgeHelp = string.Join(" ", forgeGuide.Values);
+Check(forgeHelp.Contains("!forge &lt;type&gt; [culture] [style] [quality]") && forgeHelp.Contains("!forge OneHandedLance gondor balanced masterwork"), "forge Neo subsection contains escaped syntax and copyable culture example");
+Check(forgeHelp.Contains(123456.ToString("N0")) && forgeHelp.Contains("+33 damage points"), "generated forge guide uses configured prices and bonuses");
+Check(forgeHelp.Contains("!forge random") && forgeHelp.Contains("!forge cultures") && forgeHelp.Contains("!equipcustom 6"), "forge guide explains discovery, random forging and equipping");
+var reforgeGuide = new RecordingDocumentation();
+new ReforgeCommandSettings { UpgradeCost = 123456 }.GenerateDocumentation(reforgeGuide);
+Check(string.Join(" ", reforgeGuide.Values).Contains(123456.ToString("N0")) && !string.Join(" ", reforgeGuide.Values).Contains("<strong>Forge a custom weapon"), "reforge has its own subsection and configured price");
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");

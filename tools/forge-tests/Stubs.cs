@@ -293,3 +293,9 @@ namespace BLTAdoptAHero
     public static class Naming { public static string Gold = "gold"; public static string NotEnoughGold(int cost, int gold) => "Not enough gold"; }
     public static class RewardHelpers { public static string GetItemNameAndModifiers(EquipmentElement item) => item.GetModifiedItemName(); }
 }
+
+public sealed class RecordingDocumentation : BannerlordTwitch.Util.IDocumentationGenerator
+{
+    public List<string> Values = new();
+    public void Value(string value) => Values.Add(value);
+}
