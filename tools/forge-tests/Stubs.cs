@@ -160,7 +160,12 @@ namespace TaleWorlds.CampaignSystem
     {
         public static CampaignEventDispatcher Instance = new();
         public int Crafted;
-        public void OnNewItemCrafted(ItemObject item, object hero, bool flag) { Crafted++; }
+        public void OnNewItemCrafted(ItemObject item, object hero, bool flag)
+        {
+            // Native CraftingCampaignBehavior dereferences the culture before persisting the design.
+            _ = item.Culture.StringId;
+            Crafted++;
+        }
     }
 }
 namespace TaleWorlds.MountAndBlade { public class Mission { public static Mission Current; } }

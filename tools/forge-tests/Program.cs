@@ -80,6 +80,20 @@ selected = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle
 Check(selected.NativeCrafted && !selected.Fallback, "native cultured design");
 Check(Crafting.Generated - generated == settings.CandidateBudget && registered == MBObjectManager.Instance.Objects.Count, "bounded unregistered candidates");
 Check(selected.Item.WeaponDesign.UsedPieces.All(p => p.CraftingPiece.Culture == elves), "culture-specific parts");
+// Neutral crafting parts must still produce a culture-bearing item for the native save event.
+var originalPartCultures = template.Pieces.Select(p => p.Culture).ToArray();
+foreach (var part in template.Pieces) part.Culture = null;
+var neutralDesign = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false);
+Check(neutralDesign.Fallback && neutralDesign.Item.Culture == elves, "neutral design retains fallback disclosure and requested culture");
+NativeForgeAdapter.PrepareIdentity(neutralDesign.Item);
+int beforeNeutralEvent = CampaignEventDispatcher.Instance.Crafted;
+NativeForgeAdapter.Register(neutralDesign.Item);
+Check(CampaignEventDispatcher.Instance.Crafted == beforeNeutralEvent + 1, "neutral design survives native culture dereference and registration");
+MBObjectManager.Instance.UnregisterObject(neutralDesign.Item);
+var heroCultureDesign = assets.Generate(hero, EquipmentType.TwoHandedSword, null, ForgeStyle.Balanced, settings, false);
+Check(heroCultureDesign.Item.Culture == hero.Culture, "neutral design without requested culture uses hero culture");
+for (int i = 0; i < template.Pieces.Count; i++) template.Pieces[i].Culture = originalPartCultures[i];
+Throws(() => NativeForgeAdapter.Register(new ItemObject()), "cultureless native registration rejected before event");
 settings.TargetTier = 2;
 selected = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false);
 Check(selected.Item.Tierf < 4, "requested tier honored");
