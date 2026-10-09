@@ -199,7 +199,9 @@ namespace BannerlordTwitch.Helpers
 }
 namespace BannerlordTwitch.Util
 {
-    public static class Log { public static void Error(string message) { } public static void ShowInformation(string message, object hero) { } }
+    public static class Log { public static List<(string user, string message)> OverlayReplies = new();
+        public static void LogFeedResponse(string userName, params string[] messages) => OverlayReplies.Add((userName, string.Join(", ", messages)));
+        public static void Error(string message) { } public static void ShowInformation(string message, object hero) { } }
     public static class Extensions
     {
         public static BLTAdoptAHero.HeroClassDef GetClass(this Hero hero) => hero.Class;
@@ -222,7 +224,7 @@ namespace BannerlordTwitch.Util
         public static void SetMountHitPointsModifier(this ItemModifier modifier, float value) => modifier.MountHitPoints = value;
     }
 }
-namespace BannerlordTwitch { public class ReplyContext { public string Args; } }
+namespace BannerlordTwitch { public class ReplyContext { public string Args; public string UserName = "Viewer"; } }
 namespace BLTAdoptAHero
 {
     public class HeroClassDef { public List<BannerlordTwitch.Helpers.EquipmentType> Weapons = new(); public bool Mounted; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedSlots => IndexedWeapons; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedWeapons => Weapons.Select((type, i) => ((EquipmentIndex)i, type)); }
