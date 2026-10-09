@@ -64,3 +64,9 @@ Shared feature commits are based on `main` and cherry-picked to `taom`. The pari
 Weapon commands using the old SmithItem handler (including renamed smithweapon commands) now migrate to ForgeWeapon. Their names, IDs and enabled states stay unchanged. The old gold price becomes Standard; Fine and Masterwork cost 250,000 and 500,000 more. Culture surcharges carry over. Old random ItemPower/name settings are retained in LegacySmithSettings for reference; new purchases use forging quality/style balance instead. Armour, shields and mount purchases remain on SmithItem.
 
 In BLT Configure, expand Handler Config on forge or reforge to edit its prices, weapon tier, style trade-off and quality bonuses directly. There is no shared/global forging switch. Previously shared forging values are copied into the commands that used them, while existing command-specific values and migrated weapon purchase prices are preserved. The obsolete Weapon Forging global entry is removed. TargetTier uses internal numbering (5 means displayed Tier 6). Existing command enabled states remain authoritative.
+
+## Quality point bonuses
+
+Each command has configurable extra damage and speed points for each quality. Defaults are Standard +20 damage/+10 speed, Fine +40/+20, and Masterwork +60/+30. These are total quality point bonuses, not cumulative steps. Existing damage percentages and Swift/Heavy trade-offs apply separately, using the original weapon stats. Projectile speed is unchanged.
+
+For an already-forged weapon, check `!reforge #N` for its current style, then request that same style (for example, `!reforge #6 balanced`). If the configured bonuses have changed, BLT refreshes its forge bonuses for free, preserving its name, ownership and enchantments. Repeating this cannot stack bonuses. Legacy weapons without forge metadata keep their existing bonuses until a normal reforge.
