@@ -457,11 +457,18 @@ namespace BLTAdoptAHero
                 }
             }
 
-            // Armour uses the shared culture/nearby-tier fallback, then any compatible
-            // item for this slot. There is no narrower weapon subtype to relax here.
+            // Exhaust compatible culture/tier searches first. The final armour-only
+            // fallback ignores race, then retains the old slot if assets are unavailable.
             foreach (var (index, itemType) in SkillGroup.ArmorIndexType)
             {
-                adoptedHero.BattleEquipment[index] = FindNewEquipmentByType(itemType);
+                var replacement = FindNewEquipmentByType(itemType);
+                if (replacement.IsEmpty && TaomEquipmentCompatibility.Enabled)
+                {
+                    var fallback = FindLastResortArmor(targetTier, adoptedHero, itemType,
+                        restrictedItemIds, enforceTierCap);
+                    replacement = fallback == null ? previousBattle[(int)index] : new(fallback);
+                }
+                adoptedHero.BattleEquipment[index] = replacement;
             }
 
             // We should assign a horse if using a class definition that specifies riding, OR 
@@ -527,6 +534,7 @@ namespace BLTAdoptAHero
                 Equipment equipment, Hero hero, Func<ItemObject, bool> filter = null)
             {
                 var slot = equipment[equipmentIndex];
+                var previousSlot = slot;
                 // Unsafe gear must not survive via the custom/high-tier preservation rule.
                 if (slot.Item != null && (!TaomEquipmentCompatibility.CanUse(hero, slot.Item)
                     || enforceTierCap && (int)slot.Item.Tier > targetTier))
@@ -554,6 +562,13 @@ namespace BLTAdoptAHero
                             && filter?.Invoke(o) != false
                             && !restrictedItemIds.Contains(o.StringId ?? ""),
                         cultureFilter, cultureFilterSpecified);
+                    if (item == null && TaomEquipmentCompatibility.Enabled
+                        && SkillGroup.ArmorIndexType.Any(s => s.itemType == itemType))
+                    {
+                        item = FindLastResortArmor(targetTier, hero, itemType,
+                            restrictedItemIds, enforceTierCap, filter);
+                        if (item == null) equipment[equipmentIndex] = previousSlot;
+                    }
                     if (item != null)
                     {
                         equipment[equipmentIndex] = new(item);
@@ -641,10 +656,29 @@ namespace BLTAdoptAHero
         }
 
         public static bool CanUseItem(Hero hero, ItemObject item, bool overrideAbility, bool mustBeUsableMounted)
+            => TaomEquipmentCompatibility.CanUse(hero, item)
+                && CanUseItemIgnoringRace(hero, item, overrideAbility, mustBeUsableMounted);
+
+        // Only the final armour fallback may bypass the race catalogue. Keep weapon,
+        // mount, skill, gender and configured restriction policies unchanged.
+        private static ItemObject FindLastResortArmor(int tier, Hero hero, ItemObject.ItemTypeEnum itemType,
+            HashSet<string> restrictedItemIds, bool enforceTierCap, Func<ItemObject, bool> filter = null)
+        {
+            var candidates = CampaignHelpers.AllItems.Where(item => item.ItemType == itemType
+                && !item.NotMerchandise
+                && CanUseItemIgnoringRace(hero, item, false, false)
+                && filter?.Invoke(item) != false
+                && !restrictedItemIds.Contains(item.StringId ?? "")
+                && !BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Contains(item.StringId ?? "")
+                && (!enforceTierCap || (int)item.Tier <= tier)).ToList();
+            return candidates.Where(item => (int)item.Tier == tier).SelectRandom()
+                ?? SelectRandomItemNearestTier(candidates, tier, enforceTierCap);
+        }
+
+        private static bool CanUseItemIgnoringRace(Hero hero, ItemObject item, bool overrideAbility, bool mustBeUsableMounted)
         {
             var relevantSkill = item.RelevantSkill;
-            return TaomEquipmentCompatibility.CanUse(hero, item)
-                   && (overrideAbility || relevantSkill == null || hero.GetSkillValue(relevantSkill) >= item.Difficulty)
+            return (overrideAbility || relevantSkill == null || hero.GetSkillValue(relevantSkill) >= item.Difficulty)
                    && (!mustBeUsableMounted || IsItemUsableMounted(hero, item))
                    && (!hero.CharacterObject.IsFemale || !item.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByFemale))
                    && (hero.CharacterObject.IsFemale || !item.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByMale));
