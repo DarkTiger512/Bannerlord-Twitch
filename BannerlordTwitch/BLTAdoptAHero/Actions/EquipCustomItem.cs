@@ -119,7 +119,7 @@ namespace BLTAdoptAHero.Actions
             // Try to find the item by name or index
             EquipmentElement? itemToEquip = FindCustomItem(customItems, context.Args.Trim());
 
-            if (!itemToEquip.HasValue)
+            if (!itemToEquip.HasValue || itemToEquip.Value.IsEmpty)
             {
                 onFailure("{=EquipCustomNotFound}Custom item '{itemName}' not found! Use !equipcustom to see your items."
                     .Translate(("itemName", context.Args.Trim())));
@@ -128,14 +128,18 @@ namespace BLTAdoptAHero.Actions
 
             try
             {
-                // Deduct gold cost
-                if (settings.GoldCost > 0)
+                var campaign = BLTAdoptAHeroCampaignBehavior.Current;
+                var previous = adoptedHero.BattleEquipment.YieldEquipmentSlots().ToList();
+                int slotsEquipped = 0;
+                campaign.CommitEnchantmentPurchase(adoptedHero, settings.GoldCost, () =>
                 {
-                    BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.GoldCost, true);
-                }
-
-                // Equip the item to all matching slots (no stat comparison - user choice)
-                int slotsEquipped = EquipCustomItemToAllSlots(adoptedHero, itemToEquip.Value);
+                    slotsEquipped = EquipCustomItemToAllSlots(adoptedHero, itemToEquip.Value);
+                    if (slotsEquipped == 0)
+                        throw new InvalidOperationException("No class or current loadout slot supports this weapon. Check your class weapon choices. No gold charged.");
+                }, () =>
+                {
+                    foreach (var slot in previous) adoptedHero.BattleEquipment[slot.index] = slot.element;
+                });
 
                 if (slotsEquipped > 0)
                 {
@@ -157,6 +161,10 @@ namespace BLTAdoptAHero.Actions
                 {
                     onFailure("{=EquipCustomNoSlots}Could not find any suitable equipment slots for this item!".Translate());
                 }
+            }
+            catch (InvalidOperationException ex)
+            {
+                onFailure(ex.Message);
             }
             catch (Exception ex)
             {
@@ -196,8 +204,10 @@ namespace BLTAdoptAHero.Actions
 
             // Search by name (case-insensitive, partial match)
             searchTerm = searchTerm.ToLower();
-            return customItems.FirstOrDefault(item =>
-                item.GetModifiedItemName().ToString().ToLower().Contains(searchTerm));
+            foreach (var item in customItems)
+                if (!item.IsEmpty && item.GetModifiedItemName()?.ToString().ToLower().Contains(searchTerm) == true)
+                    return item;
+            return null;
         }
 
         private int EquipCustomItemToAllSlots(Hero hero, EquipmentElement customItem)
@@ -207,7 +217,9 @@ namespace BLTAdoptAHero.Actions
             var heroClass = hero.GetClass();
 
             // Get indexed slots from hero's class (tuple of index and type)
-            var indexedSlots = heroClass.IndexedSlots;
+            if (customItem.IsEmpty || equipment == null) return 0;
+            var indexedSlots = heroClass?.IndexedSlots
+                ?? equipment.YieldFilledWeaponSlots().Select(s => (index: s.index, type: s.element.Item.GetEquipmentType()));
 
             foreach (var (slotIndex, slotType) in indexedSlots)
             {
@@ -215,15 +227,9 @@ namespace BLTAdoptAHero.Actions
                 if (!IsItemCompatibleWithSlot(customItem.Item, slotType))
                     continue;
 
-                var currentItem = equipment[slotIndex];
-
-                // If slot is empty OR has same item type, equip the custom item
-                // No stat comparison - this is a manual user choice
-                if (currentItem.IsEmpty || currentItem.Item.ItemType == customItem.Item.ItemType)
-                {
-                    equipment[slotIndex] = customItem;
-                    slotsEquipped++;
-                }
+                // Class compatibility determines the destination, regardless of what currently occupies it.
+                equipment[slotIndex] = customItem;
+                slotsEquipped++;
             }
 
             return slotsEquipped;
@@ -231,40 +237,8 @@ namespace BLTAdoptAHero.Actions
 
         private bool IsItemCompatibleWithSlot(ItemObject item, EquipmentType slotType)
         {
-            if (slotType == EquipmentType.None)
-                return false;
-
-            // For weapons, we need to check the specific weapon class
-            if (item.WeaponComponent != null)
-            {
-                    // Ammo typically doesn't get equipped via this system
-                var weaponClass = item.WeaponComponent.PrimaryWeapon.WeaponClass;
-
-                return weaponClass switch
-                {
-                    WeaponClass.Dagger => slotType == EquipmentType.Dagger,
-                    WeaponClass.OneHandedSword => slotType == EquipmentType.OneHandedSword,
-                    WeaponClass.TwoHandedSword => slotType == EquipmentType.TwoHandedSword,
-                    WeaponClass.OneHandedAxe => slotType == EquipmentType.OneHandedAxe,
-                    WeaponClass.TwoHandedAxe => slotType == EquipmentType.TwoHandedAxe,
-                    WeaponClass.Mace => slotType == EquipmentType.OneHandedMace,
-                    WeaponClass.TwoHandedMace => slotType == EquipmentType.TwoHandedMace,
-                    WeaponClass.OneHandedPolearm => slotType == EquipmentType.OneHandedLance || slotType == EquipmentType.OneHandedGlaive,
-                    WeaponClass.TwoHandedPolearm => slotType == EquipmentType.TwoHandedLance || slotType == EquipmentType.TwoHandedGlaive,
-                    WeaponClass.LowGripPolearm => slotType == EquipmentType.TwoHandedLance || slotType == EquipmentType.TwoHandedGlaive,
-                    WeaponClass.Bow => slotType == EquipmentType.Bow,
-                    WeaponClass.Crossbow => slotType == EquipmentType.Crossbow,
-                    WeaponClass.Arrow => slotType == EquipmentType.Arrows,
-                    WeaponClass.Bolt => slotType == EquipmentType.Bolts,
-                    WeaponClass.ThrowingAxe => slotType == EquipmentType.ThrowingAxes,
-                    WeaponClass.ThrowingKnife => slotType == EquipmentType.ThrowingKnives,
-                    WeaponClass.Javelin => slotType == EquipmentType.ThrowingJavelins,
-                    WeaponClass.Stone => slotType == EquipmentType.Stone,
-                    WeaponClass.SmallShield or WeaponClass.LargeShield => slotType == EquipmentType.Shield,
-                    _ => false
-                };
-            }
-            return false;
+            return item != null && slotType != EquipmentType.None && slotType != EquipmentType.Num
+                && item.IsEquipmentType(slotType);
         }
     }
 }
