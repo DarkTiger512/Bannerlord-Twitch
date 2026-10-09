@@ -67,6 +67,8 @@ In BLT Configure, expand Handler Config on forge or reforge to edit its prices, 
 
 ## Quality point bonuses
 
-Each command has configurable extra damage and speed points for each quality. Defaults are Standard +20 damage/+10 speed, Fine +40/+20, and Masterwork +60/+30. These are total quality point bonuses, not cumulative steps. Existing damage percentages and Swift/Heavy trade-offs apply separately, using the original weapon stats. Projectile speed is unchanged.
+Each command has configurable extra damage and speed points for each quality. Defaults are Standard +10 damage/+5 speed, Fine +20/+10, and Masterwork +30/+15. These are total quality point bonuses, not cumulative steps. Existing damage percentages and Swift/Heavy trade-offs apply separately, using the original weapon stats. Projectile speed is unchanged.
 
 For an already-forged weapon, check `!reforge #N` for its current style, then request that same style (for example, `!reforge #6 balanced`). If the configured bonuses have changed, BLT refreshes its forge bonuses for free, preserving its name, ownership and enchantments. Repeating this cannot stack bonuses. Legacy weapons without forge metadata keep their existing bonuses until a normal reforge.
+
+When updating from the stronger defaults, existing saved command settings remain unchanged. Set the six quality point bonuses to the values above in both forge and reforge Handler Config to use the reduced balance, then use the same-style refresh for previously forged weapons.
