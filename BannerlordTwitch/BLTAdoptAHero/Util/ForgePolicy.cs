@@ -28,35 +28,35 @@ namespace BLTAdoptAHero.Util
 
     public class ForgeSettings
     {
-        [Category("Prices"), DisplayName("Standard weapon cost") ]
+        [Category("Prices"), DisplayName("Standard weapon cost"), Description("BLT gold charged for a new Standard weapon. Standard adds no quality damage bonus. Set to 0 to make it free. Used by forge.")]
         public int StandardCost { get; set; } = 500000;
-        [Category("Prices"), DisplayName("Fine weapon cost") ]
+        [Category("Prices"), DisplayName("Fine weapon cost"), Description("BLT gold charged for a new Fine weapon, including its quality bonus. Must be at least the Standard price. Used by forge.")]
         public int FineCost { get; set; } = 750000;
-        [Category("Prices"), DisplayName("Masterwork weapon cost") ]
+        [Category("Prices"), DisplayName("Masterwork weapon cost"), Description("BLT gold charged for a new Masterwork weapon, including its quality bonus. Must be at least the Fine price. Used by forge.")]
         public int MasterworkCost { get; set; } = 1000000;
-        [Category("Prices"), DisplayName("Quality upgrade cost") ]
+        [Category("Prices"), DisplayName("Quality upgrade cost"), Description("BLT gold charged for each reforge quality step: Standard to Fine, or Fine to Masterwork. Masterwork cannot be upgraded further. Set to 0 for free upgrades. Used by reforge.")]
         public int UpgradeCost { get; set; } = 250000;
-        [Category("Prices"), DisplayName("Style change cost") ]
+        [Category("Prices"), DisplayName("Style change cost"), Description("BLT gold charged to change an owned weapon to Swift, Balanced or Heavy. Choosing its current style costs nothing. Set to 0 for free changes. Used by reforge.")]
         public int StyleCost { get; set; } = 100000;
-        [Category("Prices"), DisplayName("Culture extra cost") ]
+        [Category("Prices"), DisplayName("Culture extra cost"), Description("Extra BLT gold added when a viewer names a culture in a forge request. No extra charge when they leave culture out. Set to 0 for no surcharge. Used by forge.")]
         public int CultureSurcharge { get; set; }
-        [Category("Advanced"), DisplayName("Crafting attempts (1–128)") ]
+        [Category("Advanced"), DisplayName("Crafting attempts (1–128)"), Description("How many possible weapon designs BLT tries before choosing the best match. Higher values may find a closer match but take more work. Range: 1 to 128; recommended: 64. This is not a success chance.")]
         public int CandidateBudget { get; set; } = 64;
-        [Category("Weapon balance"), DisplayName("Weapon target tier (0–6, internal numbering)") ]
+        [Category("Weapon balance"), DisplayName("Weapon target tier (0–6, internal numbering)"), Description("Preferred strength tier when BLT chooses a newly crafted design. The game counts from 0: enter 5 for displayed Tier 6. Range: 0 to 6. This is a preference, not a guaranteed tier, and does not control the quality bonus.")]
         public int TargetTier { get; set; } = 5;
-        [Category("Weapon balance"), DisplayName("Swift / Heavy trade-off (%)") ]
+        [Category("Weapon balance"), DisplayName("Swift / Heavy trade-off (%)"), Description("The damage/speed trade-off for Swift and Heavy. At 5, Swift loses 5% damage and gains 5% weapon speed; Heavy gains 5% damage and loses 5% speed. Balanced has no trade-off. Range: 0 to 25. Projectile speed is unchanged.")]
         public double StylePercent { get; set; } = 5;
-        [Category("Weapon balance"), DisplayName("Fine extra damage (%)") ]
+        [Category("Weapon balance"), DisplayName("Fine extra damage (%)"), Description("Extra damage for Fine quality, measured from the original weapon damage. Enter 5 for +5%. This replaces the Standard quality bonus; repeated reforges do not stack it. Must be between 0 and the Masterwork bonus.")]
         public double FineDamagePercent { get; set; } = 5;
-        [Category("Weapon balance"), DisplayName("Masterwork extra damage (%)") ]
+        [Category("Weapon balance"), DisplayName("Masterwork extra damage (%)"), Description("Total extra damage for Masterwork quality, measured from the original weapon damage. Enter 10 for +10%, not an additional 10% on top of Fine. Must be at least the Fine bonus and no more than 25.")]
         public double MasterworkDamagePercent { get; set; } = 10;
-        [Category("Advanced"), DisplayName("Allow hidden crafting parts") ]
+        [Category("Advanced"), DisplayName("Allow hidden crafting parts"), Description("Allow BLT to use weapon pieces that the game or a mod hides from the normal smithing screen. Hidden means unavailable in that screen, not invisible on the weapon. Leave off unless you want these extra parts; some mods hide parts they do not intend players to use.")]
         public bool AllowHiddenParts { get; set; }
-        [Category("Advanced"), DisplayName("Blocked crafting part IDs") ]
+        [Category("Advanced"), DisplayName("Blocked crafting part IDs"), Description("Weapon pieces BLT must never use when crafting. Add their exact internal part IDs, not their display names. Leave empty unless you need to exclude a specific unwanted or broken mod part. This does not block whole weapons.")]
         public List<string> RestrictedPartIds { get; set; } = new();
-        [Category("Advanced"), DisplayName("Culture aliases") ]
+        [Category("Advanced"), DisplayName("Culture aliases"), Description("Chat shortcuts for cultures. Each entry maps a shortcut (key) to an exact culture ID or name (value). For example, a short nickname can point to a long modded culture name. Leave empty to use the normal culture names.")]
         public Dictionary<string, string> CultureAliases { get; set; } = new();
-        [Category("Advanced"), DisplayName("Weapon type aliases") ]
+        [Category("Advanced"), DisplayName("Weapon type aliases"), Description("Chat shortcuts for weapon types. Each entry maps what viewers type (key) to a weapon type (value). For example, longsword maps to TwoHandedSword. Keep the defaults unless you want different shortcuts.")]
         public Dictionary<string, string> TypeAliases { get; set; } = new()
         {
             ["longsword"] = "TwoHandedSword", ["sword"] = "OneHandedSword",
