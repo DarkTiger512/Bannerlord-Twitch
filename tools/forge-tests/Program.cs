@@ -257,4 +257,40 @@ Check(!BannerlordTwitch.LegacyWeaponCommandMigration.Localize(new[]{fromShared,f
 Check(typeof(ForgeCommandSettings).GetProperty("UseGlobalSettings")==null, "command editor has no shared settings switch");
 Check(new ForgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings) && new ReforgeWeapon().HandlerConfigType==typeof(ForgeCommandSettings), "both commands expose editable settings");
 Check(typeof(ForgeSettings).GetProperties().Where(p=>p.CanWrite).All(p=>Attribute.IsDefined(p,typeof(System.ComponentModel.DisplayNameAttribute))), "all forge settings have readable editor labels");
+// Exercise the actual equipcustom handler, including the invalid selection from the stream log.
+var equip = new BLTAdoptAHero.Actions.EquipCustomItemAction();
+var equipSettings = Activator.CreateInstance(equip.HandlerConfigType, true);
+equip.HandlerConfigType.GetProperty("GoldCost").SetValue(equipSettings, 125);
+var equipCampaign = BLTAdoptAHeroCampaignBehavior.Current;
+var equipHero = new Hero { Class = new() { Weapons = new() { EquipmentType.OneHandedSword, EquipmentType.Bow, EquipmentType.OneHandedSword } } };
+var forgedSword = new EquipmentElement(Weapon("custom_sword", EquipmentType.OneHandedSword, elves),
+    BLTCustomItemsCampaignBehavior.Current.CreateWeaponModifier("Forged sword", 39, 15, 0, 0));
+equipCampaign.AddCustomItem(equipHero, forgedSword);
+var oldPolearm = new EquipmentElement(Weapon("old_polearm", EquipmentType.TwoHandedLance, elves));
+equipHero.BattleEquipment[EquipmentIndex.Weapon0] = oldPolearm;
+int equipGold = equipCampaign.Gold;
+reply = equip.TestConfigured(equipHero, "1 slot2", equipSettings);
+Check(reply.Contains("not found") && equipCampaign.Gold == equipGold, "unsupported slot argument fails without null dereference or charge");
+reply = equip.TestConfigured(equipHero, "unknown name", equipSettings);
+Check(reply.Contains("not found") && equipCampaign.Gold == equipGold, "missing name fails without charge");
+reply = equip.TestConfigured(equipHero, "1", equipSettings);
+Check(reply.Contains("2 slots") && equipHero.BattleEquipment[EquipmentIndex.Weapon0].Item == forgedSword.Item
+    && equipHero.BattleEquipment[EquipmentIndex.Weapon2].ItemModifier == forgedSword.ItemModifier
+    && equipCampaign.Gold == equipGold - 125, "class-compatible forged sword replaces wrong type and fills empty matching slot, charging once");
+equipGold = equipCampaign.Gold;
+equipHero.Class.Weapons = new() { EquipmentType.Bow };
+reply = equip.TestConfigured(equipHero, "1", equipSettings);
+Check(reply.Contains("No class") && equipCampaign.Gold == equipGold, "unsupported class weapon fails free");
+equipHero.Class = null;
+reply = equip.TestConfigured(equipHero, "Forged sword", equipSettings);
+Check(reply.Contains("2 slots") && equipCampaign.Gold == equipGold - 125, "classless hero can use matching loadout slots");
+equipCampaign.GetCustomItems(equipHero).Add(default);
+equipGold = equipCampaign.Gold;
+Check(equip.TestConfigured(equipHero, "2", equipSettings).Contains("not found") && equipCampaign.Gold == equipGold, "empty inventory entry rejected without charge");
+equipHero.Class = new() { Weapons = new() { EquipmentType.OneHandedSword } };
+equipHero.BattleEquipment[EquipmentIndex.Weapon0] = oldPolearm;
+equipCampaign.FailCharge = true;
+equip.TestConfigured(equipHero, "1", equipSettings);
+Check(equipHero.BattleEquipment[EquipmentIndex.Weapon0].Item == oldPolearm.Item && equipCampaign.Gold == equipGold, "equip charge failure restores prior equipment and gold");
+equipCampaign.FailCharge = false;
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");

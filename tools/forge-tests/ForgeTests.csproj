@@ -14,6 +14,7 @@
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/ForgeService.cs" Link="ForgeService.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Util/EnchantmentPolicy.cs" Link="EnchantmentPolicy.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Behaviors/BLTCustomItemsCampaignBehavior.cs" Link="CustomBehavior.cs" />
+    <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/EquipCustomItem.cs" Link="EquipCustomItem.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/ForgeWeapon.cs" Link="ForgeWeapon.cs" />
     <Compile Include="../../BannerlordTwitch/BLTAdoptAHero/Actions/ReforgeWeapon.cs" Link="ReforgeWeapon.cs" />
     <Compile Include="../../BannerlordTwitch/BannerlordTwitch/SaveSystem/ScopedJsonSync.cs" Link="ScopedJsonSync.cs" />

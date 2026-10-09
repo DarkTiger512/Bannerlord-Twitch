@@ -53,6 +53,7 @@ namespace TaleWorlds.Core
         public bool IsCraftedByPlayer, NotMerchandise, Usable = true, Compatible = true;
         public float Weight = 2, Tierf = 5;
         public BannerlordTwitch.Helpers.EquipmentType Type;
+        public object ItemType => Type;
     }
     public class ItemModifier : MBObjectBase
     {
@@ -155,6 +156,7 @@ namespace TaleWorlds.CampaignSystem
         public Equipment BattleEquipment = new(), CivilianEquipment = new();
         public BLTAdoptAHero.HeroClassDef Class;
         public string Name = "Viewer";
+        public object CharacterObject => this;
     }
     public class CampaignEventDispatcher
     {
@@ -193,7 +195,7 @@ namespace BannerlordTwitch.Helpers
 }
 namespace BannerlordTwitch.Util
 {
-    public static class Log { public static void Error(string message) { } }
+    public static class Log { public static void Error(string message) { } public static void ShowInformation(string message, object hero) { } }
     public static class Extensions
     {
         public static BLTAdoptAHero.HeroClassDef GetClass(this Hero hero) => hero.Class;
@@ -219,11 +221,12 @@ namespace BannerlordTwitch.Util
 namespace BannerlordTwitch { public class ReplyContext { public string Args; } }
 namespace BLTAdoptAHero
 {
-    public class HeroClassDef { public List<BannerlordTwitch.Helpers.EquipmentType> Weapons = new(); public bool Mounted; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedWeapons => Weapons.Select((type, i) => ((EquipmentIndex)i, type)); }
+    public class HeroClassDef { public List<BannerlordTwitch.Helpers.EquipmentType> Weapons = new(); public bool Mounted; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedSlots => IndexedWeapons; public IEnumerable<(EquipmentIndex index, BannerlordTwitch.Helpers.EquipmentType type)> IndexedWeapons => Weapons.Select((type, i) => ((EquipmentIndex)i, type)); }
     public abstract class HeroCommandHandlerBase
     {
         public virtual Type HandlerConfigType => null;
         protected abstract void ExecuteInternal(Hero hero, BannerlordTwitch.ReplyContext context, object config, Action<string> success, Action<string> failure);
+        public string TestConfigured(Hero hero, string args, object config) { string result = null; ExecuteInternal(hero, new() { Args = args }, config, s => result = s, s => result = s); return result; }
         public string Test(Hero hero, string args) { string result = null; ExecuteInternal(hero, new() { Args = args }, GlobalForgeConfig.Config, s => result = s, s => result = s); return result; }
     }
     public class GlobalForgeConfig : ForgeSettings { public static GlobalForgeConfig Config = new(); public static GlobalForgeConfig Get() => Config; }
@@ -252,3 +255,35 @@ namespace BLTAdoptAHero
 namespace BannerlordTwitch { public sealed class Command { public Guid ID { get; set; } = Guid.NewGuid(); public string Handler, Name, Help, Documentation; public bool Enabled; public object HandlerConfig; } }
 
 namespace BannerlordTwitch.Util { public static class YamlHelpers { public static T ConvertObject<T>(object value) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Newtonsoft.Json.JsonConvert.SerializeObject(value)); } }
+
+namespace TaleWorlds.Library { }
+namespace BLTAdoptAHero.Annotations { public sealed class UsedImplicitlyAttribute : Attribute { } }
+namespace Xceed.Wpf.Toolkit.PropertyGrid.Attributes
+{
+    public sealed class CategoryOrderAttribute : Attribute { public CategoryOrderAttribute(string name, int order) { } }
+    public sealed class PropertyOrderAttribute : Attribute { public PropertyOrderAttribute(int order) { } }
+}
+namespace BannerlordTwitch.Localization
+{
+    public sealed class LocCategoryAttribute : Attribute { public LocCategoryAttribute(string name, string label) { } }
+    public static class TestTranslations
+    {
+        public static string Translate(this string text, params (string key, object value)[] args)
+        {
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"^\{=[^}]*\}", "");
+            foreach (var (key, value) in args) text = text.Replace("{" + key + "}", value?.ToString());
+            return text;
+        }
+    }
+}
+namespace BannerlordTwitch.Util
+{
+    public interface IDocumentable { void GenerateDocumentation(IDocumentationGenerator generator); }
+    public interface IDocumentationGenerator { void Value(string value); }
+}
+namespace BLTAdoptAHero
+{
+    public static class AdoptAHero { public static string NoHeroMessage = "No hero"; }
+    public static class Naming { public static string Gold = "gold"; public static string NotEnoughGold(int cost, int gold) => "Not enough gold"; }
+    public static class RewardHelpers { public static string GetItemNameAndModifiers(EquipmentElement item) => item.GetModifiedItemName(); }
+}
