@@ -51,17 +51,17 @@ namespace BLTAdoptAHero.Util
         [Category("Weapon balance"), DisplayName("Masterwork extra damage (%)"), Description("Total extra damage for Masterwork quality, measured from the original weapon damage. Enter 10 for +10%, not an additional 10% on top of Fine. Must be at least the Fine bonus and no more than 25.")]
         public double MasterworkDamagePercent { get; set; } = 10;
         [Category("Weapon balance"), DisplayName("Standard extra damage (points)"), Description("Flat damage points added for Standard quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int StandardDamageBonus { get; set; } = 20;
+        public int StandardDamageBonus { get; set; } = 10;
         [Category("Weapon balance"), DisplayName("Standard extra speed (points)"), Description("Flat speed points added for Standard quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int StandardSpeedBonus { get; set; } = 10;
+        public int StandardSpeedBonus { get; set; } = 5;
         [Category("Weapon balance"), DisplayName("Fine extra damage (points)"), Description("Flat damage points added for Fine quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int FineDamageBonus { get; set; } = 40;
+        public int FineDamageBonus { get; set; } = 20;
         [Category("Weapon balance"), DisplayName("Fine extra speed (points)"), Description("Flat speed points added for Fine quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int FineSpeedBonus { get; set; } = 20;
+        public int FineSpeedBonus { get; set; } = 10;
         [Category("Weapon balance"), DisplayName("Masterwork extra damage (points)"), Description("Flat damage points added for Masterwork quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int MasterworkDamageBonus { get; set; } = 60;
+        public int MasterworkDamageBonus { get; set; } = 30;
         [Category("Weapon balance"), DisplayName("Masterwork extra speed (points)"), Description("Flat speed points added for Masterwork quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
-        public int MasterworkSpeedBonus { get; set; } = 30;
+        public int MasterworkSpeedBonus { get; set; } = 15;
         [Category("Advanced"), DisplayName("Allow hidden crafting parts"), Description("Allow BLT to use weapon pieces that the game or a mod hides from the normal smithing screen. Hidden means unavailable in that screen, not invisible on the weapon. Leave off unless you want these extra parts; some mods hide parts they do not intend players to use.")]
         public bool AllowHiddenParts { get; set; }
         [Category("Advanced"), DisplayName("Blocked crafting part IDs"), Description("Weapon pieces BLT must never use when crafting. Add their exact internal part IDs, not their display names. Leave empty unless you need to exclude a specific unwanted or broken mod part. This does not block whole weapons.")]
