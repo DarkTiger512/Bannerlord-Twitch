@@ -23,7 +23,10 @@ bow.PrimaryWeapon.IsMeleeWeapon = false; bow.PrimaryWeapon.IsRangedWeapon = true
 var bow2 = Weapon("elven_bow_2", EquipmentType.Bow, elves);
 var imperialBow = Weapon("empire_bow", EquipmentType.Bow, empire);
 var guildCrossbow = Weapon("guild_crossbow", EquipmentType.Crossbow, hiddenCulture);
-CampaignHelpers.AllItems.AddRange(new[] { bow, bow2, imperialBow, guildCrossbow });
+var sword = Weapon("elven_sword", EquipmentType.TwoHandedSword, elves);
+var lowSword = Weapon("elven_sword_low", EquipmentType.TwoHandedSword, elves); lowSword.Tierf = 2;
+var generatedSword = Weapon("player_sword", EquipmentType.TwoHandedSword, elves); generatedSword.IsCraftedByPlayer = true;
+CampaignHelpers.AllItems.AddRange(new[] { bow, bow2, imperialBow, guildCrossbow, sword, lowSword, generatedSword });
 var template = new CraftingTemplate { StringId = "custom_sword_template", WeaponDescriptions = new[] { new WeaponDescription { WeaponClass = WeaponClass.TwoHandedSword } }, BuildOrders = Enumerable.Range(0, 4).Select(i => new PieceData { PieceType = (CraftingPiece.PieceTypes)i, Order = i }).ToArray() };
 foreach (var culture in new[] { empire, elves })
 foreach (var tier in new[] { 2, 5 })
@@ -84,33 +87,17 @@ Check(assets.Generate(hero, EquipmentType.Crossbow, empire, ForgeStyle.Balanced,
 guildCrossbow.Usable = true;
 int generated = Crafting.Generated, registered = MBObjectManager.Instance.Objects.Count;
 selected = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Swift, settings, false);
-Check(selected.NativeCrafted && !selected.Fallback, "native cultured design");
-Check(Crafting.Generated - generated == settings.CandidateBudget && registered == MBObjectManager.Instance.Objects.Count, "bounded unregistered candidates");
-Check(selected.Item.WeaponDesign.UsedPieces.All(p => p.CraftingPiece.Culture == elves), "culture-specific parts");
-// Neutral crafting parts must still produce a culture-bearing item for the native save event.
-var originalPartCultures = template.Pieces.Select(p => p.Culture).ToArray();
-foreach (var part in template.Pieces) part.Culture = null;
-var neutralDesign = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false);
-Check(neutralDesign.Fallback && neutralDesign.Item.Culture == elves, "neutral design retains fallback disclosure and requested culture");
-NativeForgeAdapter.PrepareIdentity(neutralDesign.Item);
-int beforeNeutralEvent = CampaignEventDispatcher.Instance.Crafted;
-NativeForgeAdapter.Register(neutralDesign.Item);
-Check(CampaignEventDispatcher.Instance.Crafted == beforeNeutralEvent + 1, "neutral design survives native culture dereference and registration");
-MBObjectManager.Instance.UnregisterObject(neutralDesign.Item);
-var heroCultureDesign = assets.Generate(hero, EquipmentType.TwoHandedSword, null, ForgeStyle.Balanced, settings, false);
-Check(heroCultureDesign.Item.Culture == hero.Culture, "neutral design without requested culture uses hero culture");
-for (int i = 0; i < template.Pieces.Count; i++) template.Pieces[i].Culture = originalPartCultures[i];
-Throws(() => NativeForgeAdapter.Register(new ItemObject()), "cultureless native registration rejected before event");
+Check(!selected.NativeCrafted && ReferenceEquals(selected.Item, sword), "templates reuse installed sword identity");
+Check(Crafting.Generated == generated && registered == MBObjectManager.Instance.Objects.Count, "no native construction or registration");
 settings.TargetTier = 2;
-selected = assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false);
-Check(selected.Item.Tierf < 4, "requested tier honored");
+Check(assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false).Item == lowSword, "nearest installed tier honored");
 settings.TargetTier = 5;
 foreach (var part in template.Pieces) part.IsHiddenOnDesigner = true;
-Throws(() => assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false), "hidden parts excluded; no item fallback for broken template");
-settings.AllowHiddenParts = true;
-Check(assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false).NativeCrafted, "hidden part override");
-settings.AllowHiddenParts = false;
-foreach (var part in template.Pieces) part.IsHiddenOnDesigner = false;
+Check(assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Heavy, settings, false).Item == sword, "broken or hidden crafting parts are never used");
+BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add(sword.StringId);
+BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Add(lowSword.StringId);
+Throws(() => assets.Generate(hero, EquipmentType.TwoHandedSword, elves, ForgeStyle.Balanced, settings, false), "player-generated designs never become forge bases");
+BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds.Clear();
 var forge = new ForgeWeapon();
 string reply = forge.Test(hero, "bow elves swift fine");
 var item = campaign.GetCustomItems(hero).Single();
@@ -191,15 +178,15 @@ custom = BLTCustomItemsCampaignBehavior.Current;
 hero.Class.Weapons = new() { EquipmentType.TwoHandedSword };
 int crafted = CampaignEventDispatcher.Instance.Crafted;
 reply = forge.Test(hero, "random");
-Check(reply.Contains("native-crafted") && CampaignEventDispatcher.Instance.Crafted == crafted + 1, "random native forge and event registration");
+Check(reply.Contains("existing weapon design") && CampaignEventDispatcher.Instance.Crafted == crafted && Crafting.Generated == generated, "random forging never generates native items or dispatches crafting events");
 var craftedItem = campaign.GetCustomItems(hero).Last();
-Check(craftedItem.Item.StringId == craftedItem.Item.WeaponDesign.HashedCode && Guid.TryParse(craftedItem.Item.StringId, out _), "unique native identity");
+Check(ReferenceEquals(craftedItem.Item, sword) && !custom.GetForgeMetadata(craftedItem.ItemModifier).NativeCrafted, "installed base identity and modifier metadata");
 Check(custom.GetForgeMetadata(craftedItem.ItemModifier).BaseItemId == craftedItem.Item.StringId, "registered provenance identity");
 var recipient = new Hero { Culture = elves };
 campaign.GetCustomItems(hero).Remove(item); campaign.AddCustomItem(recipient, item);
 Check(custom.GetForgeMetadata(campaign.GetCustomItems(recipient).Single().ItemModifier).Quality == ForgeQuality.Masterwork, "ownership transfer retains metadata");
 Check(reforge.Test(hero, "#99 heavy").Contains("Select"), "stale inventory index free");
-// Random skips unusable types before any purchase and stays within the native budget.
+// Random skips unusable types before any purchase.
 hero.Class.Weapons = new() { EquipmentType.Crossbow, EquipmentType.Bow };
 guildCrossbow.Usable = false;
 for (int i = 0; i < 5; i++) Check(assets.GenerateRandom(hero, elves, ForgeStyle.Balanced, settings).type == EquipmentType.Bow, "random skips unusable class type");
@@ -340,4 +327,19 @@ Check(forgeHelp.Contains("!forge random") && forgeHelp.Contains("!forge cultures
 var reforgeGuide = new RecordingDocumentation();
 new ReforgeCommandSettings { UpgradeCost = 123456 }.GenerateDocumentation(reforgeGuide);
 Check(string.Join(" ", reforgeGuide.Values).Contains(123456.ToString("N0")) && !string.Join(" ", reforgeGuide.Values).Contains("<strong>Forge a custom weapon"), "reforge has its own subsection and configured price");
+// Separate owners share an installed design, never their purchased modifiers.
+var ownerA = new Hero { Culture = elves, Class = new() { Weapons = new() { EquipmentType.TwoHandedSword } } };
+var ownerB = new Hero { Culture = elves, Class = new() { Weapons = new() { EquipmentType.TwoHandedSword } } };
+int nativeCount = Crafting.Generated, eventCount = CampaignEventDispatcher.Instance.Crafted;
+forge.Test(ownerA, "longsword elves balanced fine");
+forge.Test(ownerB, "longsword elves heavy masterwork");
+var purchaseA = campaign.GetCustomItems(ownerA).Single();
+var purchaseB = campaign.GetCustomItems(ownerB).Single();
+Check(ReferenceEquals(purchaseA.Item, sword) && ReferenceEquals(purchaseB.Item, sword)
+    && !ReferenceEquals(purchaseA.ItemModifier, purchaseB.ItemModifier), "shared installed design has independent owned modifiers");
+Check(purchaseA.ItemModifier.Damage == 25 && purchaseB.ItemModifier.Damage == 45
+    && sword.PrimaryWeapon.SwingDamage == 100 && sword.PrimaryWeapon.SwingSpeed == 80, "style and quality never mutate shared base stats");
+reforge.Test(ownerA, "#1 swift");
+Check(purchaseB.ItemModifier.Damage == 45 && purchaseA.ItemModifier.Damage == 20, "reforging one owner leaves the other unchanged");
+Check(Crafting.Generated == nativeCount && CampaignEventDispatcher.Instance.Crafted == eventCount, "purchases and reforges avoid native construction and crafting events");
 Console.WriteLine($"PASS: {checks} forge integration checks (engine stubs; not real-game verification).");

@@ -63,7 +63,7 @@ namespace BannerlordTwitch
                 command.Handler = "ForgeWeapon";
                 command.HandlerConfig = config;
                 command.Help = "Choose a weapon type, culture, style and quality; use this command without arguments for help.";
-                command.Documentation = "Forge a custom weapon with automatic parts, style and quality.";
+                command.Documentation = "Forge a custom weapon with style and quality bonuses.";
                 changed = true;
             }
             return changed;

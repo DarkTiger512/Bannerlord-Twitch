@@ -5,7 +5,6 @@ using BannerlordTwitch.Util;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
 
 namespace BLTAdoptAHero.Util
 {
@@ -43,7 +42,6 @@ namespace BLTAdoptAHero.Util
                 type = generated.type;
             }
             else result = ForgeAssets.Current.Generate(hero, type, culture, style, settings, false, template);
-            if (result.NativeCrafted) NativeForgeAdapter.PrepareIdentity(result.Item);
             var contributions = Contributions(result.Item, style, quality, settings);
             var oldItems = inventory.ToList();
             var oldBattle = hero.BattleEquipment.YieldEquipmentSlots().ToList();
@@ -77,8 +75,6 @@ namespace BLTAdoptAHero.Util
                         break;
                     }
                 }
-                // Register native identity last, after all reversible inventory/equipment operations.
-                if (result.NativeCrafted) NativeForgeAdapter.Register(result.Item);
             }, () =>
             {
                 inventory.Clear();
@@ -86,8 +82,6 @@ namespace BLTAdoptAHero.Util
                 foreach (var slot in oldBattle) hero.BattleEquipment[slot.index] = slot.element;
                 foreach (var slot in oldCivilian) hero.CivilianEquipment[slot.index] = slot.element;
                 custom.RemoveNewForgeModifier(modifier);
-                if (result.NativeCrafted && MBObjectManager.Instance.GetObject<ItemObject>(result.Item.StringId) == result.Item)
-                    MBObjectManager.Instance.UnregisterObject(result.Item);
             });
             return $"{quality} {style} {result.Item.Name}: {assignment}; {result.Description}; damage {contributions.damage:+0;-0;0}, speed {contributions.speed:+0;-0;0}. Spent {cost:N0} gold; balance {campaign.GetHeroGold(hero):N0}.";
         }
