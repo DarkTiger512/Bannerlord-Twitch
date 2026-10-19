@@ -12,6 +12,7 @@ Updated 19 October 2026. This replaces the previous 5.5.20 download; no addition
 - Other supported slots: `weapon1`–`weapon4`, `head`, `body`, `legs`, `hands`, and `cape`.
 - Use `!unequip civilian <slot>` to select civilian equipment instead. Other slots remain unchanged.
 - A slot is required. Bare `!unequip` and `!unequip all` do not remove anything.
+- Equipped custom items are explicitly returned to custom inventory before their slot is cleared, including legacy items missing from storage. Their exact modifiers are retained and existing inventory entries are not duplicated.
 - Unequipping does not refresh equipment or generate a replacement horse. Class, purchased equipment tier, and custom-item storage are preserved. Ordinary equipment is not stored or refunded.
 - `!equip` and `!reequip` support empty loadouts and classless heroes; their normal tier progression and gold costs still apply.
 - Unequip is unavailable during missions or captivity.

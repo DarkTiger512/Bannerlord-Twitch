@@ -21,7 +21,7 @@ static class Program
         var originalClass = new HeroClassDef();
         behavior.Class = originalClass;
         var custom = hero.CustomItems;
-        custom.Add("stored custom horse");
+        custom.Add(new EquipmentElement("stored custom horse"));
         Fill(hero);
         foreach (string invalid in new[] { null, "", "all", "weapon", "mount extra", "civilian", "civilian mount extra", "0" })
         {
@@ -98,6 +98,27 @@ static class Program
             Check(EquipHero.GeneratedClass == heroClass && behavior.EquipmentClass == heroClass, "Classless and classed dispatch.");
             Check(behavior.Gold == 990 && custom.Count == 1, "Normal cost and custom storage preserved.");
         }
+        foreach (bool civilian in new[] { false, true })
+        {
+            custom.Clear();
+            var modifier = new object();
+            BLTCustomItemsCampaignBehavior.Current.Registered.Add(modifier);
+            var weapon = new EquipmentElement("custom sword") { ItemModifier = modifier };
+            var equipment = civilian ? hero.CivilianEquipment : hero.BattleEquipment;
+            equipment[EquipmentIndex.Weapon0] = weapon;
+            context.Args = (civilian ? "civilian " : "") + "weapon1";
+            clear.Run(context);
+            Check(!clear.Failed && equipment[EquipmentIndex.Weapon0].IsEmpty && custom.Count == 1
+                && custom[0].Item == weapon.Item && ReferenceEquals(custom[0].ItemModifier, modifier),
+                "Equipped-only custom weapon returns to inventory with its exact modifier.");
+            equipment[EquipmentIndex.Weapon0] = weapon;
+            clear.Run(context);
+            clear.Run(context);
+            Check(custom.Count == 1, "Re-equipping and unequipping must not duplicate stored custom items.");
+            equipment[EquipmentIndex.Weapon0] = new EquipmentElement("ordinary sword");
+            clear.Run(context);
+            Check(custom.Count == 1, "Ordinary equipment must not become a custom inventory item.");
+        }
         behavior.Tier = 5;
         EquipHero.RemoveAllEquipment(hero);
         context.Args = "";
@@ -148,13 +169,14 @@ class Hero
     public CharacterStates HeroState;
     public bool IsPlayerCompanion;
     public Equipment BattleEquipment = new(), CivilianEquipment = new();
-    public List<string> CustomItems = new();
+    public List<EquipmentElement> CustomItems = new();
 }
 enum EquipmentIndex { Weapon0, Weapon1, Weapon2, Weapon3, Head, Body, Leg, Gloves, Cape, Horse, HorseHarness }
 struct EquipmentElement
 {
     public string Item;
-    public EquipmentElement(string item) { Item = item; }
+    public object ItemModifier;
+    public EquipmentElement(string item) { Item = item; ItemModifier = null; }
     public bool IsEmpty => Item == null;
     public static EquipmentElement Invalid => default;
 }
@@ -180,6 +202,14 @@ class BLTAdoptAHeroCampaignBehavior
     public void SetEquipmentClass(Hero hero, HeroClassDef heroClass) => EquipmentClass = heroClass;
     public int GetHeroGold(Hero hero) => Gold;
     public void ChangeHeroGold(Hero hero, int amount, bool isSpending) => Gold += amount;
+    public void AddCustomItem(Hero hero, EquipmentElement item)
+    { if (!hero.CustomItems.Contains(item)) hero.CustomItems.Add(item); }
+}
+class BLTCustomItemsCampaignBehavior
+{
+    public static readonly BLTCustomItemsCampaignBehavior Current = new();
+    public HashSet<object> Registered = new();
+    public bool IsRegistered(object modifier) => modifier != null && Registered.Contains(modifier);
 }
 static class BLTAdoptAHeroModule { public static readonly Config CommonConfig = new(); }
 class Config { public HashSet<string> RestrictedItemIds = new(); }

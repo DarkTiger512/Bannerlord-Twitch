@@ -55,6 +55,13 @@ namespace BLTAdoptAHero
 
             // Do not refresh equipment here: that would immediately generate replacements.
             var equipment = civilian ? adoptedHero.CivilianEquipment : adoptedHero.BattleEquipment;
+            var item = equipment[slot.Value];
+            // Some equipped custom items are missing from storage. Store the exact element
+            // before clearing it; AddCustomItem is idempotent for items already stored.
+            if (!item.IsEmpty && BLTCustomItemsCampaignBehavior.Current?.IsRegistered(item.ItemModifier) == true)
+            {
+                BLTAdoptAHeroCampaignBehavior.Current.AddCustomItem(adoptedHero, item);
+            }
             equipment[slot.Value] = EquipmentElement.Invalid;
 
             onSuccess("{=}Selected slot unequipped.".Translate()
