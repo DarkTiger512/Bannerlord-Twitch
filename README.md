@@ -14,6 +14,7 @@ Twitch Extension **0.0.8** was submitted for review on September 19, 2026. See t
 This is a modification for [Mount & Blade II: Bannerlord](https://www.taleworlds.com/en/Games/Bannerlord) that adds Twitch integration to the game. This allows events in a Twitch stream to trigger actions in game, for instance redemption of Channel Point Rewards, or specific chat messages.
 
 # Features
+- **Unequip Individual Slots** with `!unequip <slot>`, for example `!unequip mount` or `!unequip weapon1`. Slots: `weapon1`–`weapon4`, `head`, `body`, `legs`, `hands`, `cape`, `mount`, `harness`. Use `!unequip civilian <slot>` for civilian equipment. A slot is required; every other slot stays unchanged. Custom items stay in storage; ordinary items are cleared without storage or refund. Class and purchased equipment tier are preserved, so `!reequip` rebuilds the current tier and `!equip` buys the next tier, including for classless heroes. Unavailable during missions or captivity. Existing saved profiles must add a command named `unequip` using the `UnequipHero` handler in BLT Configure; the default configuration includes it.
 - **Moderator-Launched Stream Objectives** with shared progress, contributor rewards, and a compact OBS overlay
 - **Class-Guided Retinues** that hire and upgrade troops toward the adopted hero's formation class
 - **Campaign Spectator Map** that follows adopted heroes while preserving the campaign world's geography

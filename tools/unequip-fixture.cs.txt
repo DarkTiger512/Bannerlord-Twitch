@@ -1,0 +1,188 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
+static class Program
+{
+    static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
+    static void Fill(Hero h)
+    {
+        foreach (var i in Enum.GetValues<EquipmentIndex>())
+            h.BattleEquipment[i] = h.CivilianEquipment[i] = new EquipmentElement("item");
+    }
+    static bool Empty(Equipment e) => e.YieldEquipmentSlots().All(s => s.element.IsEmpty);
+    static void Main()
+    {
+        var behavior = BLTAdoptAHeroCampaignBehavior.Current;
+        var hero = behavior.Hero;
+        var clear = new UnequipHero();
+        var equip = new EquipHero();
+        var context = new ReplyContext();
+        var originalClass = new HeroClassDef();
+        behavior.Class = originalClass;
+        var custom = hero.CustomItems;
+        custom.Add("stored custom horse");
+        Fill(hero);
+        foreach (string invalid in new[] { null, "", "all", "weapon", "mount extra", "civilian", "civilian mount extra", "0" })
+        {
+            context.Args = invalid;
+            clear.Run(context);
+            Check(clear.Failed && hero.BattleEquipment.YieldEquipmentSlots().All(s => !s.element.IsEmpty)
+                && hero.CivilianEquipment.YieldEquipmentSlots().All(s => !s.element.IsEmpty),
+                "Missing/invalid slots must never clear equipment: " + invalid);
+        }
+        var slots = new (string name, EquipmentIndex index)[] {
+            ("weapon1", EquipmentIndex.Weapon0), ("weapon2", EquipmentIndex.Weapon1),
+            ("weapon3", EquipmentIndex.Weapon2), ("weapon4", EquipmentIndex.Weapon3),
+            ("head", EquipmentIndex.Head), ("helmet", EquipmentIndex.Head), ("body", EquipmentIndex.Body),
+            ("legs", EquipmentIndex.Leg), ("boots", EquipmentIndex.Leg), ("hands", EquipmentIndex.Gloves),
+            ("gloves", EquipmentIndex.Gloves), ("cape", EquipmentIndex.Cape),
+            ("mount", EquipmentIndex.Horse), ("horse", EquipmentIndex.Horse), ("harness", EquipmentIndex.HorseHarness)
+        };
+        foreach (bool civilian in new[] { false, true })
+        foreach (var slot in slots)
+        {
+            Fill(hero);
+            context.Args = (civilian ? "civilian " : "") + slot.name;
+            clear.Run(context);
+            Check(!clear.Failed, "Accept slot " + context.Args);
+            foreach (var e in new[] { hero.BattleEquipment, hero.CivilianEquipment })
+            foreach (var item in e.YieldEquipmentSlots())
+                Check(item.element.IsEmpty == (e == (civilian ? hero.CivilianEquipment : hero.BattleEquipment) && item.index == slot.index),
+                    "Only the explicitly selected slot may change: " + context.Args);
+            clear.Run(context);
+            Check(!clear.Failed, "Repeated removal is safe.");
+        }
+        Check(behavior.Tier == 3 && behavior.Class == originalClass && hero.CustomItems == custom && custom.Count == 1,
+            "Unequip must preserve class, recorded tier and custom storage.");
+        Check(behavior.Gold == 1000 && EquipHero.GeneratorCalls == 0, "Clearing is free and never regenerates.");
+        Fill(hero);
+        context.Args = " MOUNT ";
+        clear.Run(context);
+        Check(hero.BattleEquipment[EquipmentIndex.Horse].IsEmpty && !hero.BattleEquipment[EquipmentIndex.HorseHarness].IsEmpty
+            && !hero.CivilianEquipment[EquipmentIndex.Horse].IsEmpty,
+            "Mount selection is case-insensitive and leaves harness and civilian mount unchanged.");
+        Fill(hero);
+        context.Args = "weapon";
+        clear.Run(context);
+        Check(clear.Failed && !hero.BattleEquipment[EquipmentIndex.Horse].IsEmpty, "Reject unknown selection without mutation.");
+        context.Args = "mount";
+        Mission.Current = new object();
+        clear.Run(context);
+        Check(clear.Failed && !Empty(hero.BattleEquipment), "Mission guard.");
+        Mission.Current = null;
+        hero.HeroState = Hero.CharacterStates.Prisoner;
+        clear.Run(context);
+        Check(clear.Failed && !Empty(hero.BattleEquipment), "Prisoner guard.");
+        hero.HeroState = Hero.CharacterStates.Active;
+
+        foreach (var heroClass in new[] { originalClass, null })
+        foreach (bool reequip in new[] { true, false })
+        {
+            behavior.Class = heroClass;
+            behavior.Tier = 3;
+            behavior.Gold = 1000;
+            foreach (var slot in slots)
+            {
+                context.Args = slot.name;
+                clear.Run(context);
+                context.Args = "civilian " + slot.name;
+                clear.Run(context);
+            }
+            Check(Empty(hero.BattleEquipment) && Empty(hero.CivilianEquipment), "Individual slot removals can leave an empty loadout.");
+            context.Args = null;
+            equip.Run(context, new EquipHero.Settings { ReequipInsteadOfUpgrade = reequip });
+            Check(!equip.Failed && !Empty(hero.BattleEquipment) && !Empty(hero.CivilianEquipment), "Empty loadout can reach generation.");
+            Check(behavior.Tier == (reequip ? 3 : 4) && EquipHero.GeneratedTier == behavior.Tier,
+                "Reequip preserves progression; equip advances exactly one tier.");
+            Check(EquipHero.GeneratedClass == heroClass && behavior.EquipmentClass == heroClass, "Classless and classed dispatch.");
+            Check(behavior.Gold == 990 && custom.Count == 1, "Normal cost and custom storage preserved.");
+        }
+        behavior.Tier = 5;
+        EquipHero.RemoveAllEquipment(hero);
+        context.Args = "";
+        int calls = EquipHero.GeneratorCalls;
+        equip.Run(context, new EquipHero.Settings());
+        Check(equip.Failed && EquipHero.GeneratorCalls == calls, "Unequip cannot reset progression to bypass max tier.");
+        behavior.Tier = 3;
+        behavior.Gold = 0;
+        equip.Run(context, new EquipHero.Settings());
+        Check(equip.Failed && Empty(hero.BattleEquipment), "Insufficient gold leaves empty loadout unchanged.");
+        Console.WriteLine("PASS: individual battle/civilian slots, invalid arguments, guards, storage and empty-loadout equip/reequip flow.");
+    }
+}
+class ReplyContext { public string Args; public string UserName = "viewer"; }
+abstract class Handler
+{
+    public bool Failed;
+    public void Run(ReplyContext context, object config = null)
+    { Failed = false; ExecuteInternal(context, config, _ => {}, _ => Failed = true); }
+    protected virtual void ExecuteInternal(ReplyContext context, object config, Action<string> success, Action<string> failure) { }
+    protected virtual void ExecuteInternal(Hero hero, ReplyContext context, object config, Action<string> success, Action<string> failure) { }
+}
+class UnequipHero : Handler
+{
+    public new void Run(ReplyContext context, object config = null)
+    { Failed = false; ExecuteInternal(BLTAdoptAHeroCampaignBehavior.Current.Hero, context, config, _ => {}, _ => Failed = true); }
+    /* UNEQUIP */
+}
+class EquipHero : Handler
+{
+    public class Settings
+    { public bool ReequipInsteadOfUpgrade; public bool AllowCompanionUpgrade = true; public int GetTierCost(int tier) => 10; }
+    public static int GeneratorCalls, GeneratedTier;
+    public static HeroClassDef GeneratedClass;
+    public static bool UpgradeEquipment(Hero hero, int tier, HeroClassDef heroClass, bool replaceSameTier,
+        CultureObject cultureFilter, bool cultureFilterSpecified, HashSet<string> restrictedItemIds)
+    {
+        GeneratorCalls++; GeneratedTier = tier; GeneratedClass = heroClass;
+        hero.BattleEquipment[EquipmentIndex.Body] = hero.CivilianEquipment[EquipmentIndex.Body] = new EquipmentElement("generated");
+        return true;
+    }
+    /* EQUIP */
+    /* CLEAR */
+}
+class Hero
+{
+    public enum CharacterStates { Active, Prisoner }
+    public CharacterStates HeroState;
+    public bool IsPlayerCompanion;
+    public Equipment BattleEquipment = new(), CivilianEquipment = new();
+    public List<string> CustomItems = new();
+}
+enum EquipmentIndex { Weapon0, Weapon1, Weapon2, Weapon3, Head, Body, Leg, Gloves, Cape, Horse, HorseHarness }
+struct EquipmentElement
+{
+    public string Item;
+    public EquipmentElement(string item) { Item = item; }
+    public bool IsEmpty => Item == null;
+    public static EquipmentElement Invalid => default;
+}
+class Equipment
+{
+    readonly EquipmentElement[] items = new EquipmentElement[11];
+    public EquipmentElement this[EquipmentIndex index] { get => items[(int)index]; set => items[(int)index] = value; }
+    public IEnumerable<(EquipmentElement element, EquipmentIndex index)> YieldEquipmentSlots()
+    { for (int i = 0; i < items.Length; i++) yield return (items[i], (EquipmentIndex)i); }
+}
+class HeroClassDef { public string Name = "Infantry"; }
+class CultureObject { public string Name = "Culture"; }
+static class CampaignHelpers { public static CultureObject[] AllCultures = Array.Empty<CultureObject>(); }
+static class Mission { public static object Current; }
+class BLTAdoptAHeroCampaignBehavior
+{
+    public static readonly BLTAdoptAHeroCampaignBehavior Current = new();
+    public Hero Hero = new(); public HeroClassDef Class, EquipmentClass; public int Tier = 3, Gold = 1000;
+    public Hero GetAdoptedHero(string name) => Hero;
+    public int GetEquipmentTier(Hero hero) => Tier;
+    public void SetEquipmentTier(Hero hero, int tier) => Tier = tier;
+    public HeroClassDef GetClass(Hero hero) => Class;
+    public void SetEquipmentClass(Hero hero, HeroClassDef heroClass) => EquipmentClass = heroClass;
+    public int GetHeroGold(Hero hero) => Gold;
+    public void ChangeHeroGold(Hero hero, int amount, bool isSpending) => Gold += amount;
+}
+static class BLTAdoptAHeroModule { public static readonly Config CommonConfig = new(); }
+class Config { public HashSet<string> RestrictedItemIds = new(); }
+static class AdoptAHero { public static string NoHeroMessage = "No hero"; }
+static class Naming { public static string NotEnoughGold(int cost, int gold) => "Not enough gold"; }
+static class Localization { public static string Translate(this string s, params (string, object)[] args) => s; }

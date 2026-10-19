@@ -484,6 +484,17 @@ Commands:
   Name: customitems
   RespondInOverlay: true
   RespondInTwitch: false
+- Documentation: 'Unequip one battle slot: !unequip <weapon1|weapon2|weapon3|weapon4|head|body|legs|hands|cape|mount|harness>. Add civilian before the slot for civilian equipment. A slot is required; other slots remain unchanged. Preserves class, purchased equipment tier, and custom-item storage; ordinary equipment is not stored. Equip and reequip can generate equipment again. Cannot be used during a mission or while imprisoned.'
+  Enabled: true
+  Handler: UnequipHero
+  HandlerConfig:
+  Help: '!unequip [civilian] <slot>'
+  HideHelp: false
+  ID: cfe9098d-448d-4adc-b403-2099ec83b1cd
+  ModeratorOnly: false
+  Name: unequip
+  RespondInOverlay: true
+  RespondInTwitch: true
 - Documentation: Throw away one of your custom items.<br>Usage is <code>!discarditem (custom item index)</code>, e.g. <code>!discarditem 3</code> would discard your custom item with the index 3. The custom item index is shown in the 'customs' command.
   Enabled: true
   Handler: DiscardItem

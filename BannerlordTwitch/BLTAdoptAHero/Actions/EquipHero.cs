@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch;
@@ -101,7 +101,7 @@ namespace BLTAdoptAHero
             Action<string> onSuccess,
             Action<string> onFailure)
         {
-            var splitArgs = context.Args.Split(' ');
+            var splitArgs = (context.Args ?? "").Split(' ');
             var desiredName = string.Join(" ", splitArgs).Trim();
 
             CultureObject selectedCulture = null;
@@ -168,12 +168,7 @@ namespace BLTAdoptAHero
             }
 
             var charClass = BLTAdoptAHeroCampaignBehavior.Current.GetClass(adoptedHero);
-            // Ensure charClass is not null before using it
-            if (charClass == null)
-            {
-                onFailure("{=FZh7ZtGp}Character class not found.".Translate());
-                return;
-            }
+            // UpgradeEquipment also supports classless heroes using their strongest skills.
 
             // Get restricted items from global config
             var restrictedItemIds = BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds;

@@ -120,6 +120,7 @@
     <Compile Include="Actions\AttributePoints.cs" />
     <Compile Include="Actions\ClanManagement.cs" />
     <Compile Include="Actions\DiscardItem.cs" />
+    <Compile Include="Actions\UnequipHero.cs" />
     <Compile Include="Actions\EquipHero.cs" />
     <Compile Include="Actions\FocusPoints.cs" />
     <Compile Include="Actions\GiveItem.cs" />
