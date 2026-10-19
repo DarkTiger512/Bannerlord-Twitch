@@ -1,11 +1,14 @@
-# BLT TAOM 5.5.20 — Slot Unequip Update
-
-
+# BLT TAOM 5.5.20 — Siege Loading Update
 
 Updated 19 October 2026. This replaces the previous 5.5.20 download; no additional release entry was created.
 
+## Siege loading guard restored
 
-
+- Restores the TAOM 5.5.10 diagnostics build's guard against an unlimited mesh/physics preload wait during mission loading.
+- A readiness wait that keeps reporting pending assets now times out after approximately 15 seconds and logs their names with `PRELOAD_TIMEOUT`. Ready assets log `PRELOAD_READY` and continue normally.
+- Fixes optional Naval DLC patch initialization when its target method is unavailable, so that missing DLC does not interrupt initialization of the remaining patches.
+- The guard bounds repeated polling; it cannot interrupt a native resource check that never returns. Continuing after timeout can leave missing visuals or physics. This mitigates the loading wait and does not repair missing assets.
+- The reported attacking siege still needs an in-game replay to confirm the fix. The version remains **5.5.20**: download this refreshed ZIP even if you already installed 5.5.20.
 ## Slot-specific unequip
 
 - Use `!unequip mount` to remove only your battle mount, or `!unequip harness` for its harness.
@@ -20,11 +23,7 @@ Updated 19 October 2026. This replaces the previous 5.5.20 download; no addition
 
 ## Forging that fits TAOM
 
-
-
 Forging now selects an existing installed weapon design and gives your purchase its own BLT modifiers. It no longer assembles random crafting parts or creates new native weapon designs.
-
-
 
 - **Balanced, Swift and Heavy stay available**, along with Standard, Fine and Masterwork quality.
 
@@ -38,11 +37,7 @@ Forging now selects an existing installed weapon design and gives your purchase 
 
 - Obsolete crafting-part controls are hidden from the configuration editor. Existing prices, command names and enabled states are preserved.
 
-
-
 ## Also included
-
-
 
 - Custom polearms check all usable weapon modes; two-handed-only pikes still require a matching class slot.
 
@@ -52,29 +47,18 @@ Forging now selects an existing installed weapon design and gives your purchase 
 
 - The viewer command guide includes forge and reforge examples with configured prices and bonuses.
 
-
-
 ## Updating
-
-
 
 Close Bannerlord and replace all four BLT module folders from the ZIP. Preserve your authentication and custom configuration files. The version remains **5.5.20**, so download the refreshed ZIP even if you already installed that version.
 
-
-
-Existing saves and forge metadata remain supported. Previously generated weapons are **not automatically replaced or repaired**. This update removes native weapon generation from new purchases; it is not a confirmed fix for the earlier Minas Tirith freeze or missing TAOM assets.
-
-
+Existing saves and forge metadata remain supported. Previously generated weapons are **not automatically replaced or repaired**. The preload guard is a mitigation for repeated resource-readiness waits; it is not a repair for missing TAOM assets or a confirmed fix for every siege freeze.
 
 Requires Bannerlord 1.4.8 and your normal TAOM dependencies. Harmony and War Sails binaries are not bundled.
 
-
-
 ## Validation
-
-
 
 Forge integration checks cover existing-design selection, individual stat modifiers, reforge, persistence, purchase rollback and absence of native weapon-generation events. These use engine stubs; an in-game TAOM campaign test remains pending.
 
-
 Slot unequip validation covers each battle/civilian slot, rejected arguments, mission/prisoner guards, preserved class/tier/storage, and equip/reequip command dispatch after all slots are individually emptied. An additional 20 checks execute the current equipment generator and paid equip/reequip flow against a controlled engine fixture for classed and classless empty loadouts. Live campaign validation has not been performed.
+
+Preload regression checks pass with Harmony 2.4.2: immediate/delayed readiness, the production 15-second deadline, unresolved asset names, calling-thread resource checks, preserved resource collections, original behavior outside missions, and no patch without TAOM. All four release modules compile against Bannerlord 1.4.8 reference assemblies. Live siege validation has not been performed.

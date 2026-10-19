@@ -1284,6 +1284,10 @@ namespace BLTAdoptAHero
 
         private static readonly DefaultMobilePartyAIModel StockModel = new DefaultMobilePartyAIModel();
 
+        // Optional DLC targets must not abort initialization of the remaining patches.
+        [HarmonyPrepare]
+        static bool Prepare() => TargetMethods().Any();
+
         static IEnumerable<MethodBase> TargetMethods()
         {
             Type? type = AccessTools.TypeByName(ModelType);
