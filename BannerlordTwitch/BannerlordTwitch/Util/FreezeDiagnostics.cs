@@ -108,14 +108,18 @@ namespace BannerlordTwitch.Util
             for (var inner = exception; inner != null; inner = inner.InnerException)
             foreach (var frame in new StackTrace(inner, true).GetFrames() ?? new StackFrame[0])
             {
-                var method = frame.GetMethod();
-                if (method == null) continue;
-                var original = method is MethodInfo mi ? Harmony.GetOriginalMethod(mi) : method;
-                var info = Harmony.GetPatchInfo(original);
-                if (info == null) continue;
-                result += "\r\nPATCHES " + method.DeclaringType?.FullName + "." + method.Name;
-                foreach (var patch in info.Prefixes.Concat(info.Postfixes).Concat(info.Transpilers).Concat(info.Finalizers))
-                    result += "\r\n owner=" + patch.owner + " method=" + patch.PatchMethod?.DeclaringType?.FullName + "." + patch.PatchMethod?.Name;
+                try
+                {
+                    var method = frame.GetMethod();
+                    if (method == null) continue;
+                    var original = method is MethodInfo mi ? Harmony.GetOriginalMethod(mi) : method;
+                    var info = Harmony.GetPatchInfo(original);
+                    if (info == null) continue;
+                    result += "\r\nPATCHES " + method.DeclaringType?.FullName + "." + method.Name;
+                    foreach (var patch in info.Prefixes.Concat(info.Postfixes).Concat(info.Transpilers).Concat(info.Finalizers))
+                        result += "\r\n owner=" + patch.owner + " method=" + patch.PatchMethod?.DeclaringType?.FullName + "." + patch.PatchMethod?.Name;
+                }
+                catch (Exception metadataError) { result += "\r\nPATCH_METADATA_UNAVAILABLE " + metadataError.GetType().Name; }
             }
             return result.Length > 65536 ? result.Substring(0, 65536) : result;
         }
