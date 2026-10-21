@@ -40,6 +40,8 @@ namespace BLTAdoptAHero.Behaviors
         private static bool Prefix(object __instance)
         {
             if (Mission.Current == null) return true;
+            using var diagnosticScope = FreezeDiagnostics.Trace("TAOM preload readiness");
+            FreezeDiagnostics.Phase("preload.snapshot");
             var meshes = (HashSet<(MetaMesh, bool, bool)>)meshesField.GetValue(__instance);
             var physics = (HashSet<string>)physicsField.GetValue(__instance);
             // Native resource checks must remain on the mission thread.
@@ -53,6 +55,7 @@ namespace BLTAdoptAHero.Behaviors
                 pendingCount = 0;
                 foreach (var entry in entries)
                 {
+                    FreezeDiagnostics.Phase("preload.mesh " + entry.Name);
                     if (entry.Mesh.CheckResources() != 0)
                     {
                         pendingCount++;
@@ -61,6 +64,7 @@ namespace BLTAdoptAHero.Behaviors
                 }
                 foreach (var shape in shapes)
                 {
+                    FreezeDiagnostics.Phase("preload.physics " + shape);
                     if (PhysicsShape.GetFromResource(shape, true) == null)
                     {
                         pendingCount++;
@@ -73,6 +77,7 @@ namespace BLTAdoptAHero.Behaviors
                 ? "PRELOAD_READY meshes=" + entries.Length + " physics=" + shapes.Length
                 : "PRELOAD_TIMEOUT TAOM readiness wait exceeded 15 seconds; continuing with "
                     + pendingCount + " unresolved resources. Assets may be missing. " + string.Join("; ", pending));
+            FreezeDiagnostics.Phase("preload.returned");
             return false;
         }
     }

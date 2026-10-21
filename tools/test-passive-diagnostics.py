@@ -71,6 +71,10 @@ assert not (session / 'exit.txt').exists()
 assert not list(session.glob('*.dmp*'))
 checks += 2
 
+if '--quick' in sys.argv[3:]:
+    print(f'{checks} quick checks passed: hooks preserve exceptions, healthy/startup runs, abrupt-exit bundle and capture/storage limits')
+    sys.exit(0)
+
 host = subprocess.Popen([str(out / 'Fixture.exe'), str(out), 'stalled'])
 session = Path(wait_for(out / 'host-stalled.txt').read_text())
 first = wait_for(session / 'capture1.dmp', 35)

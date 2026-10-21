@@ -78,8 +78,8 @@ namespace BannerlordTwitch
                 try
                 {
                     harmony = new Harmony("mod.bannerlord.bannerlordtwitch");
-                    harmony.PatchAll();
                     PassiveDiagnosticHooks.Install();
+                    harmony.PatchAll();
                     Log.LogFeedSystem("{=45Q44kgm}Loaded v{ModVersion}".Translate(
                         ("ModVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString(3))));
 

@@ -32,6 +32,7 @@ namespace TaleWorlds.MountAndBlade.View {
  }
 }
 namespace BannerlordTwitch.Util {
+ public static class FreezeDiagnostics { public static void Phase(string value) {} public static IDisposable Trace(string value) => new Scope(); private class Scope : IDisposable { public void Dispose() {} } }
  public static class Log { public static readonly List<string> Events = new List<string>(); public static void Info(string value) { Events.Add(value); Console.WriteLine(value); } }
 }
 public class PreloadProbe {

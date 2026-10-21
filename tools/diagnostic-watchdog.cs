@@ -144,7 +144,6 @@ internal static class DiagnosticWatchdog
             using (var target = Process.GetProcessById(pid))
             {
                 if (!SameProcess(target, start)) return 3;
-                long needed = target.PrivateMemorySize64 + 2L * 1024 * 1024 * 1024;
                 long used = Directory.EnumerateFiles(Directory.GetParent(folder).FullName, "*.dmp*", SearchOption.AllDirectories).Sum(p => new FileInfo(p).Length);
                 var free = new DriveInfo(Path.GetPathRoot(destination)).AvailableFreeSpace;
                 if (!EnoughSpace(target.PrivateMemorySize64, free, used))

@@ -1,6 +1,17 @@
-# BLT TAOM 5.5.20 — Siege Loading Update
+# BLT TAOM 5.5.20 — Passive Diagnostics Update
 
-Updated 19 October 2026. This replaces the previous 5.5.20 download; no additional release entry was created.
+Updated 21 October 2026. This replaces the previous 5.5.20 download; no additional release entry was created.
+
+## Passive crash and freeze evidence
+
+- Quiet diagnostics start automatically: no new popups, overlay messages or recovery attempts.
+- An independent helper watches the game heartbeat and attempts two captures after a sustained stall, with at least 20 seconds between them. Full Windows process snapshots are preferred; a smaller stack dump is attempted if snapshots are unavailable.
+- Reports identify active BLT command/queued operations, preload mesh/physics names, loading boundaries, shader/readiness sample ages, module hashes and matching binaries, exception chains and Harmony patch owners.
+- Find incident files in `%LOCALAPPDATA%\BLTRefreshed\Diagnostics`. Send the affected session's `BLT-incident.zip` plus adjacent `capture*.dmp` files privately. No automatic upload occurs.
+- Normal logs are bounded. Captures have disk headroom checks, a 32 GiB dump budget and a two-attempt limit per run. Capture overhead is possible; live campaign validation remains pending.
+- Native crashes can end before a dump is taken; the helper still preserves available logs. These diagnostics improve evidence, not guarantee automatic culprit identification.
+- Includes a BLT decision-initialization fix: war/expulsion constructors now finish normally; adopted-kingdom AI proposals are filtered when entering the queue. The previous constructor skip could leave incomplete ballots. This is not presented as a proven fix for the reported loading freeze or that specific vote crash.
+- See `PASSIVE-DIAGNOSTICS.md` for capture details and privacy/storage information. Existing forging, unequip and siege preload changes remain included below.
 
 ## Siege loading guard restored
 
@@ -56,6 +67,8 @@ Existing saves and forge metadata remain supported. Previously generated weapons
 Requires Bannerlord 1.4.8 and your normal TAOM dependencies. Harmony and War Sails binaries are not bundled.
 
 ## Validation
+
+Passive diagnostics passed 22 integration checks using production observer/helper code: unchanged exceptions with real Harmony, healthy/startup runs without captures, abrupt-exit evidence, capture/storage limits, two full process snapshots with memory/thread/module validation, capture spacing, target survival and ZIP integrity. The final callback update also passed 15 focused checks. Nine decision-queue regression checks pass. These use harmless synthetic processes and game-type stubs; live TAOM campaign validation remains pending.
 
 Forge integration checks cover existing-design selection, individual stat modifiers, reforge, persistence, purchase rollback and absence of native weapon-generation events. These use engine stubs; an in-game TAOM campaign test remains pending.
 

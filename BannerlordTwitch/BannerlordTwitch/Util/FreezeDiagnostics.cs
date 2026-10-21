@@ -60,7 +60,7 @@ namespace BannerlordTwitch.Util
                 else Mark("HELPER_MISSING " + helper);
                 process.Dispose();
             }
-            catch { /* Diagnostic failures must not prevent module startup. */ }
+            catch (Exception ex) { Mark("DIAGNOSTIC_START_FAILED " + ex.GetType().Name + " " + ex.Message); }
         }
 
         public static void Pulse(string context)
@@ -194,7 +194,12 @@ namespace BannerlordTwitch.Util
             try
             {
                 var method = AccessTools.Method("TaleWorlds.Engine.SceneView:ReadyToRender");
-                if (method != null && method.ReturnType == typeof(bool)) harmony.Patch(method, postfix: new HarmonyMethod(typeof(PassiveDiagnosticHooks), nameof(Rendered)));
+                if (method != null && method.ReturnType == typeof(bool))
+                {
+                    harmony.Patch(method, prefix: new HarmonyMethod(typeof(PassiveDiagnosticHooks), nameof(Before)), postfix: new HarmonyMethod(typeof(PassiveDiagnosticHooks), nameof(Rendered)));
+                    FreezeDiagnostics.Mark("HOOK_INSTALLED SceneView.ReadyToRender");
+                }
+                else FreezeDiagnostics.Mark("HOOK_UNAVAILABLE SceneView.ReadyToRender");
             }
             catch (Exception ex) { FreezeDiagnostics.Mark("RENDER_HOOK_FAILED " + ex.GetType().Name); }
         }
@@ -204,6 +209,6 @@ namespace BannerlordTwitch.Util
             FreezeDiagnostics.ExceptionObserved(__originalMethod.Name, __exception);
             FreezeDiagnostics.Phase(__originalMethod.DeclaringType?.Name + "." + __originalMethod.Name + ".returned");
         }
-        private static void Rendered(bool __result) { FreezeDiagnostics.RenderSample(__result); }
+        private static void Rendered(bool __result) { FreezeDiagnostics.RenderSample(__result); FreezeDiagnostics.Phase("SceneView.ReadyToRender.returned"); }
     }
 }
