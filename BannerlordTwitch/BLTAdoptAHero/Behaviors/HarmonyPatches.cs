@@ -362,19 +362,25 @@ namespace BLTAdoptAHero
     #endregion
 
     #region ClanKingdomDecisions
-        // Block DeclareWarDecision for BLT kingdoms
-        [HarmonyPatch(typeof(DeclareWarDecision), MethodType.Constructor, new Type[] { typeof(Clan), typeof(IFaction) })]
-        internal static class DeclareWarDecisionConstructorPatch
+        // Constructors must finish: skipping one leaves an allocated, incomplete ballot.
+        // Reject AI proposals at the queue boundary instead.
+        [HarmonyPatch(typeof(Kingdom), nameof(Kingdom.AddDecision), new Type[] { typeof(KingdomDecision), typeof(bool) })]
+        internal static class BltKingdomDecisionQueuePatch
         {
             [HarmonyPrefix]
-            private static bool Prefix(Clan proposerClan)
+            private static bool Prefix(KingdomDecision kingdomDecision)
             {
+                if (!(kingdomDecision is DeclareWarDecision)
+                    && !(kingdomDecision is ExpelClanFromKingdomDecision))
+                    return true;
+
+                var proposerClan = kingdomDecision.ProposerClan;
                 if (proposerClan?.Kingdom?.Leader != null && proposerClan.Kingdom.Leader.IsAdopted() && Hero.MainHero?.Clan != proposerClan)
                 {
 #if DEBUG
-                    Log.Trace($"[BLT] Blocked DeclareWarDecision for BLT kingdom: {proposerClan.Kingdom.Name}");
+                    Log.Trace($"[BLT] Blocked {kingdomDecision.GetType().Name} proposal for BLT kingdom: {proposerClan.Kingdom.Name}");
 #endif
-                    return false; // Block decision creation
+                    return false;
                 }
                 return true;
             }
@@ -397,24 +403,6 @@ namespace BLTAdoptAHero
         //                return true;
         //            }
         //        }
-
-        // Block ExpelClanFromKingdomDecision for BLT kingdoms
-        [HarmonyPatch(typeof(ExpelClanFromKingdomDecision), MethodType.Constructor, new Type[] { typeof(Clan), typeof(Clan) })]
-        internal static class ExpelClanFromKingdomDecisionConstructorPatch
-        {
-            [HarmonyPrefix]
-            private static bool Prefix(Clan proposerClan)
-            {
-                if (proposerClan?.Kingdom?.Leader != null && proposerClan.Kingdom.Leader.IsAdopted() && Hero.MainHero?.Clan != proposerClan)
-                {
-#if DEBUG
-                    Log.Trace($"[BLT] Blocked ExpelClanFromKingdomDecision for BLT kingdom: {proposerClan.Kingdom.Name}");
-#endif
-                    return false; // Block decision creation
-                }
-                return true;
-            }
-        }
 
     //        // Block SettlementClaimantDecision for BLT kingdoms (fief distribution)
     //        [HarmonyPatch(typeof(SettlementClaimantDecision), MethodType.Constructor, new Type[] { typeof(Clan), typeof(Settlement) })]

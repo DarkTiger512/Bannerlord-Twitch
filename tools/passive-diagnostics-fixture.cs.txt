@@ -1,0 +1,55 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using BannerlordTwitch.Util;
+
+namespace TaleWorlds.MountAndBlade
+{
+    public class MissionState { public void TickLoading() { } }
+    public class Mission { public void WaitTickCompletion() { } public void OnPreTick() { } }
+}
+namespace TaleWorlds.Engine { public class SceneView { public bool ReadyToRender() => false; } }
+namespace TaleWorlds.ScreenSystem { public class ScreenManager { public static void Update() { } } }
+namespace TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Decisions
+{
+    public class KingdomDecisionsVM
+    {
+        public static Exception Sentinel = new InvalidOperationException("Synthetic diagnostic test exception");
+        [MethodImpl(MethodImplOptions.NoInlining)] public void HandleDecision() { throw Sentinel; }
+    }
+}
+public static class Fixture
+{
+    static byte[] memory = new byte[2 * 1024 * 1024];
+    static string sentinel = "BLT_FULL_MEMORY_DIAGNOSTIC_SENTINEL_20261021";
+    public static void Main(string[] args)
+    {
+        FreezeDiagnostics.Start(args[0]);
+        File.WriteAllText(Path.Combine(args[0], "host-" + args[1] + ".txt"), FreezeDiagnostics.SessionDirectory);
+        if (args[1] == "hooks")
+        {
+            PassiveDiagnosticHooks.Install();
+            var decision = new TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Decisions.KingdomDecisionsVM();
+            bool preserved = false;
+            try { decision.HandleDecision(); }
+            catch (Exception ex) { preserved = ReferenceEquals(ex, TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Decisions.KingdomDecisionsVM.Sentinel); }
+            if (!preserved) Environment.Exit(9);
+            new TaleWorlds.Engine.SceneView().ReadyToRender();
+        }
+        if (args[1] == "stalled")
+        {
+            FreezeDiagnostics.Pulse("mission synthetic stalled main thread");
+            typeof(FreezeDiagnostics).GetField("pulse", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, DateTime.UtcNow.AddSeconds(-181).Ticks);
+            FreezeDiagnostics.ShaderSample(4055);
+            typeof(FreezeDiagnostics).GetField("shaderTicks", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, DateTime.UtcNow.AddSeconds(-180).Ticks);
+        }
+        for (int i = 0; i < (args[1] == "stalled" ? 140 : 12); i++)
+        {
+            if (args[1] != "stalled" && args[1] != "unarmed") FreezeDiagnostics.Pulse("synthetic healthy tick");
+            Thread.Sleep(500);
+        }
+        GC.KeepAlive(memory); GC.KeepAlive(sentinel);
+    }
+}

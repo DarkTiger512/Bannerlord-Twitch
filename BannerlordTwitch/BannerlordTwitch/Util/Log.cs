@@ -83,6 +83,7 @@ namespace BannerlordTwitch.Util
 
         public static void Exception(string context, Exception ex, bool noRethrow = false)
         {
+            FreezeDiagnostics.ExceptionObserved(context, ex);
             string expId = context + (ex.GetBaseException().Message ?? "unknown");
             if (!reportedExceptions.Contains(expId))
             {

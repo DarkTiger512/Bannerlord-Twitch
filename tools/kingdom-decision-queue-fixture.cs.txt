@@ -1,0 +1,75 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using HarmonyLib;
+
+public class Hero { public static Hero MainHero; public Clan Clan; public bool Adopted; }
+public static class HeroExtensions { public static bool IsAdopted(this Hero h) => h.Adopted; }
+public class Clan { public Kingdom Kingdom; }
+public class Kingdom
+{
+    public Hero Leader;
+    public readonly List<KingdomDecision> Decisions = new List<KingdomDecision>();
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void AddDecision(KingdomDecision kingdomDecision, bool ignoreInfluenceCost) { Decisions.Add(kingdomDecision); }
+}
+public class KingdomDecision
+{
+    public Clan ProposerClan;
+    public bool Initialized;
+    public KingdomDecision(Clan clan) { ProposerClan = clan; Initialized = true; }
+}
+public class DeclareWarDecision : KingdomDecision
+{
+    public object Target;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public DeclareWarDecision(Clan clan, object target) : base(clan) { Target = target; }
+}
+public class ExpelClanFromKingdomDecision : KingdomDecision
+{
+    public Clan Target;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public ExpelClanFromKingdomDecision(Clan clan, Clan target) : base(clan) { Target = target; }
+}
+
+/* PRODUCTION PATCH */
+
+public static class Program
+{
+    static int checks;
+    static void Check(bool condition, string description)
+    { if (!condition) throw new Exception(description); checks++; }
+    public static void Main()
+    {
+        new Harmony("blt.decision.regression").PatchAll(typeof(Program).Assembly);
+        var king = new Hero { Adopted = true };
+        var kingdom = new Kingdom { Leader = king };
+        var ai = new Clan { Kingdom = kingdom };
+        var player = new Clan { Kingdom = kingdom };
+        Hero.MainHero = new Hero { Clan = player };
+        var target = new Clan();
+        var war = new DeclareWarDecision(ai, target);
+        var expel = new ExpelClanFromKingdomDecision(ai, target);
+        Check(war.Initialized && war.ProposerClan == ai && war.Target == target, "War constructor must finish");
+        Check(expel.Initialized && expel.ProposerClan == ai && expel.Target == target, "Expel constructor must finish");
+        kingdom.AddDecision(war, false);
+        kingdom.AddDecision(expel, true);
+        Check(kingdom.Decisions.Count == 0, "AI war/expel proposals must be blocked for adopted rulers");
+        kingdom.AddDecision(new DeclareWarDecision(player, target), false);
+        kingdom.AddDecision(new ExpelClanFromKingdomDecision(player, target), false);
+        Check(kingdom.Decisions.Count == 2, "Player proposals must remain allowed");
+        kingdom.AddDecision(new KingdomDecision(ai), false);
+        Check(kingdom.Decisions.Count == 3, "Other decision types must remain allowed");
+        king.Adopted = false;
+        kingdom.AddDecision(new DeclareWarDecision(ai, target), false);
+        Check(kingdom.Decisions.Count == 4, "Non-adopted rulers must remain unaffected");
+        kingdom.AddDecision(new DeclareWarDecision(null, target), false);
+        Check(kingdom.Decisions.Count == 5, "Null proposer must not throw in BLT filter");
+        kingdom.AddDecision(new DeclareWarDecision(new Clan(), target), false);
+        Check(kingdom.Decisions.Count == 6, "Kingdomless proposer must not throw");
+        kingdom.Leader = null;
+        kingdom.AddDecision(new ExpelClanFromKingdomDecision(ai, target), false);
+        Check(kingdom.Decisions.Count == 7, "Leaderless kingdom must not throw");
+        Console.WriteLine(checks + " checks passed using real Harmony interception");
+    }
+}

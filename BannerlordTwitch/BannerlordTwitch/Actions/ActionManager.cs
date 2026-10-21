@@ -228,7 +228,8 @@ namespace BannerlordTwitch.Rewards
                     config = YamlHelpers.ConvertObject(config, cmdHandler.HandlerConfigType);
                 }
                 Log.Trace($"[{nameof(ActionManager)}] HandleCommand {commandId} {context.Args} for {context.UserName}");
-                cmdHandler.Execute(context, config);
+                using (FreezeDiagnostics.Trace("command " + cmdHandler.GetType().FullName))
+                    cmdHandler.Execute(context, config);
             }
             else
             {
@@ -261,7 +262,8 @@ namespace BannerlordTwitch.Rewards
                 config = YamlHelpers.ConvertObject(config, action.RewardConfigType);
             }
             //Log.Trace($"[{nameof(ActionManager)}] HandleReward {action} {context.Args} for {context.UserName}");
-            action.Enqueue(context, config);
+            using (FreezeDiagnostics.Trace("reward " + action.GetType().FullName))
+                action.Enqueue(context, config);
 
             if (st.ElapsedMilliseconds > 5)
             {

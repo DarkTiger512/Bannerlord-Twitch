@@ -469,6 +469,7 @@
     <Compile Include="Util\LINQExtensions.cs" />
     <Compile Include="Util\Log.cs" />
     <Compile Include="Util\MainThreadSync.cs" />
+    <Compile Include="Util\FreezeDiagnostics.cs" />
     <Compile Include="Util\MiscExtensions.cs" />
     <Compile Include="Util\Paths.cs" />
     <Compile Include="Util\RangeFloat.cs" />
@@ -657,6 +658,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)BLTBuildTargets.targets" />
+  <Target Name="BuildPassiveDiagnosticHelper" AfterTargets="Build">
+    <Csc Sources="$(SolutionDir)..\tools\diagnostic-watchdog.cs" OutputAssembly="$(TargetDir)BLT.Diagnostics.exe" TargetType="winexe" Platform="x64" LangVersion="9" References="System.dll;System.Core.dll;System.IO.Compression.dll;System.IO.Compression.FileSystem.dll" />
+  </Target>
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != '' AND Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
   <Import Project="..\packages\Fody.6.8.1\build\Fody.targets" Condition="Exists('..\packages\Fody.6.8.1\build\Fody.targets')" />

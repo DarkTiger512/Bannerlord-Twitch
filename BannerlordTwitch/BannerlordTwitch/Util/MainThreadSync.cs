@@ -22,7 +22,8 @@ namespace BannerlordTwitch.Util
             st.Start();
             while (actions.TryDequeue(out var action))
             {
-                action.action();
+                using (FreezeDiagnostics.Trace("game-thread action " + action.action.Method.DeclaringType?.FullName + "." + action.action.Method.Name))
+                    action.action();
                 action.completeEvent?.Set();
                 if (st.ElapsedMilliseconds > 2)
                 {
