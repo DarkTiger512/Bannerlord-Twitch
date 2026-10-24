@@ -666,6 +666,16 @@ namespace BLTAdoptAHero
             return hd.Gold;
         }
 
+        // Refunds reverse the original spending entry as well as returning wallet gold.
+        public int RefundHeroGold(Hero hero, int amount)
+        {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+            var hd = GetHeroData(hero);
+            hd.Gold = (int)Math.Min(int.MaxValue, (long)hd.Gold + amount);
+            hd.SpentGold = (int)Math.Max(0L, (long)hd.SpentGold - amount);
+            return hd.Gold;
+        }
+
         public int InheritGold(Hero inheritor, float amount)
         {
             var ancestors = GetAncestors(inheritor.FirstName.ToString());
