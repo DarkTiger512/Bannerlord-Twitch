@@ -1,6 +1,13 @@
 # BLT TAOM 5.5.20 — Passive Diagnostics Update
 
-Updated 21 October 2026. This replaces the previous 5.5.20 download; no additional release entry was created.
+Updated 25 October 2026. This replaces the previous 5.5.20 download; no additional release entry was created.
+
+## Training refund accounting
+
+- `!party train cancel` now removes the refunded, unused training gold from `SpentGold` as it returns the gold to your wallet. Gold already consumed by training stays recorded as spent.
+- Repeated deposit/cancel cycles no longer inflate lifetime spending or its contribution to inheritance. Other spending is preserved and spending cannot become negative on a refund.
+- Existing inflated totals from earlier cancellations are not automatically recalculated; those historical refunds are not separately recorded.
+- Fifteen regression checks pass against both the main and TAOM command/accounting methods, covering full/partial refunds, multiple deposits, repeated cancellation, legacy balances and integer limits.
 
 ## Passive crash and freeze evidence
 

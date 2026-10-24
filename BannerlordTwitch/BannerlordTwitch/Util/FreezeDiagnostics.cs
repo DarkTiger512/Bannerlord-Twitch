@@ -31,7 +31,7 @@ namespace BannerlordTwitch.Util
                 folder = Path.Combine(outputRoot ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "BLTRefreshed", "Diagnostics"), "session-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + process.Id + "-" + Guid.NewGuid().ToString("N").Substring(0, 8));
                 Directory.CreateDirectory(folder);
-                File.WriteAllText(Path.Combine(folder, "session.txt"), "BLT passive diagnostics v1\r\nrevision=2026-10-21-passive.1\r\nPID=" + process.Id
+                File.WriteAllText(Path.Combine(folder, "session.txt"), "BLT passive diagnostics v1\r\nrevision=2026-10-25-passive.1\r\nPID=" + process.Id
                     + "\r\nProcessStartUtc=" + process.StartTime.ToUniversalTime().ToString("O")
                     + "\r\nGameDirectory=" + AppDomain.CurrentDomain.BaseDirectory
                     + "\r\nBLTAssembly=" + typeof(FreezeDiagnostics).Assembly.FullName);

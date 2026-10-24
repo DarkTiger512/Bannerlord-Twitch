@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+
+class Hero { public string StringId = "hero"; }
+class MobileParty { public Hero LeaderHero; }
+class Settings { public bool TrainEnabled = true; public int TrainMaxTier; }
+static class Naming { public const string Gold = "g"; public static string NotEnoughGold(int need, int have) => "Insufficient gold"; }
+class GlobalCommonConfig { public int TrainMaxDailySpend = 100; public static GlobalCommonConfig Get() => new GlobalCommonConfig(); }
+class BLTAdoptAHeroCampaignBehavior
+{
+    public static BLTAdoptAHeroCampaignBehavior Current = new BLTAdoptAHeroCampaignBehavior();
+    public class HeroData { public int Gold, SpentGold; }
+    public HeroData Data = new HeroData();
+    HeroData GetHeroData(Hero h) => Data;
+    public int GetHeroGold(Hero h) => Data.Gold;
+    /* GOLD METHODS */
+}
+class TrainingBehavior
+{
+    public static TrainingBehavior Current = new TrainingBehavior();
+    public class TrainingEntry { public int Fund, MaxTier; }
+    readonly Dictionary<string, TrainingEntry> _funds = new Dictionary<string, TrainingEntry>();
+    /* TRAINING METHODS */
+}
+class PartyManagement
+{
+    /* COMMAND */
+    public static string Run(Hero h, string arg)
+    { string result = null; HandleTrain(new Settings(), h, new MobileParty { LeaderHero = h }, arg, s => result = s, s => result = s); return result; }
+}
+class Program
+{
+    static int checks;
+    static Hero hero = new Hero();
+    static BLTAdoptAHeroCampaignBehavior B => BLTAdoptAHeroCampaignBehavior.Current;
+    static void Check(bool condition, string message) { if (!condition) throw new Exception(message); checks++; }
+    static void Reset(int gold = 2000, int spent = 250)
+    { B.Data = new BLTAdoptAHeroCampaignBehavior.HeroData { Gold = gold, SpentGold = spent }; TrainingBehavior.Current = new TrainingBehavior(); }
+    static void Main()
+    {
+        Reset(); PartyManagement.Run(hero, "1000");
+        Check(B.Data.Gold == 1000 && B.Data.SpentGold == 1250, "Deposit debits wallet and records spending");
+        Check(PartyManagement.Run(hero, "cancel").Contains("refunded 1000"), "Full refund is reported");
+        Check(B.Data.Gold == 2000 && B.Data.SpentGold == 250, "Full cancellation reverses only the deposit");
+        Check(TrainingBehavior.Current.GetEntry(hero) == null, "Cancellation removes training fund");
+        Check(PartyManagement.Run(hero, "cancel") == "No training fund to cancel", "Repeated cancellation is rejected");
+        Check(B.Data.Gold == 2000 && B.Data.SpentGold == 250, "Repeated cancellation cannot credit twice");
+        for (int i = 0; i < 20; i++) { PartyManagement.Run(hero, "1000"); PartyManagement.Run(hero, "cancel"); }
+        Check(B.Data.Gold == 2000 && B.Data.SpentGold == 250, "Repeated train/cancel cannot inflate spending");
+        Reset(); PartyManagement.Run(hero, "1000");
+        TrainingBehavior.Current.GetEntry(hero).Fund -= 400; // Funds actually consumed by troop upgrades.
+        Check(PartyManagement.Run(hero, "cancel").Contains("refunded 600"), "Only unused funds are refunded");
+        Check(B.Data.Gold == 1600 && B.Data.SpentGold == 650, "Consumed training remains spent; other spending is preserved");
+        Reset(); PartyManagement.Run(hero, "500"); PartyManagement.Run(hero, "700");
+        TrainingBehavior.Current.GetEntry(hero).Fund -= 300;
+        PartyManagement.Run(hero, "cancel");
+        Check(B.Data.Gold == 1700 && B.Data.SpentGold == 550, "Multiple deposits and partial usage reconcile");
+        Reset(10, 250); PartyManagement.Run(hero, "1000");
+        Check(B.Data.Gold == 10 && B.Data.SpentGold == 250 && TrainingBehavior.Current.GetEntry(hero) == null, "Failed deposit changes no balances");
+        Reset(1000, 50); TrainingBehavior.Current.AddFund(hero, 100);
+        PartyManagement.Run(hero, "cancel");
+        Check(B.Data.Gold == 1100 && B.Data.SpentGold == 0, "Legacy inconsistent spending cannot become negative");
+        Reset(int.MaxValue - 10, 100); B.RefundHeroGold(hero, 100);
+        Check(B.Data.Gold == int.MaxValue && B.Data.SpentGold == 0, "Wallet refund retains integer cap");
+        bool rejected = false; try { B.RefundHeroGold(hero, -1); } catch (ArgumentOutOfRangeException) { rejected = true; }
+        Check(rejected && B.Data.Gold == int.MaxValue && B.Data.SpentGold == 0, "Negative refund is rejected without mutation");
+        Reset(); B.ChangeHeroGold(hero, 100);
+        Check(B.Data.Gold == 2100 && B.Data.SpentGold == 250, "Ordinary income still preserves spending");
+        Console.WriteLine(checks + " training/refund regression checks passed");
+    }
+}
