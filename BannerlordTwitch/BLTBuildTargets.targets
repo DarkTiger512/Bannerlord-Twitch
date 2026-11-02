@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Target Name="AddGameVersionMetadaAssemblyAttributes" BeforeTargets="CoreGenerateAssemblyInfo">
         <ItemGroup>
             <AssemblyAttribute Include="AssemblyVersion" Condition="$(ModuleVersion) != ''" >
@@ -68,6 +68,20 @@
             </Code>
         </Task>
     </UsingTask>
+
+    <Target Name="ValidateOptionalNavalReferences" AfterTargets="ResolveAssemblyReferences">
+        <ItemGroup>
+            <RequiredNavalAssembly Include="@(ReferencePath)" Condition="$([System.String]::Copy('%(ReferencePath.Filename)').StartsWith('NavalDLC'))" />
+        </ItemGroup>
+        <Error Condition="'@(RequiredNavalAssembly)' != ''" Text="War Sails must remain optional. Remove direct NavalDLC references: @(RequiredNavalAssembly)" />
+    </Target>
+
+    <Target Name="ValidateDependencyPackaging" AfterTargets="SetModuleVersion" BeforeTargets="DeployToGameDirectory;Package">
+        <ItemGroup>
+            <BundledGameDependency Include="$(OutputModuleRoot)**\NavalDLC*.dll;$(OutputModuleRoot)**\0Harmony.dll" />
+        </ItemGroup>
+        <Error Condition="'@(BundledGameDependency)' != ''" Text="TAOM builds must not bundle War Sails or Harmony DLLs. Use a fresh staging directory: @(BundledGameDependency)" />
+    </Target>
 
     <Target Name="CopyModuleContent" AfterTargets="AfterBuild">
         <Message Importance="High" Text="[BLT BUILD] Copying $(AssemblyName) module content..." />

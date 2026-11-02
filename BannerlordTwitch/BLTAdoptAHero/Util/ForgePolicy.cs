@@ -40,9 +40,9 @@ namespace BLTAdoptAHero.Util
         public int StyleCost { get; set; } = 100000;
         [Category("Prices"), DisplayName("Culture extra cost"), Description("Extra BLT gold added when a viewer names a culture in a forge request. No extra charge when they leave culture out. Set to 0 for no surcharge. Used by forge.")]
         public int CultureSurcharge { get; set; }
-        [Category("Advanced"), DisplayName("Crafting attempts (1–128)"), Description("How many possible weapon designs BLT tries before choosing the best match. Higher values may find a closer match but take more work. Range: 1 to 128; recommended: 64. This is not a success chance.")]
+        [Browsable(false), Category("Advanced"), DisplayName("Crafting attempts (1–128)"), Description("How many possible weapon designs BLT tries before choosing the best match. Higher values may find a closer match but take more work. Range: 1 to 128; recommended: 64. This is not a success chance.")]
         public int CandidateBudget { get; set; } = 64;
-        [Category("Weapon balance"), DisplayName("Weapon target tier (0–6, internal numbering)"), Description("Preferred strength tier when BLT chooses a newly crafted design. The game counts from 0: enter 5 for displayed Tier 6. Range: 0 to 6. This is a preference, not a guaranteed tier, and does not control the quality bonus.")]
+        [Category("Weapon balance"), DisplayName("Weapon target tier (0–6, internal numbering)"), Description("Preferred strength tier when BLT selects an existing installed weapon design. The game counts from 0: enter 5 for displayed Tier 6. Range: 0 to 6. This is a preference, not a guaranteed tier, and does not control the quality bonus.")]
         public int TargetTier { get; set; } = 5;
         [Category("Weapon balance"), DisplayName("Swift / Heavy trade-off (%)"), Description("The damage/speed trade-off for Swift and Heavy. At 5, Swift loses 5% damage and gains 5% weapon speed; Heavy gains 5% damage and loses 5% speed. Balanced has no trade-off. Range: 0 to 25. Projectile speed is unchanged.")]
         public double StylePercent { get; set; } = 5;
@@ -62,9 +62,9 @@ namespace BLTAdoptAHero.Util
         public int MasterworkDamageBonus { get; set; } = 30;
         [Category("Weapon balance"), DisplayName("Masterwork extra speed (points)"), Description("Flat speed points added for Masterwork quality, before style effects. This is the total quality bonus, not added on top of lower qualities. Damage percentage bonuses apply separately. Reforging replaces the previous forge bonus; it does not stack.")]
         public int MasterworkSpeedBonus { get; set; } = 15;
-        [Category("Advanced"), DisplayName("Allow hidden crafting parts"), Description("Allow BLT to use weapon pieces that the game or a mod hides from the normal smithing screen. Hidden means unavailable in that screen, not invisible on the weapon. Leave off unless you want these extra parts; some mods hide parts they do not intend players to use.")]
+        [Browsable(false), Category("Advanced"), DisplayName("Allow hidden crafting parts"), Description("Allow BLT to use weapon pieces that the game or a mod hides from the normal smithing screen. Hidden means unavailable in that screen, not invisible on the weapon. Leave off unless you want these extra parts; some mods hide parts they do not intend players to use.")]
         public bool AllowHiddenParts { get; set; }
-        [Category("Advanced"), DisplayName("Blocked crafting part IDs"), Description("Weapon pieces BLT must never use when crafting. Add their exact internal part IDs, not their display names. Leave empty unless you need to exclude a specific unwanted or broken mod part. This does not block whole weapons.")]
+        [Browsable(false), Category("Advanced"), DisplayName("Blocked crafting part IDs"), Description("Weapon pieces BLT must never use when crafting. Add their exact internal part IDs, not their display names. Leave empty unless you need to exclude a specific unwanted or broken mod part. This does not block whole weapons.")]
         public List<string> RestrictedPartIds { get; set; } = new();
         [Category("Advanced"), DisplayName("Culture aliases"), Description("Chat shortcuts for cultures. Each entry maps a shortcut (key) to an exact culture ID or name (value). For example, a short nickname can point to a long modded culture name. Leave empty to use the normal culture names.")]
         public Dictionary<string, string> CultureAliases { get; set; } = new();

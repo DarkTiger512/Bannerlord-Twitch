@@ -2,8 +2,6 @@ using BannerlordTwitch;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
 using BannerlordTwitch.Util;
-using NavalDLC.Missions.MissionLogics;
-using NavalDLC.Missions.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +16,6 @@ namespace BLTAdoptAHero.Actions
 {
     internal class NavalSummonHero : SummonHero
     {
-        public static void AddHeroToShip(MissionShip ship, CharacterObject adoptedHero, bool isOnPlayerSide)
-        {
-            IAgentOriginBase heroOrigin = new SimpleAgentOrigin(adoptedHero, isOnPlayerSide);
-            Mission.Current.GetMissionBehavior<NavalAgentsLogic>().AddReservedTroopToShip(heroOrigin, ship);
-        }
         public static void SummonInNavalBattle(Hero adoptedHero, Settings settings, ReplyContext context,
         Action<string> onSuccess, Action<string> onFailure)
         {
@@ -72,20 +65,17 @@ namespace BLTAdoptAHero.Actions
                 return;
             }
 
-            var agentsLogic = Mission.Current.GetMissionBehavior<NavalAgentsLogic>();
+            var agentsLogic = OptionalNavalApi.TryCreate(Mission.Current);
 
             if (agentsLogic == null)
             {
                 onFailure("Naval spawn logic not available on this mission.");
                 return;
             }
-            //agentsLogic.SetIgnoreTroopCapacities(true);
-            //agentsLogic.SetIgnoreTroopCapacities(targetTeam.TeamSide, true);
 
             var ships = Mission.Current.MissionObjects
-                .OfType<NavalDLC.Missions.Objects.MissionShip>()
-                .Where(s => s.Team == targetTeam)
-                .OrderBy(s => s.TotalCrewCapacity)
+                .Where(s => agentsLogic.IsShip(s) && agentsLogic.GetTeam(s) == targetTeam)
+                .OrderBy(s => agentsLogic.GetCapacity(s))
                 .ToList();
 
             if (!ships.Any())
@@ -117,7 +107,7 @@ namespace BLTAdoptAHero.Actions
                 {
 
                     agentsLogic.SetIgnoreTroopCapacities(ship, true);
-                    agentsLogic.SetDesiredTroopCountOfShip(ship, ship.TotalCrewCapacity + 100);
+                    agentsLogic.SetDesiredTroopCountOfShip(ship, agentsLogic.GetCapacity(ship) + 100);
 
 
                     TeamSideEnum teamSide = targetTeam.TeamSide;
@@ -136,20 +126,9 @@ namespace BLTAdoptAHero.Actions
 
                     // Resolve the engine's single-origin removal before enqueueing. A failed
                     // attempt must not leave a hero waiting to spawn on a later reinforcement tick.
-                    var getTeam = HarmonyLib.AccessTools.Method(typeof(NavalAgentsLogic), "GetTeamAgents");
-                    var teamArgs = new object[] { teamSide, null };
-                    if (getTeam == null || !(bool)getTeam.Invoke(agentsLogic, teamArgs) || teamArgs[1] == null) continue;
-                    var teamAgents = teamArgs[1];
-                    var removeReserved = HarmonyLib.AccessTools.Method(teamAgents.GetType(), "RemoveReservedTroopFromShip",
-                        new[] { typeof(IAgentOriginBase), typeof(MissionShip) });
-                    var removeOrigin = HarmonyLib.AccessTools.Method(teamAgents.GetType(), "RemoveTroopOriginAux");
-                    if (removeReserved == null || removeOrigin == null) continue;
                     var reservedOrigin = new SimpleAgentOrigin(adoptedHero.CharacterObject, settings.OnPlayerSide);
-                    cancelReservation = () =>
-                    {
-                        removeReserved.Invoke(teamAgents, new object[] { reservedOrigin, ship });
-                        removeOrigin.Invoke(teamAgents, new object[] { reservedOrigin });
-                    };
+                    cancelReservation = agentsLogic.CreateReservationCleanup(teamSide, reservedOrigin, ship);
+                    if (cancelReservation == null) continue;
                     if (!agentsLogic.AddReservedTroopToShip(reservedOrigin, ship)) continue;
                     agentsLogic.SpawnNextBatch(teamSide, false, null);
                     spawnedAgent = adoptedHero.GetAgent();

@@ -2,6 +2,10 @@
 
 BLTRefreshed has been consolidated into this fork. Development, downloads, and issue tracking now live here; the project history and release variants are preserved.
 
+## 5.5.21 draft baseline
+
+Classic and TOAM now share the baseline described in [release notes](docs/RELEASE-5.5.21.md). Both await [live campaign qualification](docs/CAMPAIGN-5.5.21-CHECKLIST.md).
+
 ## Choose your version
 
 BLT is maintained in two variants: **Classic** (`main`, chat and existing overlays) and **Twitch Extension** (`BLT/twitch-integration`, chat plus extension UI and pairing). Both support prestige and battle balance. Install one variant at a time.
@@ -55,7 +59,7 @@ Viewers can "adopt" an in-game hero of types that can be specified in the config
    ![image](https://user-images.githubusercontent.com/1453936/115397098-9daae880-a1dd-11eb-87c7-0bda9af4c79d.png)
    It should also create the `BLTAdoptAHero`, `BLTBuffet`, and `BLTConfigure` directories.
    
-3. Run the launcher, make sure Harmony loads first and Bannerlord Twitch loads after the game modules and before any BLT extensions:  
+3. Run the launcher, make sure Harmony loads first and Bannerlord Twitch loads after the game modules and before any BLT extensions:
    ![image](https://user-images.githubusercontent.com/1453936/116240320-95155d80-a75b-11eb-8920-6e0629ab81b9.png)
    
 4. Run the game.

@@ -1,7 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
     <PropertyGroup>
-        <ModuleVersion>5.5.11</ModuleVersion>
+        <ModuleVersion>5.5.21</ModuleVersion>
         <DefineConstants/>
         <OutputBuildRoot>$(SolutionDir)build\</OutputBuildRoot>
         <OutputConfigRoot>$(OutputBuildRoot)$(Configuration)\</OutputConfigRoot>
@@ -265,6 +265,7 @@
     <ItemGroup>
         <Reference Include="0Harmony, Version=2.3.3.0, Culture=neutral, processorArchitecture=MSIL">
             <SpecificVersion>False</SpecificVersion>
+            <Private>False</Private>
             <HintPath>$(BANNERLORD_GAME_DIR)\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
         </Reference>
     </ItemGroup>

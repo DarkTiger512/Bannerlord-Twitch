@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -49,6 +49,7 @@ namespace BannerlordTwitch
             SetWindowText(Process.GetCurrentProcess().MainWindowHandle, "Bannerlord Game Window");
 
             MainThreadSync.InitMainThread();
+            FreezeDiagnostics.Start();
 
             // AssemblyHelper.Redirect("Microsoft.Extensions.Logging.Abstractions", Version.Parse("3.1.5.0"), "adb9793829ddae60");
             AssemblyHelper.Redirect("Microsoft.Owin", Version.Parse("4.2.2.0"), "31bf3856ad364e35");
@@ -77,6 +78,7 @@ namespace BannerlordTwitch
                 try
                 {
                     harmony = new Harmony("mod.bannerlord.bannerlordtwitch");
+                    PassiveDiagnosticHooks.Install();
                     harmony.PatchAll();
                     Log.LogFeedSystem("{=45Q44kgm}Loaded v{ModVersion}".Translate(
                         ("ModVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString(3))));
@@ -208,8 +210,22 @@ namespace BannerlordTwitch
 
         protected override void OnApplicationTick(float dt)
         {
+            try
+            {
+                var mission = Mission.Current;
+                FreezeDiagnostics.Pulse(mission == null ? "campaign/menu" : "mission mode=" + mission.Mode + " loadingFinished=" + mission.IsLoadingFinished);
+                if (mission != null && FreezeDiagnostics.ProbeDue())
+                {
+                    FreezeDiagnostics.Phase("BLT.shader-counter-sample");
+                    FreezeDiagnostics.ShaderSample(TaleWorlds.Engine.Utilities.GetNumberOfShaderCompilationsInProgress());
+                }
+            }
+            catch { /* Observations must never interrupt ticks. */ }
+            FreezeDiagnostics.Phase("BLT.application.base-tick");
             base.OnApplicationTick(dt);
+            FreezeDiagnostics.Phase("BLT.application.queued-actions");
             MainThreadSync.RunQueued();
+            FreezeDiagnostics.Phase("BLT.application.returned");
         }
 
         public override void OnGameEnd(Game game)
@@ -234,12 +250,10 @@ namespace BannerlordTwitch
             }
             catch (Exception ex)
             {
-                InformationManager.ShowInquiry(
-                    new InquiryData(
-                        "{=Sphd7XTS}Bannerlord Twitch Mod DISABLED".Translate(),
-                        ex.Message,
-                        true, false, "{=hpFXglKx}Okay".Translate(), null,
-                        () => { }, () => { }), true);
+                // A modal inquiry here pauses GameLoadingState behind the loading
+                // screen. Report the failure without blocking campaign startup.
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "{=Sphd7XTS}Bannerlord Twitch Mod DISABLED".Translate() + ": " + ex.Message));
                 TwitchService = null;
                 Log.Exception($"TwitchService could not start: {ex.Message}", ex);
                 return false;

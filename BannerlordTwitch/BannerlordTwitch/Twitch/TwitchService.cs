@@ -151,12 +151,12 @@ namespace BannerlordTwitch
             {
                 Log.LogFeedSystem($"Affiliate spoofing enabled");
                 affiliateSpoofing = new Dummy.AffiliateSpoofingHttpCallHandler();
-                api = new TwitchAPI(http: affiliateSpoofing);
+                api = TwitchLibraryFactory.Create<TwitchAPI>(null, null, null, affiliateSpoofing);
                 affiliateSpoofing.OnRewardRedeemed += OnRewardRedeemedInternal;
             }
             else
             {
-                api = new TwitchAPI(http: new CustomTwitchHttpClient());
+                api = TwitchLibraryFactory.Create<TwitchAPI>(null, null, null, new CustomTwitchHttpClient());
             }
 
             //api.Settings.Secret = SECRET;

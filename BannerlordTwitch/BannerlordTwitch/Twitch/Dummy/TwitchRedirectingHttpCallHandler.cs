@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,7 +21,7 @@ namespace BannerlordTwitch.Dummy
             IHttpCallHandler http = null,
             ILogger<TwitchHttpClient> logger = null)
         {
-            httpCallHandlerImplementation = http ?? new TwitchHttpClient(logger);
+            httpCallHandlerImplementation = http ?? TwitchLibraryFactory.Create<TwitchHttpClient>((object)logger);
         }
 
         public delegate Task<KeyValuePair<int, string>> RedirectHandler(string payload, string clientId, string accessToken, Func<Task<KeyValuePair<int, string>>> realCall, Dictionary<string, string[]> urlParams);

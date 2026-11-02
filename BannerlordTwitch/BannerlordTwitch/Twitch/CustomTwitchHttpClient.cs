@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -18,7 +18,7 @@ namespace BannerlordTwitch
 
         public CustomTwitchHttpClient()
         {
-            this._http = new HttpClient(new TwitchHttpClientHandler(null));
+            this._http = new HttpClient(TwitchLibraryFactory.Create<TwitchHttpClientHandler>((object)null));
         }
 
         /// <summary>PUT Request with a byte array body</summary>

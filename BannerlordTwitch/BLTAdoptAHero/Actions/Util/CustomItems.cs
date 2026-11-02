@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Annotations;
@@ -148,11 +148,9 @@ namespace BLTAdoptAHero.Actions.Util
                     RestrictedPartIds = settings.RestrictedPartIds
                 };
                 var assets = BLTAdoptAHero.Util.ForgeAssets.Current;
-                if (!assets.ForType(weaponType).Any()) return null;
+                if (!assets.Available(weaponType)) return null;
                 var result = assets.Generate(hero, weaponType, culture ?? hero.Culture,
                     BLTAdoptAHero.Util.ForgeStyle.Balanced, legacySettings, false);
-                BLTAdoptAHero.Util.NativeForgeAdapter.PrepareIdentity(result.Item);
-                BLTAdoptAHero.Util.NativeForgeAdapter.Register(result.Item);
                 return result.Item;
             }
             catch (Exception ex)

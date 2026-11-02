@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch;
@@ -100,7 +100,7 @@ namespace BLTAdoptAHero
             Action<string> onSuccess,
             Action<string> onFailure)
         {
-            var splitArgs = context.Args.Split(' ');
+            var splitArgs = (context.Args ?? "").Split(' ');
             var desiredName = string.Join(" ", splitArgs).Trim();
 
             CultureObject selectedCulture = null;
@@ -167,21 +167,20 @@ namespace BLTAdoptAHero
             }
 
             var charClass = BLTAdoptAHeroCampaignBehavior.Current.GetClass(adoptedHero);
-            // Ensure charClass is not null before using it
-            if (charClass == null)
-            {
-                onFailure("{=FZh7ZtGp}Character class not found.".Translate());
-                return;
-            }
+            // UpgradeEquipment also supports classless heroes using their strongest skills.
 
             // Get restricted items from global config
             var restrictedItemIds = BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds;
 
-            UpgradeEquipment(adoptedHero, targetTier, charClass,
+            if (!UpgradeEquipment(adoptedHero, targetTier, charClass,
                 replaceSameTier: settings.ReequipInsteadOfUpgrade,
                 cultureFilter: cultureFilterSpecified ? selectedCulture : null,
                 cultureFilterSpecified: cultureFilterSpecified,
-                restrictedItemIds: restrictedItemIds);
+                restrictedItemIds: restrictedItemIds))
+            {
+                onFailure("No different equipment is available at this tier. No gold was spent.");
+                return;
+            }
 
             BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentTier(adoptedHero, targetTier);
             BLTAdoptAHeroCampaignBehavior.Current.SetEquipmentClass(adoptedHero, charClass);
@@ -232,8 +231,10 @@ namespace BLTAdoptAHero
             || o.Type == ItemObject.ItemTypeEnum.Crossbow && hero?.CharacterObject?.GetPerkValue(DefaultPerks.Crossbow.MountedCrossbowman) == true
             ;
 
-        public static void UpgradeEquipment(Hero adoptedHero, int targetTier, HeroClassDef classDef, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, Func<EquipmentElement, bool> customKeepFilter = null, HashSet<string> restrictedItemIds = null)
+        public static bool UpgradeEquipment(Hero adoptedHero, int targetTier, HeroClassDef classDef, bool replaceSameTier, CultureObject cultureFilter = null, bool cultureFilterSpecified = false, Func<EquipmentElement, bool> customKeepFilter = null, HashSet<string> restrictedItemIds = null)
         {
+            var previousBattle = adoptedHero.BattleEquipment.YieldEquipmentSlots().Select(e => e.element).ToArray();
+            var previousCivilian = adoptedHero.CivilianEquipment.YieldEquipmentSlots().Select(e => e.element).ToArray();
             customKeepFilter ??= _ => true;
             restrictedItemIds ??= new HashSet<string>();
 
@@ -440,6 +441,8 @@ namespace BLTAdoptAHero
             }
 
             UpgradeCivilian(adoptedHero, targetTier, replaceSameTier, cultureFilter, cultureFilterSpecified, restrictedItemIds);
+            return !previousBattle.SequenceEqual(adoptedHero.BattleEquipment.YieldEquipmentSlots().Select(e => e.element))
+                || !previousCivilian.SequenceEqual(adoptedHero.CivilianEquipment.YieldEquipmentSlots().Select(e => e.element));
         }
 
         public static bool HeroShouldUseHorse(Hero adoptedHero, HeroClassDef classDef)

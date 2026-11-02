@@ -11,7 +11,7 @@ using TaleWorlds.Core;
 
 namespace BLTAdoptAHero
 {
-    [LocDisplayName("{=}Forge Weapon"), LocDescription("{=}Forge a cultured custom weapon with automatic parts, style and quality."), UsedImplicitly]
+    [LocDisplayName("{=}Forge Weapon"), LocDescription("{=}Forge a cultured custom weapon with style and quality bonuses."), UsedImplicitly]
     public sealed class ForgeWeapon : HeroCommandHandlerBase
     {
         public override Type HandlerConfigType => typeof(ForgeCommandSettings);
@@ -47,7 +47,7 @@ namespace BLTAdoptAHero
                 if (args.Count == 1 && args[0].Equals("types", StringComparison.OrdinalIgnoreCase))
                 {
                     ReplyAvailability(context, onSuccess, string.Join(", ", ForgeAssets.WeaponTypes.Where(assets.Available))
-                        + ". Template IDs: " + string.Join(", ", assets.Templates.Select(t => t.StringId)));
+                        + ". Template IDs: " + string.Join(", ", assets.Templates.Where(t => ForgeAssets.WeaponTypes.Any(type => assets.Available(type) && assets.ForType(type).Contains(t))).Select(t => t.StringId)));
                     return;
                 }
                 bool random = args[0].Equals("random", StringComparison.OrdinalIgnoreCase);
