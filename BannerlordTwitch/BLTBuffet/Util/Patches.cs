@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using JetBrains.Annotations;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
@@ -14,7 +14,7 @@ namespace BLTBuffet.Util
              {
                  typeof(Agent), // attackerAgent
                  typeof(Agent), // victimAgent
-                 typeof(WeakGameEntity), // hitObject
+                 typeof(GameEntity), // hitObject
                  typeof(float), // momentumRemaining
                  typeof(MissionWeapon), // attackerWeapon
                  typeof(bool), // crushedThrough
@@ -42,7 +42,7 @@ namespace BLTBuffet.Util
 
         public static void GetAttackCollisionResultsPostfix(Mission __instance, Agent attackerAgent, Agent victimAgent, ref AttackCollisionData attackCollisionData)
         {
-            CharacterEffect.BLTEffectsBehaviour.Get().ApplyHitDamage(attackerAgent, victimAgent, ref attackCollisionData);
+            CharacterEffect.BLTEffectsBehaviour.Get()?.ApplyHitDamage(attackerAgent, victimAgent, ref attackCollisionData);
         }
 
         // [UsedImplicitly]

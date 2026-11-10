@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -179,11 +179,7 @@ namespace BLTAdoptAHero
             var desiredName = string.Join(" ", splitArgs.Skip(1)).Trim();
             var kingdom = adoptedHero.Clan.Kingdom;
             bool atWar = Kingdom.All.Any(k => k.IsAtWarWith(kingdom));
-            AllianceCampaignBehavior allianceBehavior = Campaign.Current.GetCampaignBehavior<AllianceCampaignBehavior>();
-            IAllianceCampaignBehavior iallianceBehavior = Campaign.Current.GetCampaignBehavior<IAllianceCampaignBehavior>();
-            TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
             var diplomacyHelper = Campaign.Current.GetCampaignBehavior<BLTDiplomacyHelper>();
-            TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
 
             var desiredKingdom = Kingdom.All.FirstOrDefault(c => c.Name.ToString().IndexOf(desiredName, StringComparison.OrdinalIgnoreCase) >= 0);
 
@@ -252,14 +248,6 @@ namespace BLTAdoptAHero
                         else
                         {
                             BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.WarPrice, true);
-                            if (allianceBehavior.IsAllyWithKingdom(kingdom, desiredKingdom))
-                            {
-                                allianceBehavior.EndAlliance(kingdom, desiredKingdom);
-                            }
-                            if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
-                            {
-                                tradeBehavior.EndTradeAgreement(kingdom, desiredKingdom);
-                            }
                             DeclareWarAction.ApplyByDefault(kingdom, desiredKingdom);
                             adoptedHero.Clan.Influence -= influenceCost;
                             onSuccess($"Declared war on {desiredKingdom}");
@@ -316,14 +304,12 @@ namespace BLTAdoptAHero
                         BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
 
                         Clan proposer = adoptedHero.Clan;
-                        var diplomacy = Campaign.Current.Models.DiplomacyModel;
-                        Clan recipient = desiredKingdom.RulingClan;
-                        int dailyTribute = diplomacy.GetDailyTributeToPay(proposer, recipient, out int tributeDurationInDays);
+                        const int dailyTribute = 0;
 
 
                         if (desiredKingdom == Hero.MainHero.Clan.Kingdom && Hero.MainHero.IsKingdomLeader)
                         {
-                            CampaignEventDispatcher.Instance.OnPeaceOfferedToPlayer(kingdom, dailyTribute, tributeDurationInDays);
+                            CampaignEventDispatcher.Instance.OnPeaceOfferedToPlayer(kingdom, dailyTribute);
 
                             onSuccess("Peace offer sent to the player.");
                         }
@@ -353,15 +339,13 @@ namespace BLTAdoptAHero
                                 return;
                             }
 
-                            MakePeaceAction.ApplyByKingdomDecision(kingdom, desiredKingdom, dailyTribute, tributeDurationInDays);
+                            MakePeaceAction.ApplyByKingdomDecision(kingdom, desiredKingdom, dailyTribute);
                             adoptedHero.Clan.Influence -= influenceCost;
                             influenceCost *= -1;
-                            onSuccess("{=BLTTribute}Peace applied between {Proposer} and {Recipient}. Daily tribute: {DailyTribute}, Duration: {Days} days."
+                            onSuccess("{=BLTShokuhoPeace}Peace applied between {Proposer} and {Recipient}."
                                 .Translate(
                                     ("Proposer", proposer.Name),
-                                    ("Recipient", recipient.Name),
-                                    ("DailyTribute", dailyTribute),
-                                    ("Days", tributeDurationInDays)
+                                    ("Recipient", desiredKingdom.Name)
                                 ));
                         }
                         BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.PeacePrice, true);
@@ -424,137 +408,13 @@ namespace BLTAdoptAHero
                     }
                 case "alliance":
                     {
-
-                        if (!settings.AllyEnabled)
-                        {
-                            onFailure("Alliance disabled".Translate());
-                            return;
-                        }
-                        if (desiredKingdom == null)
-                        {
-                            onFailure("{=JdZ2CelP}Could not find the kingdom with the name {name}".Translate(("name", desiredName)));
-                            return;
-                        }
-                        if (!adoptedHero.IsKingdomLeader)
-                        {
-                            onFailure("{=TESTING}Not a king.".Translate());
-                            return;
-                        }
-
-                        if (kingdom.IsAtWarWith(desiredKingdom))
-                        {
-                            onFailure($"At war with {desiredKingdom}");
-                            return;
-                        }
-                        if (allianceBehavior.IsAllyWithKingdom(kingdom, desiredKingdom))
-                        {
-                            onFailure($"Already allied with {desiredKingdom}");
-                            return;
-                        }
-                        if (kingdom == desiredKingdom)
-                        {
-                            onFailure("Cant ally on yourself!");
-                            return;
-                        }
-                        int influenceCost = Campaign.Current.Models.AllianceModel.GetInfluenceCostOfProposingStartingAlliance(adoptedHero.Clan);
-                        if (adoptedHero.Clan.Influence < influenceCost)
-                        {
-                            onFailure($"Not enough influence:{influenceCost}");
-                            return;
-                        }
-                        if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero) < settings.AllyPrice)
-                        {
-                            onFailure(Naming.NotEnoughGold(settings.AllyPrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero)));
-                            return;
-                        }
-                        if (desiredKingdom == Hero.MainHero.Clan.Kingdom && !Hero.MainHero.IsKingdomLeader)
-                        {
-                            iallianceBehavior.OnAllianceOfferedToPlayerKingdom(kingdom);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess("Proposed alliance to player kingdom");
-                        }
-                        else if (desiredKingdom == Hero.MainHero.Clan.Kingdom && Hero.MainHero.IsKingdomLeader)
-                        {
-                            iallianceBehavior.OnAllianceOfferedToPlayer(kingdom);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess("Proposed alliance to player");
-                        }
-                        else
-                        {
-
-                            allianceBehavior.StartAlliance(kingdom, desiredKingdom);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess($"Allied with {desiredKingdom}");
-                        }
-                        BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.AllyPrice, true);
-                        break;
+                        onFailure("This native agreement is unavailable on Bannerlord 1.2.12.");
+                        return;
                     }
                 case "trade":
                     {
-
-                        if (!settings.TradeEnabled)
-                        {
-                            onFailure("Trade alliances disabled".Translate());
-                            return;
-                        }
-                        if (desiredKingdom == null)
-                        {
-                            onFailure("{=JdZ2CelP}Could not find the kingdom with the name {name}".Translate(("name", desiredName)));
-                            return;
-                        }
-                        if (!adoptedHero.IsKingdomLeader)
-                        {
-                            onFailure("{=TESTING}Not a king.".Translate());
-                            return;
-                        }
-
-                        if (kingdom.IsAtWarWith(desiredKingdom))
-                        {
-                            onFailure($"At war with {desiredKingdom}");
-                            return;
-                        }
-                        if (tradeBehavior.HasTradeAgreement(kingdom, desiredKingdom, out temptrade))
-                        {
-                            onFailure($"Already trading with {desiredKingdom}");
-                            return;
-                        }
-                        if (kingdom == desiredKingdom)
-                        {
-                            onFailure("Cant trade with yourself!");
-                            return;
-                        }
-                        int influenceCost = Campaign.Current.Models.TradeAgreementModel.GetInfluenceCostOfProposingTradeAgreement(adoptedHero.Clan);
-                        if (adoptedHero.Clan.Influence < influenceCost)
-                        {
-                            onFailure($"Not enough influence:{influenceCost}");
-                            return;
-                        }
-                        if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero) < settings.TradePrice)
-                        {
-                            onFailure(Naming.NotEnoughGold(settings.TradePrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(adoptedHero)));
-                            return;
-                        }
-                        if (desiredKingdom == Hero.MainHero.Clan.Kingdom && !Hero.MainHero.IsKingdomLeader)
-                        {
-                            tradeBehavior.OnTradeAgreementOfferedToPlayer(kingdom);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess("Proposed trade agreement to player kingdom");
-                        }
-                        else if (desiredKingdom == Hero.MainHero.Clan.Kingdom && Hero.MainHero.IsKingdomLeader)
-                        {
-                            tradeBehavior.OnTradeAgreementOfferedToPlayer(kingdom);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess("Proposed trade agreement to player kingdom");
-                        }
-                        else
-                        {
-                            var duration = Campaign.Current.Models.TradeAgreementModel.GetTradeAgreementDurationInYears(kingdom, desiredKingdom);
-                            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(adoptedHero, -settings.TradePrice, true);
-                            tradeBehavior.MakeTradeAgreement(kingdom, desiredKingdom, duration);
-                            adoptedHero.Clan.Influence -= influenceCost;
-                            onSuccess($"Allied with {desiredKingdom}");
-                        }
-                        break;
+                        onFailure("This native agreement is unavailable on Bannerlord 1.2.12.");
+                        return;
                     }
                 default:
                     {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -60,11 +60,6 @@ namespace BLTAdoptAHero.Actions
                 onFailure("{=TESTING}No mission!".Translate());
                 return;
             }
-            if (Mission.Current.IsNavalBattle)
-            {
-                onFailure("Cannot change formation in naval battle");
-                return;
-            }
             if (MissionHelpers.InTournament())
             {
                 onFailure("Cannot change formation in tournament");
@@ -100,7 +95,7 @@ namespace BLTAdoptAHero.Actions
             {      
                 if (!settings.Detach) { onFailure("Detach commands are off"); return; }
                 if (behavior == null) { onFailure("Detachment system not active"); return; }
-                if (!Mission.Current.IsDeploymentFinished) { onFailure("Cannot detach while deploying"); return; }
+                if (!BannerlordTwitch.Helpers.MissionHelpers.IsBattleReady(Mission.Current)) { onFailure("Cannot detach while deploying"); return; }
 
                 string error = num switch
                 {
@@ -133,10 +128,10 @@ namespace BLTAdoptAHero.Actions
             var query = currentFormation.QuerySystem;
             FormationClass formType = query switch
             {
-                _ when query.IsInfantryFormationReadOnly => FormationClass.Infantry,
-                _ when query.IsRangedFormationReadOnly => FormationClass.Ranged,
-                _ when query.IsCavalryFormationReadOnly => FormationClass.Cavalry,
-                _ when query.IsRangedCavalryFormationReadOnly => FormationClass.HorseArcher,
+                _ when query.IsInfantryFormation => FormationClass.Infantry,
+                _ when query.IsRangedFormation => FormationClass.Ranged,
+                _ when query.IsCavalryFormation => FormationClass.Cavalry,
+                _ when query.IsRangedCavalryFormation => FormationClass.HorseArcher,
                 _ => FormationClass.Infantry
             };
 
@@ -199,10 +194,10 @@ namespace BLTAdoptAHero.Actions
                     var q = f.QuerySystem;
                     string type = q switch
                     {
-                        _ when q.IsInfantryFormationReadOnly => "Infantry",
-                        _ when q.IsRangedFormationReadOnly => "Ranged",
-                        _ when q.IsCavalryFormationReadOnly => "Cavalry",
-                        _ when q.IsRangedCavalryFormationReadOnly => "Horse archer",
+                        _ when q.IsInfantryFormation => "Infantry",
+                        _ when q.IsRangedFormation => "Ranged",
+                        _ when q.IsCavalryFormation => "Cavalry",
+                        _ when q.IsRangedCavalryFormation => "Horse archer",
                         _ => "unknown"
                     };
 
@@ -262,15 +257,15 @@ namespace BLTAdoptAHero.Actions
             if (f.TargetFormation != null)
             {
                 var q = f.TargetFormation.QuerySystem;
-                var myPos = f.CachedAveragePosition;
-                var targetPos = f.TargetFormation.CachedAveragePosition;
+                var myPos = f.QuerySystem.AveragePosition;
+                var targetPos = f.TargetFormation.QuerySystem.AveragePosition;
                 float pos = (targetPos - myPos).Length;
                 string type = q switch
                 {
-                    _ when q.IsInfantryFormationReadOnly => "Infantry",
-                    _ when q.IsRangedFormationReadOnly => "Ranged",
-                    _ when q.IsCavalryFormationReadOnly => "Cavalry",
-                    _ when q.IsRangedCavalryFormationReadOnly => "Horse archer",
+                    _ when q.IsInfantryFormation => "Infantry",
+                    _ when q.IsRangedFormation => "Ranged",
+                    _ when q.IsCavalryFormation => "Cavalry",
+                    _ when q.IsRangedCavalryFormation => "Horse archer",
                     _ => "unknown"
                 };
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -740,7 +740,7 @@ namespace BLTAdoptAHero.Actions
             // Resolve the upgrade object for the final target first (validate it exists)
             var targetUpgrade = gc.FiefUpgrades?.FirstOrDefault(u => u.ID == upgradeId);
             if (targetUpgrade == null) { fail($"Upgrade '{upgradeId}' not found"); return; }
-            if (targetUpgrade.CoastalOnly && !settlement.HasPort) { fail("This is a Coastal Only upgrade, try again on a coastal settlement"); return; }
+            if (targetUpgrade.CoastalOnly) { fail("This is a Coastal Only upgrade, try again on a coastal settlement"); return; }
 
             // Build purchase chain (includes prerequisites when autoBuy is true)
             var owned = new HashSet<string>(UpgradeBehavior.Current?.GetFiefUpgrades(settlement) ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
@@ -823,7 +823,7 @@ namespace BLTAdoptAHero.Actions
             foreach (var settlement in targetList)
             {
                 // Skip non-coastal settlements for coastal-only upgrades silently
-                if (targetUpgrade.CoastalOnly && !settlement.HasPort) { settlementsSkipped++; continue; }
+                if (targetUpgrade.CoastalOnly) { settlementsSkipped++; continue; }
 
                 var owned = new HashSet<string>(UpgradeBehavior.Current?.GetFiefUpgrades(settlement) ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
 

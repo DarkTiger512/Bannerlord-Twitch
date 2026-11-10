@@ -1,8 +1,7 @@
-﻿using System.Linq;
+using System.Linq;
 using SandBox.Conversation.MissionLogics;
 using SandBox.Missions.MissionLogics;
 using SandBox.Tournaments.MissionLogics;
-using SandBox.Missions.MissionLogics.Hideout;
 using SandBox;
 using SandBox.Missions;
 using StoryMode.Missions;
@@ -20,6 +19,11 @@ namespace BannerlordTwitch.Helpers
         public static bool HeroIsSpawned(Hero hero)
             => //CampaignMission.Current.Location?.ContainsCharacter(hero) == true || 
                 Mission.Current?.Agents.Any(a => a.Character == hero.CharacterObject) == true;
+
+        public static bool IsBattleReady(Mission mission)
+            => mission != null && mission.IsLoadingFinished && mission.CurrentState == Mission.State.Continuing
+                && mission.Mode == MissionMode.Battle && !mission.IsMissionEnding
+                && mission.MissionResult?.BattleResolved != true;
 
         public static bool InHideOutMission()
         {

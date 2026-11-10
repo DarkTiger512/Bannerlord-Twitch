@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
@@ -707,7 +707,7 @@ namespace BLTAdoptAHero
                 var stance = payer.GetStanceWith(receiver);
                 if (stance != null && daysRemaining > 0)
                 {
-                    stance.SetDailyTributePaid(payer, amount, daysRemaining);
+                    stance.SetDailyTributePaid(payer, amount);
                 }
             }
         }

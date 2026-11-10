@@ -45,6 +45,13 @@ namespace BLTAdoptAHero
             }
         }
 
+        private static int GetTotalSkillXp(Hero hero, SkillObject skill)
+        {
+            var model = Campaign.Current.Models.CharacterDevelopmentModel;
+            return model.GetXpRequiredForSkillLevel(hero.GetSkillValue(skill))
+                + hero.HeroDeveloper.GetSkillXpProgress(skill);
+        }
+
         protected override Type ConfigType => typeof(SkillXPSettings);
 
         protected override (bool success, string description) Improve(string userName,
@@ -67,15 +74,15 @@ namespace BLTAdoptAHero
             if (hero.IsDead) return (false, "Hero is dead");
 
             amount = BLTAdoptAHero.Util.PrestigePolicy.ScalePositive(amount, rewardMultiplier, 1 + (BLTAdoptAHeroCampaignBehavior.Current?.PrestigeBonus(hero, "insight") ?? 0));
-            float previousTotalXP = hero.HeroDeveloper.GetSkillXp(skill);
             int prevLevel = hero.GetSkillValue(skill);
+            int previousTotalXP = GetTotalSkillXp(hero, skill);
             hero.HeroDeveloper.AddSkillXp(skill, amount,
                 isAffectedByFocusFactor: !BLTAdoptAHeroModule.CommonConfig.UseRawXP);
             // Force this immediately instead of waiting for the daily campaign tick
             hero.HeroDeveloper.DevelopCharacterStats();
 
             int newXp = hero.HeroDeveloper.GetSkillXpProgress(skill);
-            int realGainedXp = (int)Math.Max(0, Math.Round(hero.HeroDeveloper.GetSkillXp(skill) - previousTotalXP));
+            int realGainedXp = (int)Math.Max(0, Math.Round((double)GetTotalSkillXp(hero, skill) - previousTotalXP));
             onAward?.Invoke(realGainedXp);
             int newLevel = hero.GetSkillValue(skill);
             int gainedLevels = newLevel - prevLevel;

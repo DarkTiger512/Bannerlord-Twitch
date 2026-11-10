@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using BannerlordTwitch;
 using BannerlordTwitch.Helpers;
@@ -128,7 +128,6 @@ namespace BLTAdoptAHero.Actions
             public ObservableCollection<MarkPropertyModifier> AffectedProperties { get; set; } = new()
             {
                 new MarkPropertyModifier { Name = DrivenProperty.SwingSpeedMultiplier, Weight = 1f },
-                new MarkPropertyModifier { Name = DrivenProperty.DamageMultiplierBonus, Weight = 1f },
                 new MarkPropertyModifier { Name = DrivenProperty.MaxSpeedMultiplier, Weight = -1f },
             };
 
@@ -173,7 +172,7 @@ namespace BLTAdoptAHero.Actions
             // Block during deployment: agents are still lined up on their own side, so ordering
             // one to run alone across no-man's-land into a full enemy formation gets it swarmed
             // and killed instantly on arrival.
-            if (!Mission.Current.IsDeploymentFinished)
+            if (!BannerlordTwitch.Helpers.MissionHelpers.IsBattleReady(Mission.Current))
             {
                 onFailure("Duel can't be started during deployment - wait for the battle to actually begin.");
                 return;

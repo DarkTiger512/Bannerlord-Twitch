@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -253,16 +253,14 @@ namespace BLTAdoptAHero.Actions
                 var oldParty = vassal.PartyBelongedTo;
                 bool wasLeader = oldParty.LeaderHero == vassal;
                 oldParty.MemberRoster.RemoveTroop(vassal.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                MakeHeroFugitiveAction.Apply(vassal, false);
+                MakeHeroFugitiveAction.Apply(vassal);
                 if (wasLeader && oldParty.IsLordParty)
                     DisbandPartyAction.StartDisband(oldParty);
             }
             var fullClanName = $"[Vassal] {setname}";
             var newClan = Clan.CreateClan(fullClanName);
-            newClan.ChangeClanName(new TextObject(fullClanName), new TextObject(fullClanName));
-            newClan.Culture = vassal.Culture;
-            newClan.Banner = Banner.CreateOneColoredBannerWithOneIcon(adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetFirstIconColor(), -1);
-            newClan.SetInitialHomeSettlement(Settlement.All.SelectRandom());
+            newClan.InitializeClan(new TextObject(fullClanName), new TextObject(fullClanName), vassal.Culture, Banner.CreateOneColoredBannerWithOneIcon(adoptedHero.Clan.Banner.GetPrimaryColor(), adoptedHero.Clan.Banner.GetFirstIconColor(), -1));
+            newClan.UpdateHomeSettlement(Settlement.All.SelectRandom());
             vassal.Clan = newClan;
             if (vassal.Spouse != null)
             {
@@ -275,7 +273,7 @@ namespace BLTAdoptAHero.Actions
                     var oldParty = vassal.Spouse.PartyBelongedTo;
                     bool wasLeader = oldParty.LeaderHero == vassal.Spouse;
                     oldParty.MemberRoster.RemoveTroop(vassal.Spouse.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                    MakeHeroFugitiveAction.Apply(vassal.Spouse, false);
+                    MakeHeroFugitiveAction.Apply(vassal.Spouse);
                     if (wasLeader && oldParty.IsLordParty)
                         DisbandPartyAction.StartDisband(oldParty);
                 }
@@ -294,7 +292,7 @@ namespace BLTAdoptAHero.Actions
                         var oldParty = child.PartyBelongedTo;
                         bool wasLeader = oldParty.LeaderHero == child;
                         oldParty.MemberRoster.RemoveTroop(child.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                        MakeHeroFugitiveAction.Apply(child, false);
+                        MakeHeroFugitiveAction.Apply(child);
                         if (wasLeader && oldParty.IsLordParty)
                             DisbandPartyAction.StartDisband(oldParty);
                     }
@@ -315,7 +313,7 @@ namespace BLTAdoptAHero.Actions
                     ChangeKingdomAction.ApplyByJoinToKingdom(newClan, adoptedHero.Clan.Kingdom);
                 AdoptedHeroFlags._allowKingdomMove = false;
             }
-            CampaignEventDispatcher.Instance.OnClanCreated(newClan, false);
+            CampaignEventDispatcher.Instance.OnCompanionClanCreated(newClan);
             ChangeRelationAction.ApplyRelationChangeBetweenHeroes(adoptedHero, vassal, 100, false);
 
             // Register the vassal with the VassalBehavior
@@ -429,14 +427,14 @@ namespace BLTAdoptAHero.Actions
             }
             try
             {
-                if (Banner.TryGetBannerDataFromCode(bannerCode, out var bannerDataList))
+                if (Banner.GetBannerDataFromBannerCode(bannerCode).IsEmpty())
                 {
                     var newBanner = new Banner(bannerCode);  // creates a Banner object directly from the code                  
                     var color1 = newBanner.GetPrimaryColor();
                     var color2 = newBanner.GetFirstIconColor();
 
 
-                    vassal.Banner = newBanner;
+                    vassal.InitializeClan(vassal.Name, vassal.InformalName, vassal.Culture, newBanner);
                     vassal.Banner.ChangeBackgroundColor(color1, color2);
                     vassal.Color = color1;
                     vassal.Color2 = color2;

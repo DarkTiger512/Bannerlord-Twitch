@@ -50,7 +50,6 @@
   <Import Project="$(SolutionDir)BLTProperties.targets" />
   <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
     <PackageReference Include="Bannerlord.ReferenceAssemblies" />
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.NavalDLC" ExcludeAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FontAwesome.WPF, Version=4.7.0.37774, Culture=neutral, PublicKeyToken=0758b07a11a4f466">

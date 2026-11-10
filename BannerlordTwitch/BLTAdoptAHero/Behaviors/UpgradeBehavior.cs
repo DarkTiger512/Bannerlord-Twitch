@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
@@ -478,7 +478,7 @@ namespace BLTAdoptAHero
                 {
                     var up = ConfigSafe.FiefUpgrades.FirstOrDefault(u => u.ID == upgradeId);
                     if (up == null || up.GarrisonDailyTroopSpawnAmount <= 0) continue;
-                    if (up.CoastalOnly && !settlement.HasPort) continue;
+                    if (up.CoastalOnly) continue;
 
                     int tier = GetEffectiveGarrisonTierFief(settlement, up);
                     RunAccumulation($"fief_garrison:{settlement.StringId}:{upgradeId}",
@@ -509,7 +509,7 @@ namespace BLTAdoptAHero
             {
                 var up = ConfigSafe.FiefUpgrades.FirstOrDefault(u => u.ID == id);
                 if (up == null) continue;
-                if (up.CoastalOnly && !s.HasPort) continue;
+                if (up.CoastalOnly) continue;
                 if (up.CapitalOnly) continue;
                 float v = sel(up);
                 if (guard && v < 0f && currentValue + sum + v < 0f) continue;
@@ -607,7 +607,7 @@ namespace BLTAdoptAHero
             {
                 var up = ConfigSafe.FiefUpgrades.FirstOrDefault(u => u.ID == id);
                 if (up == null) continue;
-                if (up.CoastalOnly && !s.HasPort) continue;
+                if (up.CoastalOnly) continue;
                 if (up.CapitalOnly) continue;
                 int v = sel(up);
                 if (guard && v < 0 && currentValue + sum + v < 0f) continue;

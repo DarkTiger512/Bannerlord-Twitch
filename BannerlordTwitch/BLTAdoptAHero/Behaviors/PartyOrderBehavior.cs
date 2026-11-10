@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
@@ -501,54 +501,42 @@ namespace BLTAdoptAHero
         /// </summary>
         public static void IssueOrder(MobileParty party, PartyOrderType type, Settlement target)
         {
-            bool atSea = party.IsCurrentlyAtSea;
-            bool needsWaterCrossing = !atSea && target != null && LandPartyNeedsWaterCrossing(party, target);
-            bool isFromPort = atSea || needsWaterCrossing;
-            var nav = isFromPort ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-
             var pm = new PartyManagement();
 
             switch (type)
             {
                 case PartyOrderType.Siege:
                     if (target != null)
-                        SetPartyAiAction.GetActionForBesiegingSettlement(party, target, nav, isFromPort);
+                        SetPartyAiAction.GetActionForBesiegingSettlement(party, target);
                     break;
 
                 case PartyOrderType.Defend:
-                    if (target != null)
-                        IssueForceDefendOrder(party, target);
+                    IssueForceDefendOrder(party, target);
                     break;
 
                 case PartyOrderType.Patrol:
                     if (target != null)
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target, nav, isFromPort, false);
+                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
                     else
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(
-                            party,
-                            pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom),
-                            nav, isFromPort, false);
+                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom));
                     break;
 
                 case PartyOrderType.Garrison:
                     // GoToSettlement causes the party to travel to and enter the settlement
                     if (target != null)
-                        SetPartyAiAction.GetActionForVisitingSettlement(party, target, nav, isFromPort, isFromPort);
+                        SetPartyAiAction.GetActionForVisitingSettlement(party, target);
                     break;
 
                 case PartyOrderType.Raid:
                     if (target != null)
-                        SetPartyAiAction.GetActionForRaidingSettlement(party, target, nav, isFromPort, isFromPort);
+                        SetPartyAiAction.GetActionForRaidingSettlement(party, target);
                     break;
 
                 case PartyOrderType.SmartGuard:
                     if (target != null)
                         IssueSmartGuardOrder(party, target);
                     else
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(
-                            party,
-                            pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom),
-                            nav, isFromPort, false);
+                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom));
                     break;
             }
         }
@@ -563,18 +551,13 @@ namespace BLTAdoptAHero
         {
             if (party == null || fortification == null || !fortification.IsFortification) return;
 
-            bool atSea = party.IsCurrentlyAtSea;
-
             // ── 1. Defend if fortification is under attack by an enemy ───────
             if (fortification.IsUnderSiege && fortification.SiegeEvent?.BesiegerCamp != null)
             {
                 var besiegerFaction = fortification.SiegeEvent.BesiegerCamp.LeaderParty?.MapFaction;
                 if (besiegerFaction != null && party.MapFaction.IsAtWarWith(besiegerFaction))
                 {
-                    bool w = !atSea && LandPartyNeedsWaterCrossing(party, fortification);
-                    bool fp = atSea || w;
-                    var nav = fp ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-                    SetPartyAiAction.GetActionForDefendingSettlement(party, fortification, nav, fp, false);
+                    SetPartyAiAction.GetActionForDefendingSettlement(party, fortification);
                     return;
                 }
                 // Besieger is non-hostile (e.g. allied siege or civil war) → fall through to patrol
@@ -589,20 +572,14 @@ namespace BLTAdoptAHero
                     var raider = village.Settlement.LastAttackerParty;
                     if (raider == null || !party.MapFaction.IsAtWarWith(raider.MapFaction)) continue;
 
-                    bool w = !atSea && LandPartyNeedsWaterCrossing(party, village.Settlement);
-                    bool fp = atSea || w;
-                    var nav = fp ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-                    SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, village.Settlement, nav, fp, false);
+                    SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, village.Settlement);
                     return;
                 }
             }
 
             // ── 3. Default: patrol the fortification ─────────────────────────
             {
-                bool w = !atSea && LandPartyNeedsWaterCrossing(party, fortification);
-                bool fp = atSea || w;
-                var nav = fp ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-                SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification, nav, fp, false);
+                SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification);
             }
         }
 
@@ -610,93 +587,31 @@ namespace BLTAdoptAHero
         //  REACHABILITY HELPERS
         // ─────────────────────────────────────────────
 
-        /// <summary>
-        /// Forced-defend logic for the (previously-dead) Defend order type.
-        /// Unlike IssueSmartGuardOrder, this does NOT use GetActionForDefendingSettlement —
-        /// that call lets the AI's own strength assessment decide whether to actually
-        /// close in, and it will hold back or retreat if outmatched. SetMoveEngageParty
-        /// is a direct move-order that bypasses that assessment, so the party commits
-        /// to the fight regardless of the strength differential.
-        /// Does NOT count as a re-issue attempt — called every tick for Defend orders.
-        /// </summary>
-        public static void IssueForceDefendOrder(MobileParty party, Settlement fortification)
+        private static void IssueForceDefendOrder(MobileParty party, Settlement fortification)
         {
             if (party == null || fortification == null || !fortification.IsFortification) return;
-
-            if (fortification.IsUnderSiege && fortification.SiegeEvent?.BesiegerCamp != null)
+            var besieger = fortification.SiegeEvent?.BesiegerCamp?.LeaderParty;
+            if (besieger != null && besieger.IsActive && party.MapFaction.IsAtWarWith(besieger.MapFaction))
             {
-                var besiegerParty = fortification.SiegeEvent.BesiegerCamp.LeaderParty;
-                if (besiegerParty != null && besiegerParty.IsActive
-                    && party.MapFaction.IsAtWarWith(besiegerParty.MapFaction))
-                {
-                    bool atSea = party.IsCurrentlyAtSea;
-                    bool needsWaterCrossing = !atSea && LandPartyNeedsWaterCrossing(party, besiegerParty.CurrentSettlement ?? fortification);
-                    var nav = (atSea || needsWaterCrossing) ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-
-                    // Force engagement — ignores strength difference entirely.
-                    party.SetMoveEngageParty(besiegerParty, nav);
-                    return;
-                }
+                party.Ai.SetMoveEngageParty(besieger);
+                return;
             }
-
-            // No hostile siege on the target right now: patrol it instead.
-            bool patrolAtSea = party.IsCurrentlyAtSea;
-            bool patrolNeedsWater = !patrolAtSea && LandPartyNeedsWaterCrossing(party, fortification);
-            bool patrolFromPort = patrolAtSea || patrolNeedsWater;
-            var patrolNav = patrolFromPort ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.All;
-            SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification, patrolNav, patrolFromPort, false);
+            SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification);
         }
 
         public static bool IsSettlementReachable(MobileParty party, Settlement target)
         {
             try
             {
-                if (party.IsCurrentlyAtSea)
-                {
-                    float navalDist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                        party, target, true, MobileParty.NavigationType.Naval, out _);
-                    return navalDist < float.MaxValue - 1f;
-                }
                 float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                    party, target, false, MobileParty.NavigationType.All, out float landRatio);
+                    party, target);
                 if (dist >= float.MaxValue - 1f) return false;
-                if (landRatio >= 0f && landRatio < 0.5f) return false;
                 return true;
             }
             catch (Exception ex)
             {
                 Log.Error($"[BLT] IsSettlementReachable error: {ex}");
                 return false;
-            }
-        }
-
-        private static bool LandPartyNeedsWaterCrossing(MobileParty party, Settlement target)
-        {
-            try
-            {
-                // Already at sea — handled by the caller via IsCurrentlyAtSea
-                if (party.IsCurrentlyAtSea) return false;
-
-                // Distance calculation is unreliable from inside a settlement gate;
-                // returning false here prevents the naval-stamp bug entirely.
-                if (party.CurrentSettlement != null) return false;
-
-                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                    party, target, false, MobileParty.NavigationType.All, out float landRatio);
-
-                // Unreachable by land nav: do NOT assume naval — default to land.
-                // The old "return true" here was the root cause of the sailing bug.
-                if (dist >= float.MaxValue - 1f) return false;
-
-                // landRatio < 0.5 means the majority of the route crosses water
-                if (landRatio >= 0f && landRatio < 0.5f) return true;
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] LandPartyNeedsWaterCrossing error: {ex}");
-                return false;   // safe default: land routing
             }
         }
 
@@ -721,7 +636,7 @@ namespace BLTAdoptAHero
                         if (party.BesiegedSettlement == target) return true;
                         if (target.IsUnderSiege)
                         {
-                            var besiegerFaction = target.SiegeEvent?.BesiegerCamp?.MapFaction;
+                            var besiegerFaction = target.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction;
                             Log.Info($"[BLT-VALIDATE] {party.StringId}: SIEGE — target is under siege by {besiegerFaction?.Name}");
 
                             if (besiegerFaction == null)
@@ -752,6 +667,7 @@ namespace BLTAdoptAHero
 
                             var besiegerC = besiegerFaction as Clan;
                             var clan = party.ActualClan;
+
                             if (besiegerC != null && clan != null && BLTClanDiplomacyBehavior.Current != null)
                             {
                                 bool hasAlliance = BLTClanDiplomacyBehavior.Current.HasAlliance(clan, besiegerC);
@@ -763,8 +679,7 @@ namespace BLTAdoptAHero
                             Log.Info($"[BLT-VALIDATE] {party.StringId}: SIEGE FALSE — under siege but no alliance path matched. " +
                                      $"besiegerFactionType={besiegerFaction.GetType().Name} " +
                                      $"partyFactionType={party.MapFaction?.GetType().Name} " +
-                                     $"besiegerC={besiegerC?.Name} clan={clan?.Name} " +
-                                     $"diplomacyBehavior={BLTClanDiplomacyBehavior.Current != null}");
+                                     $"besiegerC={besiegerC?.Name} clan={clan?.Name} ");
                             return false;
                         }
 

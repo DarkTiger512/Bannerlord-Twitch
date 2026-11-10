@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
@@ -38,7 +38,7 @@ namespace BLTBuffet
                 foreach (var a in attachments)
                 {
                     var frame = skeleton.GetBoneEntitialFrame((sbyte)a.boneIdx) * a.localFrame;
-                    a.particleSystem.SetLocalFrame(frame);
+                    a.particleSystem.SetLocalFrame(ref frame);
                 }
             }
         }

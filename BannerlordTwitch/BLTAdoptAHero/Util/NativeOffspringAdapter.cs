@@ -25,14 +25,12 @@ namespace BLTAdoptAHero.Util
             GetMinorHeroes();
             var models = Campaign.Current.Models;
             if (models.AgeModel.HeroComesOfAge <= 0 || models.EquipmentSelectionModel == null ||
-                models.HeroCreationModel == null || models.PregnancyModel == null ||
-                mother == null || father == null)
+                models.PregnancyModel == null || mother?.Culture == null || father == null)
                 throw new InvalidOperationException("Native offspring templates or adulthood models are unavailable. No gold charged.");
-            var male = models.HeroCreationModel.GetCharacterTemplateForOffspring(mother, father, false);
-            var female = models.HeroCreationModel.GetCharacterTemplateForOffspring(mother, father, true);
-            if (male == null || female == null)
-                throw new InvalidOperationException("Native offspring templates are unavailable. No gold charged.");
-            if (male.Race != mother.CharacterObject.Race || female.Race != mother.CharacterObject.Race)
+            var male = mother.Culture.TownsmanInfant;
+            var female = mother.Culture.TownswomanInfant;
+            if (male == null || female == null ||
+                male.Race != mother.CharacterObject.Race || female.Race != mother.CharacterObject.Race)
                 throw new InvalidOperationException("Native offspring templates do not support the parents' race. No gold charged.");
         }
 
@@ -50,8 +48,8 @@ namespace BLTAdoptAHero.Util
                 try
                 {
                     child.SetBirthDay(CampaignTime.YearsFromNow(-models.AgeModel.HeroComesOfAge));
-                    if (models.EquipmentSelectionModel.GetEquipmentForHeroComeOfAge(child, TaleWorlds.Core.Equipment.EquipmentType.Battle) == null ||
-                        models.EquipmentSelectionModel.GetEquipmentForHeroComeOfAge(child, TaleWorlds.Core.Equipment.EquipmentType.Civilian) == null)
+                    if (models.EquipmentSelectionModel.GetEquipmentRostersForHeroComeOfAge(child, isCivilian: false)?.Count is not > 0 ||
+                        models.EquipmentSelectionModel.GetEquipmentRostersForHeroComeOfAge(child, isCivilian: true)?.Count is not > 0)
                         throw new InvalidOperationException("Adult equipment for this child is unavailable. No gold charged; restore the culture's equipment assets and retry.");
                 }
                 finally { child.SetBirthDay(originalBirthday); }

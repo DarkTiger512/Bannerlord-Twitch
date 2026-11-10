@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using TaleWorlds.GauntletUI.Data;
 using System.Collections.Generic;
 using System.Linq;
 using BannerlordTwitch.Helpers;
@@ -27,7 +28,7 @@ namespace BLTAdoptAHero
     {
         private GauntletLayer _layer;
         private HeroWidgetVM _vm;
-        private GauntletMovieIdentifier _gauntletMovie;
+        private IGauntletMovie _gauntletMovie;
         private Camera _camera;
         private readonly Dictionary<Hero, HeroIconVM> _heroToVM = new();
         private bool _isInitialized = false;
@@ -73,7 +74,7 @@ namespace BLTAdoptAHero
         {
             //Log.Trace("BLTAdoptAHero: Initializing UI.");
             this._vm = new HeroWidgetVM();
-            this._layer = new GauntletLayer("BLTHeroWidgetLayer", 15, false);
+            this._layer = new GauntletLayer(15, "BLTHeroWidgetLayer", false);
             this._gauntletMovie = this._layer.LoadMovie("BLTHeroNametag", _vm);
             this.MissionScreen.AddLayer(_layer);
             //Log.Trace("BLTAdoptAHero: Layer added to MissionScreen.");

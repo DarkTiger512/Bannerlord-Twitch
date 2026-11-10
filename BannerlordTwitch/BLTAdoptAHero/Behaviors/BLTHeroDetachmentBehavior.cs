@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using TaleWorlds.MountAndBlade;
@@ -56,7 +56,8 @@ namespace BLTAdoptAHero
                 
                 if (agent.IsDetachedFromFormation)
                 {
-                    if (!agent.TryAttachToFormation())
+                    agent.Formation.AttachUnit(agent);
+                    if (agent.IsDetachedFromFormation)
                     {
                         return "Failed to detach";
                     }
@@ -129,7 +130,7 @@ namespace BLTAdoptAHero
                 }
                 else
                 {
-                    var closestFormation = state.Detachment?.ParentFormation?.CachedClosestEnemyFormation;
+                    var closestFormation = state.Detachment?.ParentFormation?.QuerySystem.ClosestEnemyFormation;
                     if (closestFormation != null)
                         agent.SetTargetFormationIndex(closestFormation.Formation.Index);
                     state.Order = DetachmentOrder.None;
@@ -201,8 +202,9 @@ namespace BLTAdoptAHero
                 if (agent.Team.IsAttacker)
                 {
                     state.Order = DetachmentOrder.None;
-                    agent.SetScriptedTargetEntity(
+                    agent.SetScriptedTargetEntityAndPosition(
                         nearestGate.GameEntity,
+                        nearestGate.GameEntity.GlobalPosition.ToWorldPosition(),
                         Agent.AISpecialCombatModeFlags.AttackEntity,
                         true);
                 }
@@ -442,7 +444,7 @@ namespace BLTAdoptAHero
             var parent = state.Detachment?.ParentFormation;
             if (parent == null) return;
 
-            var medianPos = parent.CachedMedianPosition;
+            var medianPos = parent.QuerySystem.MedianPosition;
             if (!medianPos.IsValid) return;
 
             Vec2 behindOffset = -parent.Direction * 3f;
@@ -524,7 +526,6 @@ namespace BLTAdoptAHero
                 formation.LeaveDetachment(detachment);
 
 
-                agent.TryRemoveAllDetachmentScores();
             }
 
             // 3. reattach cleanly
@@ -553,6 +554,8 @@ namespace BLTAdoptAHero
         {
             ParentFormation = parent;
         }
+
+        void IDetachment.AddAgent(Agent agent, int slotIndex) => AddAgent(agent, slotIndex);
 
         public void AddAgent(Agent agent, int slotIndex = -1,
             Agent.AIScriptedFrameFlags customFlags = Agent.AIScriptedFrameFlags.None)
@@ -593,7 +596,7 @@ namespace BLTAdoptAHero
             }
 
             agent.Detachment = this;
-            agent.SetDetachmentWeight(1f);
+            agent.DetachmentWeight = 1f;
         }
 
         public void RemoveAgent(Agent agent)

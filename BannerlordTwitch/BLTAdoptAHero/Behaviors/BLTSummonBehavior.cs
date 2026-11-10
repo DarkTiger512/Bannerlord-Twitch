@@ -466,6 +466,7 @@ namespace BLTAdoptAHero
                 , formationTroopCount: 1
                 , formationTroopIndex: 0
                 , isAlarmed: isAlarmed
+                , forceDismounted: false
                 , wieldInitialWeapons: true
                 , initialPosition: null
                 , initialDirection: null
@@ -479,7 +480,6 @@ namespace BLTAdoptAHero
         {
             return Mission.Current.Mode != MissionMode.Stealth
                    && !MissionHelpers.InSiegeMission()
-                   && Mission.Current?.IsNavalBattle == false
                    && formationClass is
                        FormationClass.Cavalry or
                        FormationClass.LightCavalry or

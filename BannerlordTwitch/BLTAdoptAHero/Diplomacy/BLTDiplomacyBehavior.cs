@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -87,9 +87,8 @@ namespace BLTAdoptAHero
                 }
                 _recentAIPeaceAttempts[key] = CampaignTime.Now;
 
-                // Use the base-game tribute model to price the proposal
-                int dailyTribute = Campaign.Current.Models.DiplomacyModel.GetDailyTributeToPay(
-                    aiKingdom.RulingClan, bltKingdom.RulingClan, out int duration);
+                const int dailyTribute = 0;
+                int duration = 0;
                 bool isOffer = dailyTribute > 0;
 
 #if DEBUG

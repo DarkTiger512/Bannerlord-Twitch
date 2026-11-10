@@ -44,22 +44,27 @@ namespace TaleWorlds.CampaignSystem {
  }
  public struct CampaignTime { public float Years; public static CampaignTime YearsFromNow(float age)=>new(){Years=age}; }
  public class CharacterObject { public int Race; }
+ public class CultureObject {
+  public bool Missing;
+  public int Race;
+  public CharacterObject TownsmanInfant => Missing ? null : new(){Race=Race};
+  public CharacterObject TownswomanInfant => Missing ? null : new(){Race=Race};
+ }
  public class Clan { public object Home=new(); public List<Hero> Heroes=new(); }
  public class Party { public object MapEvent; }
  public class Hero : TaleWorlds.ObjectSystem.MBObjectBase {
   public string Name="Child"; public string FirstName=>Name; public List<Hero> Siblings=new(); public HeroDeveloper HeroDeveloper; public int InitialSkill=1; public bool IsWanderer; public Hero(){HeroDeveloper=new(){Owner=this};} public int GetSkillValue(object skill)=>InitialSkill; public bool IsFemale, IsPregnant, IsPrisoner, IsDisabled, Adopted, IsClanLeader, IsActive;
   public bool IsAlive=true; public bool IsDead=>!IsAlive;
   public Clan Clan; public Hero Mother,Father,Spouse; public Party PartyBelongedTo;
-  public List<Hero> Children=new(); public CharacterObject CharacterObject=new();
+  public List<Hero> Children=new(); public CharacterObject CharacterObject=new(); public CultureObject Culture=new();
   public CampaignTime BirthDay=new(){Years=-25}; public float Age=>-BirthDay.Years;
   public object HomeSettlement=>Clan?.Home;
   public void SetBirthDay(CampaignTime t)=>BirthDay=t;
  }
  public class AgeModel { public int HeroComesOfAge=18; }
  public class PregnancyModel { public float DeliveringFemaleOffspringProbability=.5f; }
- public class CreationModel { public bool Missing; public CharacterObject GetCharacterTemplateForOffspring(Hero m,Hero f,bool female)=>Missing?null:new(){Race=m.CharacterObject.Race}; }
- public class EquipmentModel { public bool Missing; public object GetEquipmentForHeroComeOfAge(Hero h,TaleWorlds.Core.Equipment.EquipmentType type)=>Missing?null:new(); }
- public class Models { public AgeModel AgeModel=new(); public PregnancyModel PregnancyModel=new(); public CreationModel HeroCreationModel=new(); public EquipmentModel EquipmentSelectionModel=new(); }
+ public class EquipmentModel { public bool Missing; public List<object> GetEquipmentRostersForHeroComeOfAge(Hero h,bool isCivilian)=>Missing?null:new(){new object()}; }
+ public class Models { public AgeModel AgeModel=new(); public PregnancyModel PregnancyModel=new(); public EquipmentModel EquipmentSelectionModel=new(); }
  public class Campaign {
   public static Campaign Current=new(); public Models Models=new(); public List<object> Behaviors=new();
   public T GetCampaignBehavior<T>() where T:class=>Behaviors.OfType<T>().FirstOrDefault();

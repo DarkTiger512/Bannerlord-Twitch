@@ -48,7 +48,6 @@
   <Import Project="$(SolutionDir)BLTProperties.targets" />
 	<ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
 		<PackageReference Include="Bannerlord.ReferenceAssemblies" />
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.NavalDLC" ExcludeAssets="all" />
 	</ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

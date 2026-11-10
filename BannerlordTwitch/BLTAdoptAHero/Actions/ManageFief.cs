@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
@@ -110,7 +110,7 @@ namespace BLTAdoptAHero.Actions
             foreach (var build in buildings)
             {
                 bool isActive = active.Contains(build);
-                bool isdaily = build.BuildingType.IsDailyProject;
+                bool isdaily = build.BuildingType.IsDefaultProject;
 
                 if (isdaily)
                 {
@@ -158,7 +158,7 @@ namespace BLTAdoptAHero.Actions
             }
             var builds = town.Buildings;
             var queue = town.BuildingsInProgress;
-            var oldDaily = queue.FirstOrDefault(b => b.BuildingType.IsDailyProject);
+            var oldDaily = town.CurrentDefaultBuilding;
 
             List<Building> projects = new();
             Building newDaily = null;
@@ -176,7 +176,7 @@ namespace BLTAdoptAHero.Actions
                     match = GetBestMatch(twoArg, town);
                     if (match != null)
                     {
-                        if (match.BuildingType.IsDailyProject && !hasDaily)
+                        if (match.BuildingType.IsDefaultProject && !hasDaily)
                         {
                             hasDaily = true;
                             newDaily = match;
@@ -193,7 +193,7 @@ namespace BLTAdoptAHero.Actions
                 match = GetBestMatch(args[i], town);
                 if (match != null)
                 {
-                    if (match.BuildingType.IsDailyProject && !hasDaily)
+                    if (match.BuildingType.IsDefaultProject && !hasDaily)
                     {
                         hasDaily = true;
                         newDaily = match;

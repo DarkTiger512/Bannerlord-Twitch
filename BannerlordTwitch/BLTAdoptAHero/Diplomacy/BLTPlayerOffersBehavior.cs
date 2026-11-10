@@ -1,4 +1,4 @@
-﻿using BannerlordTwitch.Localization;
+using BannerlordTwitch.Localization;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero;
 using System.Collections.Generic;
@@ -203,7 +203,7 @@ namespace BLTAdoptAHero
             AdoptedHeroFlags._allowDiplomacyAction = true;
             try
             {
-                MakePeaceAction.ApplyByKingdomDecision(player, proposer, current.DailyTribute, current.Duration);
+                MakePeaceAction.ApplyByKingdomDecision(player, proposer, current.DailyTribute);
                 FactionManager.SetNeutral(player, proposer);
 
                 if (current.DailyTribute > 0 && payer is Kingdom pk && receiver is Kingdom rk)
@@ -421,23 +421,7 @@ namespace BLTAdoptAHero
 
         private void AcceptPlayerTrade(Kingdom proposer, Kingdom playerKingdom)
         {
-            if (BLTTreatyManager.Current == null) return;
-
-            var proposal = BLTTreatyManager.Current.GetTradeProposal(proposer, playerKingdom);
-            if (proposal == null || playerKingdom.IsAtWarWith(proposer))
-            {
-                InformationManager.DisplayMessage(new InformationMessage("Trade proposal is no longer valid", Colors.Red));
-                return;
-            }
-
-            var tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
-            var duration = Campaign.Current.Models.TradeAgreementModel.GetTradeAgreementDurationInYears(playerKingdom, proposer);
-            tradeBehavior.MakeTradeAgreement(playerKingdom, proposer, duration);
-
-            BLTTreatyManager.Current.RemoveTradeProposal(proposer, playerKingdom);
-
-            InformationManager.DisplayMessage(new InformationMessage($"Trade agreement established with {proposer.Name}!", Colors.Green));
-            Log.ShowInformation($"{playerKingdom.Name} and {proposer.Name} have formed a trade agreement!", Hero.MainHero.CharacterObject);
+            Log.Info("Native trade agreements are unavailable on Bannerlord 1.2.12.");
         }
 
         private void DeclinePlayerTrade(Kingdom proposer, Kingdom playerKingdom)

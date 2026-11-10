@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -120,7 +120,7 @@ namespace BannerlordTwitch.Helpers
         #region Weapon Effects
         private static List<GameEntityComponent> CreateWeaponEffects(Agent agent, string pfxSystem)
         {
-            var index = agent.GetPrimaryWieldedItemIndex();
+            var index = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
             if (index == EquipmentIndex.None)
                 return default;
 

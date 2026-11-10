@@ -12,20 +12,18 @@ class Program
     }
     static void Run()
     {
-        foreach (bool dlc in new[] { false, true })
         foreach (bool playerSide in new[] { false, true })
-        foreach (string place in new[] { "battle", "location", "naval" })
+        foreach (string place in new[] { "battle", "location" })
         {
-            CampaignHelpers.Enabled = dlc;
-            Mission.Current = new() { IsNavalBattle = place == "naval" };
+            Mission.Current = new();
             CampaignMission.Current = new() { Location = place == "location" ? new object() : null };
             var settings = new Settings { OnPlayerSide = playerSide };
             var replies = new List<string>();
             new SummonHero().ExecuteInternal(new(), new(), settings, replies.Add, error => throw new Exception(error));
             Check(replies.Count == (place == "location" ? 1 : 0), "Battle spawning must wait for the mission tick");
             BLTSummonBehavior.Current.Tick();
-            string expected = dlc && place == "naval" ? "naval" : place == "location" ? "location" : "battle";
-            Check(replies.SequenceEqual(new[] { expected }), $"Missing/wrong summon dispatch: DLC={dlc}, playerSide={playerSide}, mission={place}");
+            string expected = place == "location" ? "location" : "battle";
+            Check(replies.SequenceEqual(new[] { expected }), $"Missing/wrong summon dispatch: playerSide={playerSide}, mission={place}");
         }
         Mission.Current = null;
         int failures = 0;
@@ -37,7 +35,7 @@ class Program
         new SummonHero().ExecuteInternal(new(), new(), new Settings(), fallback.Add, _ => throw new Exception("Null campaign mission failed"));
         BLTSummonBehavior.Current.Tick();
         Check(fallback.SequenceEqual(new[] { "battle" }), "A battle without a campaign location must dispatch");
-        Console.WriteLine("PASS actual summon dispatch: DLC on/off, summon/attack sides, land/location/naval routing, mission-tick deferral, one terminal callback, no-mission rejection, null campaign location.");
+        Console.WriteLine("PASS actual summon dispatch: summon/attack sides, land/location routing, mission-tick deferral, one terminal callback, no-mission rejection, null campaign location.");
     }
 }
 class SummonHero

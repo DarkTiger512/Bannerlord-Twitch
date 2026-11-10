@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using BannerlordTwitch.Util;
 using TaleWorlds.Core;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
@@ -76,7 +76,7 @@ namespace BannerlordTwitch.Helpers
             { DrivenProperty.AIRealizeBlockingFromIncorrectSideAbility, "AIRealizeBlockingFromIncorrectSideAbility" },
             { DrivenProperty.AiAttackingShieldDefenseChance, "AiAttackingShieldDefenseChance" },
             { DrivenProperty.AiAttackingShieldDefenseTimer, "AiAttackingShieldDefenseTimer" },
-            { DrivenProperty.AiCheckApplyMovementInterval, "AiCheckApplyMovementInterval" }, 
+            { DrivenProperty.AiCheckMovementIntervalFactor, "AiCheckApplyMovementIntervalFactor" },
             // { DrivenProperty.AiMovemetDelayFactor, "AiMovemetDelayFactor" }, 
             { DrivenProperty.AiParryDecisionChangeValue, "AiParryDecisionChangeValue" },
             { DrivenProperty.AiDefendWithShieldDecisionChanceValue, "AiDefendWithShieldDecisionChanceValue" },

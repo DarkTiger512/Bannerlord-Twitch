@@ -124,11 +124,9 @@ namespace BLTAdoptAHero.Behaviors
                 var culture = Hero.MainHero.Culture;
                 clan = Clan.CreateClan($"blt_immortal_clan_{suffix}");
                 string clanName = SafeName(cfg.ImmortalEncounterCultName, "Cult of the Eternal");
-                clan.ChangeClanName(new TextObject(clanName), new TextObject(clanName));
-                clan.Culture = culture;
-                clan.Banner = Banner.CreateRandomBanner();
+                clan.InitializeClan(new TextObject(clanName), new TextObject(clanName), culture, Banner.CreateRandomBanner());
                 clan.Kingdom = null;
-                clan.SetInitialHomeSettlement(Settlement.All.FirstOrDefault(s => s.Culture == culture) ?? Settlement.All.FirstOrDefault());
+                clan.UpdateHomeSettlement(Settlement.All.FirstOrDefault(s => s.Culture == culture) ?? Settlement.All.FirstOrDefault());
                 clan.IsNoble = true;
                 var template = CampaignHelpers.GetWandererTemplates(culture).FirstOrDefault(t => !t.IsFemale)
                     ?? CampaignHelpers.GetWandererTemplates(culture).FirstOrDefault()
@@ -139,13 +137,13 @@ namespace BLTAdoptAHero.Behaviors
                 hero.Clan = clan;
                 clan.SetLeader(hero);
                 hero.CompanionOf = null;
-                CampaignEventDispatcher.Instance.OnClanCreated(clan, false);
+                CampaignEventDispatcher.Instance.OnCompanionClanCreated(clan);
                 var spawn = Settlement.All.OrderBy(s => s.GetPosition2D.Distance(MobileParty.MainParty.GetPosition2D)).FirstOrDefault();
                 if (spawn == null) throw new InvalidOperationException("no settlement spawn position was available");
                 party = MobilePartyHelper.SpawnLordParty(hero, spawn.GatePosition, 1f);
                 if (party == null) throw new InvalidOperationException("Bannerlord could not create the cult party");
-                party.InitializeMobilePartyAtPosition(MobileParty.MainParty.Position);
-                int size = RandomEventPolicy.CalculateArmySize(MobileParty.MainParty.Party.EstimatedStrength,
+                party.Position2D = MobileParty.MainParty.Position2D;
+                int size = RandomEventPolicy.CalculateArmySize(MobileParty.MainParty.Party.TotalStrength,
                     cfg.ImmortalEncounterArmyStrengthPercent, 50, 500);
                 AddTroops(party, culture, size, 4, 6);
                 if (party.MemberRoster.TotalManCount == 0) throw new InvalidOperationException("no valid cult troops were available");

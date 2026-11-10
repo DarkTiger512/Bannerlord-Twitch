@@ -21,7 +21,7 @@ namespace BLTAdoptAHero.Util
         internal readonly List<CultureObject> Cultures;
         internal static readonly EquipmentType[] WeaponTypes = Enum.GetValues(typeof(EquipmentType)).Cast<EquipmentType>()
             .Where(t => t != EquipmentType.None && t != EquipmentType.Num && t != EquipmentType.Shield
-                && t != EquipmentType.Arrows && t != EquipmentType.Bolts && t != EquipmentType.SlingStones && t != EquipmentType.Stone).ToArray();
+                && t != EquipmentType.Arrows && t != EquipmentType.Bolts && t != EquipmentType.Sling && t != EquipmentType.SlingStones && t != EquipmentType.Stone).ToArray();
 
         private ForgeAssets()
         {

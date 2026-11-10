@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
@@ -41,7 +41,7 @@ namespace BLTAdoptAHero.Actions
          CategoryOrder("Party Orders", 3)]
         private class Settings : IDocumentable
         {
-            // ── Army ────────────────────────────────────────────────────────────
+            // â”€â”€ Army â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             [LocDisplayName("{=ArmyEnabled}Army"),
              LocCategory("Army", "{=ArmyCat}Army"),
              LocDescription("{=ArmyEnabledDesc}Enable the !party army command"),
@@ -77,7 +77,7 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(5), UsedImplicitly]
             public float ArmyOrderExpiryDays { get; set; } = 0f;
 
-            // ── King army management ─────────────────────────────────────────
+            // â”€â”€ King army management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             [LocDisplayName("King Army Management"),
              LocCategory("Army", "{=ArmyCat}Army"),
              LocDescription("Allow kings to view, create (NPC-led), and disband any kingdom army by index."),
@@ -162,7 +162,7 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(19), UsedImplicitly]
             public bool AutoCallPartiesOnCreate { get; set; } = true;
 
-            // ── Threat ───────────────────────────────────────────────────────
+            // â”€â”€ Threat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             [LocDisplayName("{=ThreatEnabled}Threat Scan"),
              LocCategory("Threat", "{=ThreatCat}Threat"),
              LocDescription("{=ThreatEnabledDesc}Enable !party army threat scan subcommand"),
@@ -181,7 +181,7 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(3), UsedImplicitly]
             public float ThreatScanRadius { get; set; } = 15f;
 
-            // ── Training ─────────────────────────────────────────────────────
+            // â”€â”€ Training â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             [LocDisplayName("Train Enabled"),
              LocCategory("Training", "Training"),
              LocDescription("Enable the !party train command."),
@@ -199,7 +199,7 @@ namespace BLTAdoptAHero.Actions
              PropertyOrder(2), UsedImplicitly]
             public int TrainMaxTier { get; set; } = 0;
 
-            // ── Party Orders ─────────────────────────────────────────────────
+            // â”€â”€ Party Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             [LocDisplayName("Clan Orders Enabled"),
              LocCategory("Party Orders", "Party Orders"),
              LocDescription("Enable !party [siege/defend/patrol/raid/garrison] commands for individual or all clan parties."),
@@ -221,39 +221,39 @@ namespace BLTAdoptAHero.Actions
             public void GenerateDocumentation(IDocumentationGenerator generator)
             {
                 generator.Value("<strong>Commands:</strong>");
-                generator.Value("!party — current party/army status");
-                generator.Value("!party create — spawn a new party");
-                generator.Value("!party govern [fief] — become governor of a clan fief");
-                generator.Value("!party stats — detailed party stats");
-                generator.Value("!party disband [index|all] — disband own party/parties");
-                generator.Value("!party train <gold> / status / cancel — invest gold in troop training");
-                generator.Value("!party release [all] — release BLT order on own party (or all free clan parties) and restore AI");
+                generator.Value("!party â€” current party/army status");
+                generator.Value("!party create â€” spawn a new party");
+                generator.Value("!party govern [fief] â€” become governor of a clan fief");
+                generator.Value("!party stats â€” detailed party stats");
+                generator.Value("!party disband [index|all] â€” disband own party/parties");
+                generator.Value("!party train <gold> / status / cancel â€” invest gold in troop training");
+                generator.Value("!party release [all] â€” release BLT order on own party (or all free clan parties) and restore AI");
                 generator.Value("");
                 generator.Value("<strong>Clan party orders (append 'all' for every free clan party):</strong>");
-                generator.Value("  !party defend <settlement> [all]  — force-engage besiegers of a fortification; patrols if no siege");
-                generator.Value("  !party raid <village|fort> [all]  — raid a village (fort = raid bound villages)");
-                generator.Value("  !party garrison <fort> [all]      — enter and stay in a friendly fortification");
-                generator.Value("  !party guard/patrol <settlement> [all]   — smart-guard a friendly fortification");
+                generator.Value("  !party defend <settlement> [all]  â€” force-engage besiegers of a fortification; patrols if no siege");
+                generator.Value("  !party raid <village|fort> [all]  â€” raid a village (fort = raid bound villages)");
+                generator.Value("  !party garrison <fort> [all]      â€” enter and stay in a friendly fortification");
+                generator.Value("  !party guard/patrol <settlement> [all]   â€” smart-guard a friendly fortification");
                 generator.Value("  Smart-guard logic (guard/patrol): (1) defend if under siege by enemy, (2) protect raided village, (3) patrol");
                 generator.Value("  Raid 'all' distributes parties to different villages; any extra parties will patrol the fortification");
                 generator.Value("");
                 generator.Value("<strong>Army subcommands:</strong> !party army [subcommand]");
-                generator.Value("  siege [settlement] — besiege a named enemy settlement (or auto-pick)");
-                generator.Value("  guard/patrol [settlement] — smart-guard a named friendly settlement (or auto-pick)");
-                generator.Value("  defend [settlement] — force-engage besiegers of a friendly settlement; patrols if no siege");
-                generator.Value("  garrison [settlement] — garrison whole army at a friendly fortification");
-                generator.Value("  release — release the active army order and restore normal AI");
-                generator.Value("  status — army strength, behavior, cohesion, food, active order info");
-                generator.Value("  disband [index] — disband your army; king: disband any by index");
-                generator.Value("  leave — leave someone else's army");
-                generator.Value("  reassign [hero] — transfer army leadership to a hero in your army");
-                generator.Value("  kick [n] — kick the n weakest parties from army (army leader or king w/ index)");
-                generator.Value("  view — (king) list all kingdom armies with index numbers");
-                generator.Value("  create [hero_name] — (king) commission an NPC-led army");
-                generator.Value("  takeover [hero|index] — (clan leader) seize command of a clan member's army");
-                generator.Value("  call nearby [army_index] — call free parties near the army to join");
-                generator.Value("  call all [army_index] — call all free kingdom parties to join the army");
-                generator.Value("  join <index> — join a kingdom army by index, bringing all free clan parties");
+                generator.Value("  siege [settlement] â€” besiege a named enemy settlement (or auto-pick)");
+                generator.Value("  guard/patrol [settlement] â€” smart-guard a named friendly settlement (or auto-pick)");
+                generator.Value("  defend [settlement] â€” force-engage besiegers of a friendly settlement; patrols if no siege");
+                generator.Value("  garrison [settlement] â€” garrison whole army at a friendly fortification");
+                generator.Value("  release â€” release the active army order and restore normal AI");
+                generator.Value("  status â€” army strength, behavior, cohesion, food, active order info");
+                generator.Value("  disband [index] â€” disband your army; king: disband any by index");
+                generator.Value("  leave â€” leave someone else's army");
+                generator.Value("  reassign [hero] â€” transfer army leadership to a hero in your army");
+                generator.Value("  kick [n] â€” kick the n weakest parties from army (army leader or king w/ index)");
+                generator.Value("  view â€” (king) list all kingdom armies with index numbers");
+                generator.Value("  create [hero_name] â€” (king) commission an NPC-led army");
+                generator.Value("  takeover [hero|index] â€” (clan leader) seize command of a clan member's army");
+                generator.Value("  call nearby [army_index] â€” call free parties near the army to join");
+                generator.Value("  call all [army_index] â€” call all free kingdom parties to join the army");
+                generator.Value("  join <index> â€” join a kingdom army by index, bringing all free clan parties");
                 generator.Value("  Allied siege joining: parties allied via the diplomacy treaty system may jointly besiege a mutual enemy.");
 
                 if (ArmyEnabled)
@@ -290,7 +290,7 @@ namespace BLTAdoptAHero.Actions
 
         /// <summary>
         /// If the last whitespace-delimited token of <paramref name="arg"/> is a positive
-        /// integer ≤ 200, returns it as a party count and removes it from the string.
+        /// integer â‰¤ 200, returns it as a party count and removes it from the string.
         /// Otherwise returns the original string and null.
         /// </summary>
         private static (string cleanedArg, int? count) ParseTrailingCount(string arg)
@@ -315,7 +315,7 @@ namespace BLTAdoptAHero.Actions
             if (leaderParty?.MapFaction is not Kingdom kingdom) yield break;
 
             var ldrPos = leaderParty.GetPosition2D;
-            // Tune this — vanilla's internal logic effectively favors nearby parties;
+            // Tune this â€” vanilla's internal logic effectively favors nearby parties;
             // this radius controls how far out we'll look for "extra" parties to add.
             const float maxCallRadius = 100f;
 
@@ -334,9 +334,9 @@ namespace BLTAdoptAHero.Actions
                 yield return p;
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  EXECUTE
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected override void ExecuteInternal(Hero adoptedHero, ReplyContext context, object config,
             Action<string> onSuccess, Action<string> onFailure)
@@ -359,8 +359,8 @@ namespace BLTAdoptAHero.Actions
             }
             Army army = party?.Army;
 
-            string behaviorText = party?.GetBehaviorText()?.ToString() ?? "";
-            string armyBehavior = army?.LeaderParty?.GetBehaviorText()?.ToString() ?? "";
+            string behaviorText = party?.DefaultBehavior.ToString() ?? "";
+            string armyBehavior = army?.LeaderParty?.DefaultBehavior.ToString() ?? "";
 
             if (string.IsNullOrEmpty(mode))
             {
@@ -378,9 +378,9 @@ namespace BLTAdoptAHero.Actions
                 case "disband": HandlePartyDisband(adoptedHero, party, desiredName, onSuccess, onFailure); break;
                 case "train": HandleTrain(settings, adoptedHero, party, desiredName, onSuccess, onFailure); break;
                 case "army": HandleArmy(settings, adoptedHero, party, army, desiredName, onSuccess, onFailure); break;
-                // ── Release orders on own party ────────────────────────────────
+                // â”€â”€ Release orders on own party â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 case "release": HandlePartyRelease(adoptedHero, party, desiredName, onSuccess, onFailure); break;
-                // ── Clan party order commands ──────────────────────────────────
+                // â”€â”€ Clan party order commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 case "siege":
                 case "defend":
                 case "guard":
@@ -392,9 +392,9 @@ namespace BLTAdoptAHero.Actions
             }
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  STATUS STRING  (unchanged)
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void BuildStatusString(Hero adoptedHero, MobileParty party, Army army,
             string behaviorText, string armyBehavior, StringBuilder sb)
@@ -423,14 +423,13 @@ namespace BLTAdoptAHero.Actions
                 sb.Append($"Governor: {adoptedHero.GovernorOf.Name}");
             else if (party != null && party.LeaderHero == adoptedHero)
             {
-                sb.Append($"Party(Strength: {(int)party.Party.EstimatedStrength} - ");
+                sb.Append($"Party(Strength: {(int)party.Party.TotalStrength} - ");
                 string sizeStr = $"{party.MemberRoster.TotalHealthyCount}({party.MemberRoster.TotalWounded})/{party.Party.PartySizeLimit}";
                 if (party.PrisonRoster.Count > 0)
                     sb.Append($"Size: {sizeStr} - Prisoners: {party.PrisonRoster.Count}) | ");
                 else
                     sb.Append($"Size: {sizeStr}) | ");
 
-                if (party.IsCurrentlyAtSea) sb.Append("Sailing | ");
                 if (!string.IsNullOrWhiteSpace(behaviorText) && behaviorText != armyBehavior)
                     sb.Append($"Your party is: {behaviorText} | ");
                 if (party.IsDisbanding) sb.Append("Disbanding");
@@ -454,9 +453,9 @@ namespace BLTAdoptAHero.Actions
                 if (army != null)
                 {
                     sb.Append("{=CVzSgXhT}Army: {army}".Translate(("army", army.Name?.ToString() ?? army.LeaderParty?.Name?.ToString() ?? "Unknown army")));
-                    sb.Append("{=d76wc5iS}[Strength: {strength} | ".Translate(("strength", Math.Round(army.EstimatedStrength).ToString())));
+                    sb.Append("{=d76wc5iS}[Strength: {strength} | ".Translate(("strength", Math.Round(army.TotalStrength).ToString())));
                     sb.Append("{=D3dcUxuj}Size: {size} | ".Translate(("size", army.TotalHealthyMembers.ToString())));
-                    sb.Append("{=7p5j5Mlx}Party nº: {count}] ".Translate(("count", army.LeaderPartyAndAttachedPartiesCount.ToString())));
+                    sb.Append("{=7p5j5Mlx}Party nÂº: {count}] ".Translate(("count", army.LeaderPartyAndAttachedPartiesCount.ToString())));
                     if (!string.IsNullOrWhiteSpace(armyBehavior)) sb.Append($"Your army is: {armyBehavior} | ");
                 }
 
@@ -486,9 +485,9 @@ namespace BLTAdoptAHero.Actions
                 sb.Append("Unknown");
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  GOVERN / CREATE / STATS / DISBAND / TRAIN  (unchanged from original)
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void HandleGovern(Hero h, MobileParty party, Army army, string desiredName,
             Action<string> onSuccess, Action<string> onFailure)
@@ -512,7 +511,7 @@ namespace BLTAdoptAHero.Actions
             {
                 bool wasLeader = party.LeaderHero == h;
                 party.MemberRoster.RemoveTroop(h.CharacterObject, 1, default(UniqueTroopDescriptor), 0);
-                MakeHeroFugitiveAction.Apply(h, false);
+                MakeHeroFugitiveAction.Apply(h);
                 if (wasLeader && party.IsLordParty) DisbandPartyAction.StartDisband(party);
             }
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOf(h);
@@ -529,15 +528,14 @@ namespace BLTAdoptAHero.Actions
             if (h.HeroState == Hero.CharacterStates.Fugitive) { onFailure("Your hero is fugitive"); return; }
             if (party != null) { onFailure("You already have a party"); return; }
             if (h.IsPrisoner) { onFailure("You are prisoner"); return; }
-            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.WarPartyLimit)
-            { onFailure($"Clan party limit: {h.Clan.WarPartyLimit}"); return; }
+            if (!h.IsClanLeader && h.Clan.WarPartyComponents.Count >= h.Clan.CommanderLimit)
+            { onFailure($"Clan party limit: {h.Clan.CommanderLimit}"); return; }
 
             if (h.GovernorOf != null) ChangeGovernorAction.RemoveGovernorOfIfExists(h.GovernorOf);
 
             var spawn = SettlementHelper.GetBestSettlementToSpawnAround(h)
                         ?? h.CurrentSettlement ?? h.HomeSettlement;
-            var newParty = MobilePartyHelper.SpawnLordParty(h, spawn.GatePosition,
-                Campaign.Current.GetAverageDistanceBetweenClosestTwoTownsWithNavigationType(MobileParty.NavigationType.Default) / 2f);
+            var newParty = MobilePartyHelper.SpawnLordParty(h, spawn);
 
             if (newParty == null) { onFailure("Failed to create a party. Wait some time and try again."); return; }
 
@@ -549,10 +547,10 @@ namespace BLTAdoptAHero.Actions
             foreach (var t in BLTAdoptAHeroCampaignBehavior.Current.GetRetinue2(h).ToList())
                 if (t != null) newParty.MemberRoster.AddToCounts(t, 1);
 
-            float range = 2f * Campaign.Current.EstimatedAverageLordPartySpeed * (float)CampaignTime.HoursInDay;
+            float range = 6f * (float)CampaignTime.HoursInDay;
             foreach (var s in Campaign.Current.Settlements.Where(s => s.IsVillage))
             {
-                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, s, false, newParty.NavigationCapability, out _);
+                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(newParty, s);
                 if (dist >= range) continue;
                 foreach (var (item, prod) in s.Village.VillageType.Productions)
                 {
@@ -563,7 +561,7 @@ namespace BLTAdoptAHero.Actions
                     if (n > 0) newParty.ItemRoster.AddToCounts(item, n);
                 }
             }
-            newParty.InitializeMobilePartyAtPosition(spawn.GatePosition);
+            newParty.InitializeMobilePartyAtPosition(newParty.MemberRoster, newParty.PrisonRoster, newParty.Position2D);
             onSuccess("Party created!");
         }
 
@@ -574,8 +572,7 @@ namespace BLTAdoptAHero.Actions
             var comp = PartyBaseHelper.PrintRegularTroopCategories(party.MemberRoster) ?? new TextObject("Unknown");
             var roster = party.MemberRoster.GetTroopRoster();
             double tier = roster.Sum(r => r.Character.Tier * r.Number) / (double)Math.Max(1, roster.Sum(r => r.Number));
-            var nav = party.IsCurrentlyAtSea ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.Default;
-            var near = SettlementHelper.FindNearestFortificationToMobileParty(party, nav);
+            //var near = SettlementHelper.FindNearestFortificationToMobileParty(party, nav);
 
             var sb = new StringBuilder();
             sb.Append($"Troops: {comp}(avg Tier {Math.Round(tier, 1)}) | ");
@@ -584,7 +581,7 @@ namespace BLTAdoptAHero.Actions
             sb.Append($"Morale: {(int)party.Morale} | ");
             sb.Append($"Sight: {Math.Round(party.SeeingRange, 1)} | ");
             sb.Append($"Wage: {party.TotalWage}");
-            if (near != null) sb.Append($" | Near: {near.Name}");
+            //if (near != null) sb.Append($" | Near: {near.Name}");
             onSuccess(sb.ToString());
         }
 
@@ -698,9 +695,9 @@ namespace BLTAdoptAHero.Actions
             onSuccess($"Invested {gold}{Naming.Gold} in training | Total fund: {entry2.Fund}{Naming.Gold} | {daily2}{Naming.Gold}/day{tierStr2}");
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  RELEASE  (!party release [all])
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Cancels the active BLT order on the hero's own party (or all free clan parties
@@ -740,12 +737,12 @@ namespace BLTAdoptAHero.Actions
             PartyOrderBehavior.Current.CancelOrdersForParty(party.StringId, null, false);
             try { party.Ai.SetDoNotMakeNewDecisions(false); }
             catch (Exception ex) { Log.Error($"[BLT] HandlePartyRelease: AI unlock failed for {party.Name}: {ex}"); }
-            onSuccess($"{party.Name} order released — AI restored");
+            onSuccess($"{party.Name} order released â€” AI restored");
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  CLAN PARTY ORDERS  (siege / defend / patrol / raid / garrison)
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Handles !party [siege|defend|patrol|raid|garrison] &lt;target&gt; [all]
@@ -765,7 +762,7 @@ namespace BLTAdoptAHero.Actions
             if (subCmd == "garrison" && !settings.GarrisonEnabled) { onFailure("Garrison is disabled"); return; }
             if (subCmd == "raid" && !settings.RaidEnabled) { onFailure("Raid is disabled"); return; }
 
-            // ── Parse "all" suffix ───────────────────────────────────────────
+            // â”€â”€ Parse "all" suffix â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             bool allParties = false;
             string settlementArg = args?.Trim() ?? "";
 
@@ -780,7 +777,7 @@ namespace BLTAdoptAHero.Actions
                 settlementArg = "";
             }
 
-            // ── Determine order type ─────────────────────────────────────────
+            // â”€â”€ Determine order type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var orderType = subCmd switch
             {
                 "siege" => PartyOrderType.Siege,
@@ -792,7 +789,7 @@ namespace BLTAdoptAHero.Actions
                 _ => PartyOrderType.SmartGuard
             };
 
-            // ── Collect target parties ───────────────────────────────────────
+            // â”€â”€ Collect target parties â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             List<MobileParty> targetParties;
             if (allParties)
             {
@@ -813,13 +810,13 @@ namespace BLTAdoptAHero.Actions
                 if (party.LeaderHero != h) { onFailure("You must be leading your party"); return; }
                 if (party.MapEvent != null) { onFailure("Your party is in combat"); return; }
                 if (party.Army != null)
-                { onFailure("You are in army — use !party army commands instead"); return; }
+                { onFailure("You are in army â€” use !party army commands instead"); return; }
                 targetParties = new List<MobileParty> { party };
             }
 
             var refParty = targetParties[0];
 
-            // ── Resolve primary target settlement ────────────────────────────
+            // â”€â”€ Resolve primary target settlement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Settlement primaryTarget = null;
             if (!string.IsNullOrWhiteSpace(settlementArg))
             {
@@ -834,7 +831,7 @@ namespace BLTAdoptAHero.Actions
                             .Where(s => s?.IsVillage == true)
                             .OrderBy(s => s.Name.ToString().Length)
                             .FirstOrDefault(s => s.Name.ToString().IndexOf(settlementArg, StringComparison.OrdinalIgnoreCase) >= 0);
-                    // If still null, check all settlements (fortification case → expand to villages later)
+                    // If still null, check all settlements (fortification case â†’ expand to villages later)
                     if (primaryTarget == null)
                         primaryTarget = FindSettlementByNameLoose(settlementArg);
                 }
@@ -844,7 +841,7 @@ namespace BLTAdoptAHero.Actions
                 }
                 else
                 {
-                    // defend / patrol / garrison — accept any settlement
+                    // defend / patrol / garrison â€” accept any settlement
                     primaryTarget = FindSettlementByNameLoose(settlementArg);
                 }
 
@@ -884,7 +881,7 @@ namespace BLTAdoptAHero.Actions
                 }
             }
 
-            // ── Siege: war & reachability validation ─────────────────────────
+            // â”€â”€ Siege: war & reachability validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Siege)
             {
                 //if (h.Clan.Kingdom == null) { onFailure("You must be in a kingdom to besiege"); return; }
@@ -892,11 +889,11 @@ namespace BLTAdoptAHero.Actions
                 { onFailure($"{primaryTarget.Name} is not a fortification"); return; }
                 if (primaryTarget != null && !h.Clan.MapFaction.IsAtWarWith(primaryTarget.MapFaction))
                 { onFailure($"Not at war with {primaryTarget.Name}'s owners"); return; }
-                if (h.Clan.MapFaction.FactionsAtWarWith.Count == 0)
+                if (!FactionManager.GetEnemyFactions(h.Clan.MapFaction).Any())
                 { onFailure("No active wars"); return; }
             }
 
-            // ── Garrison: must be friendly fortification ──────────────────────
+            // â”€â”€ Garrison: must be friendly fortification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Garrison)
             {
                 if (primaryTarget != null && !primaryTarget.IsFortification)
@@ -905,18 +902,18 @@ namespace BLTAdoptAHero.Actions
                 { onFailure($"Cannot garrison in hostile settlement {primaryTarget.Name}"); return; }
             }
 
-            // ── SmartGuard: target should be a fortification ──────────────────
+            // â”€â”€ SmartGuard: target should be a fortification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.SmartGuard && primaryTarget != null && !primaryTarget.IsFortification)
             {
                 // Non-fortification target: just use regular patrol
                 orderType = PartyOrderType.Patrol;
             }
 
-            // ── Defend: must be a fortification (no fallback — this is a deliberate command) ──
+            // â”€â”€ Defend: must be a fortification (no fallback â€” this is a deliberate command) â”€â”€
             if (orderType == PartyOrderType.Defend && primaryTarget != null && !primaryTarget.IsFortification)
             { onFailure($"{primaryTarget.Name} is not a fortification"); return; }
 
-            // ── Raid on a fortification → expand to bound villages ────────────
+            // â”€â”€ Raid on a fortification â†’ expand to bound villages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Raid && primaryTarget != null && primaryTarget.IsFortification)
             {
                 var villages = primaryTarget.BoundVillages
@@ -946,13 +943,13 @@ namespace BLTAdoptAHero.Actions
                         {
                             usedIds.Add(available.Settlement.StringId);
                             IssueSinglePartyOrder(settings, h, mp, PartyOrderType.Raid, available.Settlement, null, null);
-                            results.Add($"{mp.LeaderHero?.FirstName}→{available.Settlement.Name}");
+                            results.Add($"{mp.LeaderHero?.FirstName}â†’{available.Settlement.Name}");
                         }
                         else
                         {                     
                             // No more villages; patrol / smart-guard the fortification
                             IssueSinglePartyOrder(settings, h, mp, PartyOrderType.SmartGuard, fortRef, null, null);
-                            results.Add($"{mp.LeaderHero?.FirstName}→patrol");
+                            results.Add($"{mp.LeaderHero?.FirstName}â†’patrol");
                         }
                     }
                     onSuccess($"Raid {primaryTarget.Name}: " + string.Join(", ", results));
@@ -960,7 +957,7 @@ namespace BLTAdoptAHero.Actions
                 return;
             }
 
-            // ── Standard issuance ─────────────────────────────────────────────
+            // â”€â”€ Standard issuance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (!allParties)
             {
                 IssueSinglePartyOrder(settings, h, targetParties[0], orderType, primaryTarget, onSuccess, onFailure);
@@ -974,7 +971,7 @@ namespace BLTAdoptAHero.Actions
                     results.Add(mp.LeaderHero?.FirstName?.ToString() ?? mp.Name.ToString());
                 }
                 string tName = primaryTarget?.Name?.ToString() ?? "auto";
-                onSuccess($"{results.Count} parties ordered to {subCmd} → {tName}: {string.Join(", ", results)}");
+                onSuccess($"{results.Count} parties ordered to {subCmd} â†’ {tName}: {string.Join(", ", results)}");
             }
         }
 
@@ -990,7 +987,7 @@ namespace BLTAdoptAHero.Actions
             if (mp == null) return;
             if (mp.MapEvent != null) { onFailure?.Invoke($"{mp.Name} is in combat"); return; }
 
-            // ── Siege validation ──────────────────────────────────────────────
+            // â”€â”€ Siege validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Siege && target != null)
             {
                 if (!mp.MapFaction.IsAtWarWith(target.MapFaction))
@@ -1017,12 +1014,12 @@ namespace BLTAdoptAHero.Actions
                     var fallback = FindBestSettlementToDefend(mp, h.Clan.MapFaction);
                     orderType = PartyOrderType.SmartGuard;
                     target = fallback;
-                    onFailure?.Invoke($"{mp.LeaderHero?.FirstName}: {target?.Name.ToString() ?? "target"} not reachable — patrolling instead");
+                    onFailure?.Invoke($"{mp.LeaderHero?.FirstName}: {target?.Name.ToString() ?? "target"} not reachable â€” patrolling instead");
                     // Allow fall-through to issue the fallback order
                 }
             }
 
-            // ── Raid validation ───────────────────────────────────────────────
+            // â”€â”€ Raid validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Raid && target != null)
             {
                 if (!target.IsVillage)
@@ -1033,7 +1030,7 @@ namespace BLTAdoptAHero.Actions
                 { onFailure?.Invoke($"{target.Name} is already under raid"); return; }
             }
 
-            // ── Garrison validation ───────────────────────────────────────────
+            // â”€â”€ Garrison validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (orderType == PartyOrderType.Garrison && target != null)
             {
                 if (!target.IsFortification)
@@ -1047,12 +1044,12 @@ namespace BLTAdoptAHero.Actions
             PartyOrderBehavior.Current?.RegisterOrder(h, mp, orderType, target,
                 settings.ArmyMaxReissueAttempts, settings.PartyOrderExpiryDays);
 
-            onSuccess?.Invoke($"{mp.LeaderHero?.Name ?? mp.Name} → {orderType} {target?.Name?.ToString() ?? "auto"}");
+            onSuccess?.Invoke($"{mp.LeaderHero?.Name ?? mp.Name} â†’ {orderType} {target?.Name?.ToString() ?? "auto"}");
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        //  ARMY — main dispatcher
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  ARMY â€” main dispatcher
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void HandleArmy(Settings settings, Hero h, MobileParty party, Army army, string desiredName,
             Action<string> onSuccess, Action<string> onFailure)
@@ -1097,7 +1094,7 @@ namespace BLTAdoptAHero.Actions
             }
         }
 
-        // ── STATUS ────────────────────────────────────────────────────────────
+        // â”€â”€ STATUS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyStatus(Hero h, MobileParty party, Army army,
             Action<string> onSuccess, Action<string> onFailure)
@@ -1105,10 +1102,10 @@ namespace BLTAdoptAHero.Actions
             if (army == null) { onFailure("You have no army"); return; }
 
             var sb = new StringBuilder();
-            sb.Append($"Army: {army.Name} | Str: {(int)army.EstimatedStrength} | ");
+            sb.Append($"Army: {army.Name} | Str: {(int)army.TotalStrength} | ");
             sb.Append($"{army.TotalHealthyMembers} troops / {army.LeaderPartyAndAttachedPartiesCount} parties | ");
             sb.Append($"Cohesion: {(int)army.Cohesion}");
-            sb.Append($" | {party.DefaultBehavior} → {party.TargetSettlement?.Name?.ToString() ?? party.TargetParty?.Name?.ToString() ?? "—"}");
+            sb.Append($" | {party.DefaultBehavior} â†’ {party.TargetSettlement?.Name?.ToString() ?? party.TargetParty?.Name?.ToString() ?? "â€”"}");
             sb.Append($" | Morale: {(int)army.Morale}");
             if (party.FoodChange < 0f && party.Food > 0f)
                 sb.Append($" | Food: ~{(int)(party.Food / Math.Abs(party.FoodChange))}d");
@@ -1118,12 +1115,12 @@ namespace BLTAdoptAHero.Actions
             onSuccess(sb.ToString());
         }
 
-        // ── DISBAND ───────────────────────────────────────────────────────────
+        // â”€â”€ DISBAND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyDisband(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
         {
-            // Independent clan — disband their own clan army (no index needed, only one)
+            // Independent clan â€” disband their own clan army (no index needed, only one)
             if (h.Clan.Kingdom == null)
             {
                 if (army == null || army.LeaderParty != party)
@@ -1172,7 +1169,7 @@ namespace BLTAdoptAHero.Actions
             onSuccess("Army disbanded");
         }
 
-        // ── LEAVE ─────────────────────────────────────────────────────────────
+        // â”€â”€ LEAVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyLeave(Hero h, MobileParty party, Army army,
             Action<string> onSuccess, Action<string> onFailure)
@@ -1191,11 +1188,11 @@ namespace BLTAdoptAHero.Actions
             party.Army = null;
             party.AttachedTo = null;
             onSuccess($"Left {old.Name}");
-            if (old.LeaderPartyAndAttachedPartiesCount <= 1 && !old.IsWaitingForArmyMembers())
+            if (old.LeaderPartyAndAttachedPartiesCount <= 1 && old.AIBehavior != Army.AIBehaviorFlags.Gathering && old.AIBehavior != Army.AIBehaviorFlags.PreGathering)
                 DisbandArmyAction.ApplyByUnknownReason(old);
         }
 
-        // ── REASSIGN ──────────────────────────────────────────────────────────
+        // â”€â”€ REASSIGN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyReassign(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1230,7 +1227,7 @@ namespace BLTAdoptAHero.Actions
             float influenceBefore = h.Clan.Influence;
             var gather = curTarget ?? newLeaderParty.CurrentSettlement ?? h.HomeSettlement;
             AdoptedHeroFlags._allowBLTArmyCreation = true;
-            try { h.Clan.Kingdom.CreateArmy(newLeaderParty.LeaderHero, gather, armyType, remaining); }
+            try { CreateKingdomArmy(h.Clan.Kingdom, newLeaderParty, gather, armyType, remaining); }
             finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
             h.Clan.Influence = influenceBefore;
 
@@ -1246,7 +1243,7 @@ namespace BLTAdoptAHero.Actions
             onSuccess($"Army command transferred to {newLeaderParty.LeaderHero.Name}");
         }
 
-        // ── KICK (remove n weakest parties from army) ─────────────────────────
+        // â”€â”€ KICK (remove n weakest parties from army) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyKick(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1276,7 +1273,7 @@ namespace BLTAdoptAHero.Actions
                     targetArmy = kArmies[armyIdx - 1];
                     countStr = tokens.Length > 2 ? string.Join(" ", tokens.Skip(2)) : "";
                 }
-                // No "army" prefix → act on the king's own army; the whole arg is the count.
+                // No "army" prefix â†’ act on the king's own army; the whole arg is the count.
                 // targetArmy remains null and falls through to the own-army path below.
             }
 
@@ -1302,7 +1299,7 @@ namespace BLTAdoptAHero.Actions
 
             var kickable = targetArmy.Parties
                 .Where(p => p != targetArmy.LeaderParty && p.MapEvent == null)
-                .OrderBy(p => p.Party.EstimatedStrength)
+                .OrderBy(p => p.Party.TotalStrength)
                 .Take(countToKick)
                 .ToList();
 
@@ -1317,13 +1314,26 @@ namespace BLTAdoptAHero.Actions
                 catch (Exception ex) { Log.Error($"[BLT] ArmyKick: AI unlock failed for {pName}: {ex}"); }
                 p.Army = null;
                 p.AttachedTo = null;
-                kicked.Add($"{pName}({(int)p.Party.EstimatedStrength}str)");
+                kicked.Add($"{pName}({(int)p.Party.TotalStrength}str)");
             }
 
             onSuccess($"Kicked {kicked.Count} parties from {targetArmy.Name}: {string.Join(", ", kicked)}");
         }
 
-        // ── GARRISON (army) ───────────────────────────────────────────────────
+        // â”€â”€ GARRISON (army) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+        private static void CreateKingdomArmy(Kingdom kingdom, MobileParty leader, Settlement gather,
+            Army.ArmyTypes type, IEnumerable<MobileParty> members)
+        {
+            kingdom.CreateArmy(leader.LeaderHero, gather, type);
+            var army = leader.Army;
+            if (army == null) return;
+            foreach (var member in members)
+            {
+                if (member != null && member != leader && member.Army == null)
+                    member.Army = army;
+            }
+        }
 
         private void ArmyGarrison(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1356,7 +1366,7 @@ namespace BLTAdoptAHero.Actions
             onSuccess($"Army garrisoning at {target.Name}");
         }
 
-        // ── RELEASE (army) ────────────────────────────────────────────────────
+        // â”€â”€ RELEASE (army) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Cancels the active BLT order on the army leader's party and restores normal
@@ -1375,10 +1385,10 @@ namespace BLTAdoptAHero.Actions
             PartyOrderBehavior.Current.CancelOrdersForParty(party.StringId, null, false);
             try { party.Ai.SetDoNotMakeNewDecisions(false); }
             catch (Exception ex) { Log.Error($"[BLT] ArmyRelease: AI unlock failed for {party.Name}: {ex}"); }
-            onSuccess($"Army {army.Name} order released — AI restored");
+            onSuccess($"Army {army.Name} order released â€” AI restored");
         }
 
-        // ── VIEW ──────────────────────────────────────────────────────────────
+        // â”€â”€ VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyView(Settings settings, Hero h,
             Action<string> onSuccess, Action<string> onFailure)
@@ -1408,12 +1418,12 @@ namespace BLTAdoptAHero.Actions
                     foreach (var a in ownArmies)
                     {
                         var ldr = a.LeaderParty?.LeaderHero;
-                        string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
+                        string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
                         string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
+                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
                         sb.Append($"[own] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, " +
-                                  $"Str:{(int)a.EstimatedStrength}, " +
-                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, {behavior}→{tgt}) | ");
+                                  $"Str:{(int)a.TotalStrength}, " +
+                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, {behavior}â†’{tgt}) | ");
                     }
                 }
 
@@ -1424,14 +1434,14 @@ namespace BLTAdoptAHero.Actions
                     foreach (var (owner, a) in alliedArmies)
                     {
                         var ldr = a.LeaderParty?.LeaderHero;
-                        string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
+                        string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
                         string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
+                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
                         bool inCombat = a.LeaderParty?.MapEvent != null;
                         sb.Append($"[{idx}] {a.Name} ({owner.Name}, Leader:{ldr?.Name.ToString() ?? "?"}, " +
-                                  $"Str:{(int)a.EstimatedStrength}, " +
+                                  $"Str:{(int)a.TotalStrength}, " +
                                   $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
-                                  $"{behavior}→{tgt}{(inCombat ? " [COMBAT]" : "")}) | ");
+                                  $"{behavior}â†’{tgt}{(inCombat ? " [COMBAT]" : "")}) | ");
                         idx++;
                     }
                 }
@@ -1451,19 +1461,19 @@ namespace BLTAdoptAHero.Actions
             {
                 var a = armies[i];
                 var ldr = a.LeaderParty?.LeaderHero;
-                string behavior = a.LeaderParty?.GetBehaviorText()?.ToString() ?? "—";
+                string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
                 string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                  ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "—";
+                                  ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
                 string orderTag = PartyOrderBehavior.Current?.HasActiveOrder(a.LeaderParty?.StringId ?? "") == true
                     ? "[order]" : "";
                 sb2.Append($"[{i + 1}] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, Clan:{a.LeaderParty?.ActualClan?.Name.ToString() ?? "?"}, " +
-                           $"Str:{(int)a.EstimatedStrength}, Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
-                           $"{behavior}→{tgt}{orderTag}) | ");
+                           $"Str:{(int)a.TotalStrength}, Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
+                           $"{behavior}â†’{tgt}{orderTag}) | ");
             }
             onSuccess(sb2.ToString().TrimEnd(' ', '|'));
         }
 
-        // ── CREATE ────────────────────────────────────────────────────────────
+        // â”€â”€ CREATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void ArmyCreate(Settings settings, Hero h, MobileParty party, Army army,
     string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1504,7 +1514,7 @@ namespace BLTAdoptAHero.Actions
                 .Distinct().ToMBList();
 
             var gather = leaderParty.CurrentSettlement
-                ?? SettlementHelper.FindNearestSettlementToMobileParty(leaderParty, leaderParty.NavigationCapability)
+                ?? SettlementHelper.FindNearestFortification(toMapPoint: leaderParty)
                 ?? h.Clan.Kingdom.Settlements.FirstOrDefault(s => s.IsFortification);
             if (gather == null) { onFailure("Could not determine a gather point"); return; }
 
@@ -1528,12 +1538,12 @@ namespace BLTAdoptAHero.Actions
             }
 
             BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.CreateArmyPrice, true);
-            h.Clan.Kingdom.CreateArmy(leaderParty.LeaderHero, gather, Army.ArmyTypes.Patrolling, members);
+            CreateKingdomArmy(h.Clan.Kingdom, leaderParty, gather, Army.ArmyTypes.Patrolling, members);
 
             if (leaderParty.Army == null)
             {
                 BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, settings.CreateArmyPrice, false);
-                onFailure("Army creation failed — refunded");
+                onFailure("Army creation failed â€” refunded");
                 return;
             }
 
@@ -1543,7 +1553,7 @@ namespace BLTAdoptAHero.Actions
                 h.CharacterObject, Log.Sound.Horns2);
         }
 
-        // ── TAKEOVER ──────────────────────────────────────────────────────────
+        // â”€â”€ TAKEOVER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void ArmyTakeover(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1551,7 +1561,7 @@ namespace BLTAdoptAHero.Actions
             if (!settings.TakeoverEnabled) { onFailure("Army takeover is disabled"); return; }
             if (!h.IsPartyLeader || party == null) { onFailure("You must be leading a party to take over an army"); return; }
             if (party.MapEvent != null) { onFailure("Your party is in combat"); return; }
-            if (army != null && army.LeaderParty == party) { onFailure("You are already leading an army — use reassign instead"); return; }
+            if (army != null && army.LeaderParty == party) { onFailure("You are already leading an army â€” use reassign instead"); return; }
             if (h.Clan.Kingdom == null) { onFailure("You are not in a kingdom"); return; }
 
             bool isKing = settings.KingArmyManageEnabled && h.Clan.Kingdom.Leader == h;
@@ -1581,8 +1591,8 @@ namespace BLTAdoptAHero.Actions
                 else
                 {
                     var sb2 = new StringBuilder(isKing
-                        ? "Multiple kingdom armies — specify index or leader name: "
-                        : "Multiple clan armies — specify index or leader name: ");
+                        ? "Multiple kingdom armies â€” specify index or leader name: "
+                        : "Multiple clan armies â€” specify index or leader name: ");
                     // Use kingdom indices so they match 'army view' output.
                     for (int i = 0; i < kArmies.Count; i++)
                     {
@@ -1601,7 +1611,7 @@ namespace BLTAdoptAHero.Actions
                 {
                     var candidate = kArmies[idx - 1];
                     if (candidate.LeaderParty?.LeaderHero == h)
-                    { onFailure("That is your own army — use reassign instead"); return; }
+                    { onFailure("That is your own army â€” use reassign instead"); return; }
                     if (!isKing && candidate.LeaderParty?.ActualClan != h.Clan)
                     { onFailure($"Army [{idx}] is not led by a clan member"); return; }
                     targetArmy = candidate;
@@ -1639,7 +1649,7 @@ namespace BLTAdoptAHero.Actions
             float influenceBefore = h.Clan.Influence;
             var gather = curTarget ?? oldLeader.CurrentSettlement ?? h.HomeSettlement;
             AdoptedHeroFlags._allowBLTArmyCreation = true;
-            try { h.Clan.Kingdom.CreateArmy(h, gather, armyType, remaining); }
+            try { CreateKingdomArmy(h.Clan.Kingdom, party, gather, armyType, remaining); }
             finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
             h.Clan.Influence = influenceBefore;
 
@@ -1653,13 +1663,13 @@ namespace BLTAdoptAHero.Actions
                     settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
             }
 
-            onSuccess($"Took over {oldLeader.LeaderHero?.Name}'s army — {remaining.Count} parties gathering");
+            onSuccess($"Took over {oldLeader.LeaderHero?.Name}'s army â€” {remaining.Count} parties gathering");
             Log.ShowInformation($"{h.Name} seized command of {oldLeader.LeaderHero?.Name}'s army!",
                 h.CharacterObject, Log.Sound.Horns2);
         }
 
 
-        // ── CALL ──────────────────────────────────────────────────────────────
+        // â”€â”€ CALL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void ArmyCall(Settings settings, Hero h, MobileParty party, Army army,
     string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1753,7 +1763,7 @@ namespace BLTAdoptAHero.Actions
                         && p.MemberRoster.TotalHealthyCount > 0)
                     .ToList();
 
-                // NEW — own vassals
+                // NEW â€” own vassals
                 if (VassalBehavior.Current != null)
                     foreach (var vassal in VassalBehavior.Current.GetVassalClans(h.Clan))
                         eligible.AddRange(vassal.WarPartyComponents
@@ -1774,7 +1784,7 @@ namespace BLTAdoptAHero.Actions
                                 && p.IsLordParty && p.LeaderHero != null
                                 && !p.LeaderHero.IsPrisoner && p.MemberRoster.TotalHealthyCount > 0));
 
-                        // NEW — ally's vassals
+                        // NEW â€” ally's vassals
                         if (VassalBehavior.Current != null)
                             foreach (var alliedVassal in VassalBehavior.Current.GetVassalClans(allied))
                                 eligible.AddRange(alliedVassal.WarPartyComponents
@@ -1803,7 +1813,7 @@ namespace BLTAdoptAHero.Actions
             }
             else // "all"
             {
-                // FIX 1b: honour the count argument for the "all" path — was previously
+                // FIX 1b: honour the count argument for the "all" path â€” was previously
                 // parsed but discarded because the Take guard only existed for "nearby".
                 if (callCount.HasValue)
                     eligible = eligible.Take(callCount.Value).ToList();
@@ -1851,7 +1861,7 @@ namespace BLTAdoptAHero.Actions
             Log.ShowInformation($"{h.Name} called {added} parties to {targetArmy.Name}!", h.CharacterObject, Log.Sound.Horns2);
         }
 
-        // ── JOIN ──────────────────────────────────────────────────────────────
+        // â”€â”€ JOIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void ArmyJoin(Settings settings, Hero h, MobileParty party, Army army,
             string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -1859,9 +1869,9 @@ namespace BLTAdoptAHero.Actions
             if (!settings.JoinEnabled) { onFailure("Army join is disabled"); return; }
             if (!h.IsPartyLeader || party == null) { onFailure("You must be leading a party to join an army"); return; }
             if (party.MapEvent != null) { onFailure("Your party is in combat"); return; }
-            if (army != null) { onFailure("You are already in an army — use 'army leave' first"); return; }
+            if (army != null) { onFailure("You are already in an army â€” use 'army leave' first"); return; }
 
-            // ── Independent clan joining a clan army ───────────────────────────────
+            // â”€â”€ Independent clan joining a clan army â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (h.Clan.Kingdom == null)
             {
                 if (string.IsNullOrWhiteSpace(tgtArg))
@@ -1925,12 +1935,12 @@ namespace BLTAdoptAHero.Actions
 
                 if (added == 0) { onFailure("Failed to join the army"); return; }
 
-                onSuccess($"Joined {targetArmy.Name} with {added} parties (no influence cost — clan alliance)");
+                onSuccess($"Joined {targetArmy.Name} with {added} parties (no influence cost â€” clan alliance)");
                 Log.ShowInformation($"{h.Name} joined {targetArmy.Name}!", h.CharacterObject, Log.Sound.Horns2);
                 return;
             }
 
-            // ── Kingdom army join ──────────────────────────────────────────────────
+            // â”€â”€ Kingdom army join â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (string.IsNullOrWhiteSpace(tgtArg))
             { onFailure("Specify an army index. Use 'army view' to list available armies."); return; }
 
@@ -1987,7 +1997,7 @@ namespace BLTAdoptAHero.Actions
             Log.ShowInformation($"{h.Name} joined {targetKArmy.Name} with {addedK} parties!", h.CharacterObject, Log.Sound.Horns2);
         }
 
-        // ── ALLOW AI ARMIES ───────────────────────────────────────────────────
+        // â”€â”€ ALLOW AI ARMIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyAllowAI(Settings settings, Hero h, string arg,
             Action<string> onSuccess, Action<string> onFailure)
@@ -1999,7 +2009,7 @@ namespace BLTAdoptAHero.Actions
             if (string.IsNullOrWhiteSpace(arg))
             {
                 bool allowed = !PartyOrderBehavior.Current.IsAIArmiesBlocked(h.Clan.Kingdom);
-                onSuccess($"{h.Clan.Kingdom.Name} AI armies: {(allowed ? "allowed" : "blocked")} — use 'army allowai on/off' to change");
+                onSuccess($"{h.Clan.Kingdom.Name} AI armies: {(allowed ? "allowed" : "blocked")} â€” use 'army allowai on/off' to change");
                 return;
             }
             if (arg.Equals("on", StringComparison.OrdinalIgnoreCase))
@@ -2009,7 +2019,7 @@ namespace BLTAdoptAHero.Actions
             else onFailure("Usage: army allowai [on|off]");
         }
 
-        // ── ALLOW BLT ARMIES ──────────────────────────────────────────────────
+        // â”€â”€ ALLOW BLT ARMIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyAllowBLT(Settings settings, Hero h, string arg,
             Action<string> onSuccess, Action<string> onFailure)
@@ -2021,7 +2031,7 @@ namespace BLTAdoptAHero.Actions
             if (string.IsNullOrWhiteSpace(arg))
             {
                 bool allowed = !PartyOrderBehavior.Current.IsBLTArmiesBlocked(h.Clan.Kingdom);
-                onSuccess($"{h.Clan.Kingdom.Name} BLT armies: {(allowed ? "allowed" : "blocked")} — use 'army allowblt on/off' to change");
+                onSuccess($"{h.Clan.Kingdom.Name} BLT armies: {(allowed ? "allowed" : "blocked")} â€” use 'army allowblt on/off' to change");
                 return;
             }
             if (arg.Equals("on", StringComparison.OrdinalIgnoreCase))
@@ -2031,7 +2041,7 @@ namespace BLTAdoptAHero.Actions
             else onFailure("Usage: army allowblt [on|off]");
         }
 
-        // ── THREAT ────────────────────────────────────────────────────────────
+        // â”€â”€ THREAT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private static void ArmyThreat(Settings settings, Hero h, MobileParty party,
             Action<string> onSuccess, Action<string> onFailure)
@@ -2040,7 +2050,7 @@ namespace BLTAdoptAHero.Actions
             if (party == null) { onFailure("You have no party"); return; }
 
             float radius = settings.ThreatScanRadius;
-            float ourStr = party.GetTotalLandStrengthWithFollowers();
+            float ourStr = party.Party.TotalStrength + party.AttachedParties.Sum(p => p.Party.TotalStrength);
             var ourPos = party.GetPosition2D;
 
             var threats = new List<(string name, float eStr, float atkScore, float avoidScore, bool flee)>();
@@ -2058,7 +2068,7 @@ namespace BLTAdoptAHero.Actions
                 {
                     if (threats.Any(t => t.name == other.Name.ToString())) continue;
                 }
-                float eStr = other.GetTotalLandStrengthWithFollowers();
+                float eStr = other.Party.TotalStrength + other.AttachedParties.Sum(p => p.Party.TotalStrength);
                 if (eStr <= 0f) continue;
                 float adv = ourStr / eStr;
                 float atk = MBMath.ClampFloat(0.5f * (1f + adv), 0.05f, 3f);
@@ -2072,12 +2082,12 @@ namespace BLTAdoptAHero.Actions
                 .OrderByDescending(t => t.flee ? t.avoidScore : 0f)
                 .ThenByDescending(t => !t.flee ? t.atkScore : 0f)
                 .Take(settings.ThreatMaxResults)
-                .Select(t => $"[{(t.flee ? "⚠ DANGER" : "→ ENGAGE")}] {t.name} (Str:{t.eStr:0} vs {ourStr:0})");
+                .Select(t => $"[{(t.flee ? "âš  DANGER" : "â†’ ENGAGE")}] {t.name} (Str:{t.eStr:0} vs {ourStr:0})");
 
             onSuccess(string.Join(" | ", top));
         }
 
-        // ── ORDER (siege / defend / patrol) ───────────────────────────────────
+        // â”€â”€ ORDER (siege / defend / patrol) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private void ArmyOrder(Settings settings, Hero h, MobileParty party, Army army,
             string subCmd, string tgtArg, Action<string> onSuccess, Action<string> onFailure)
@@ -2123,10 +2133,10 @@ namespace BLTAdoptAHero.Actions
             if (orderType == PartyOrderType.Defend && !target.IsFortification)
             { onFailure($"{target.Name} is not a fortification"); return; }
 
-            // ── Siege-specific validation ──────────────────────────────────────────
+            // â”€â”€ Siege-specific validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (subCmd == "siege")
             {
-                if (h.Clan.Kingdom != null && h.Clan.Kingdom.FactionsAtWarWith.Count == 0)
+                if (h.Clan.Kingdom != null && !FactionManager.GetEnemyFactions(h.Clan.Kingdom).Any())
                 { onFailure("No active wars"); return; }
                 if (target == null) { onFailure("No valid enemy settlement found to besiege"); return; }
                 if (!target.IsFortification) { onFailure($"{target.Name} is not a fortification"); return; }
@@ -2155,7 +2165,7 @@ namespace BLTAdoptAHero.Actions
                     party.Ai.SetDoNotMakeNewDecisions(true);
                     PartyOrderBehavior.Current?.RegisterOrder(h, party, PartyOrderType.SmartGuard, fallback,
                         settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
-                    onFailure($"{target.Name} is not reachable by land — army set to patrol instead");
+                    onFailure($"{target.Name} is not reachable by land â€” army set to patrol instead");
                     return;
                 }
             }
@@ -2163,7 +2173,7 @@ namespace BLTAdoptAHero.Actions
             if (!h.IsPartyLeader) { onFailure("You are not leading a party"); return; }
             if (party.MapEvent != null) { onFailure("Your party is in combat"); return; }
 
-            // ── Redirect existing army ─────────────────────────────────────────────
+            // â”€â”€ Redirect existing army â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (army != null && army.LeaderParty == party)
             {
                 army.ArmyType = armyType;
@@ -2172,7 +2182,7 @@ namespace BLTAdoptAHero.Actions
                 party.Ai.SetDoNotMakeNewDecisions(true);
                 PartyOrderBehavior.Current?.RegisterOrder(h, party, orderType, target,
                     settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
-                onSuccess($"Army redirected: {subCmd}" + (target != null ? $" → {target.Name}" : ""));
+                onSuccess($"Army redirected: {subCmd}" + (target != null ? $" â†’ {target.Name}" : ""));
                 return;
             }
             if (army != null && army.LeaderParty != party)
@@ -2181,13 +2191,12 @@ namespace BLTAdoptAHero.Actions
             if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h) < settings.ArmyPrice)
             { onFailure(Naming.NotEnoughGold(settings.ArmyPrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h))); return; }
 
-            var nav = party.IsCurrentlyAtSea ? MobileParty.NavigationType.Naval : MobileParty.NavigationType.Default;
-            var near = SettlementHelper.FindNearestSettlementToMobileParty(party, nav) ?? h.HomeSettlement;
+            var near = SettlementHelper.FindNearestFortification(toMapPoint: party) ?? h.HomeSettlement;
             var gather = target ?? near;
 
             Army newArmy;
 
-            // ── Kingdom army creation ──────────────────────────────────────────────
+            // â”€â”€ Kingdom army creation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (h.Clan.Kingdom != null)
             {
                 var vassals = VassalBehavior.Current.GetVassalClans(h.Clan);
@@ -2227,7 +2236,7 @@ namespace BLTAdoptAHero.Actions
                 h.Clan.Influence += 200f;
                 BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(h, -settings.ArmyPrice, true);
                 AdoptedHeroFlags._allowBLTArmyCreation = true;
-                try { h.Clan.Kingdom.CreateArmy(h, gather, armyType, merged); }
+                try { CreateKingdomArmy(h.Clan.Kingdom, party, gather, armyType, merged); }
                 finally { AdoptedHeroFlags._allowBLTArmyCreation = false; }
                 newArmy = party.Army;
 
@@ -2240,9 +2249,9 @@ namespace BLTAdoptAHero.Actions
                     return;
                 }
                 int mCount = newArmy.Parties.Count - 1;
-                onSuccess($"Gathering {armyType} army ({mCount} joining)" + (target != null ? $" → {target.Name}" : ""));
+                onSuccess($"Gathering {armyType} army ({mCount} joining)" + (target != null ? $" â†’ {target.Name}" : ""));
             }
-            // ── Independent clan army creation ────────────────────────────────────
+            // â”€â”€ Independent clan army creation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             else // Independent clan army creation
             {
                 MBList<MobileParty> merged;
@@ -2255,7 +2264,7 @@ namespace BLTAdoptAHero.Actions
                             && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0)
                         .ToList<MobileParty>();
 
-                    // NEW — our own vassals' parties. Vassals are extensions of us; no separate cost/consent.
+                    // NEW â€” our own vassals' parties. Vassals are extensions of us; no separate cost/consent.
                     var vassalCandidates = new List<MobileParty>();
                     if (VassalBehavior.Current != null)
                         foreach (var vassal in VassalBehavior.Current.GetVassalClans(h.Clan))
@@ -2276,7 +2285,7 @@ namespace BLTAdoptAHero.Actions
                                     && mp.LeaderHero != null && mp.MapEvent == null && !mp.IsDisbanding
                                     && mp.IsLordParty && mp.MemberRoster.TotalHealthyCount > 0));
 
-                            // NEW — ally's vassals count as part of the ally's strength too.
+                            // NEW â€” ally's vassals count as part of the ally's strength too.
                             if (VassalBehavior.Current != null)
                                 foreach (var alliedVassal in VassalBehavior.Current.GetVassalClans(allied))
                                     allyCandidates.AddRange(alliedVassal.WarPartyComponents
@@ -2288,7 +2297,7 @@ namespace BLTAdoptAHero.Actions
                     }
 
                     var ldrPos = party.GetPosition2D;
-                    // Priority: own parties → own vassals → allies (incl. their vassals)
+                    // Priority: own parties â†’ own vassals â†’ allies (incl. their vassals)
                     var sorted = ownCandidates.Concat(vassalCandidates).Concat(allyCandidates).Distinct()
                         .OrderBy(p => p.GetPosition2D.Distance(ldrPos));
                     merged = (createCount.HasValue ? sorted.Take(createCount.Value) : sorted).ToMBList();
@@ -2316,10 +2325,10 @@ namespace BLTAdoptAHero.Actions
                     return;
                 }
                 int mCount = newArmy.Parties.Count - 1;
-                onSuccess($"Gathering clan {armyType} army ({mCount} joining)" + (target != null ? $" → {target.Name}" : ""));
+                onSuccess($"Gathering clan {armyType} army ({mCount} joining)" + (target != null ? $" â†’ {target.Name}" : ""));
             }
 
-            // ── Shared post-creation setup ─────────────────────────────────────────
+            // â”€â”€ Shared post-creation setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (target != null) newArmy.AiBehaviorObject = target;
             PartyOrderBehavior.IssueOrder(party, orderType, target);
             party.Ai.SetDoNotMakeNewDecisions(true);
@@ -2327,9 +2336,9 @@ namespace BLTAdoptAHero.Actions
                 settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //  HELPER METHODS
-        // ─────────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private Settlement FindBestSettlementToTarget(MobileParty party, IFaction faction, bool forSiege)
         {
@@ -2341,7 +2350,7 @@ namespace BLTAdoptAHero.Actions
             int stance = 0;
             if (kingdom != null)
             {               
-                foreach (var enemy in kingdom.FactionsAtWarWith)
+                foreach (var enemy in FactionManager.GetEnemyFactions(kingdom).ToList())
                 {
                     stance = faction.GetStanceWith(enemy).BehaviorPriority;
                     if (stance == 1 || enemy.Settlements == null) continue;
@@ -2360,19 +2369,15 @@ namespace BLTAdoptAHero.Actions
                             
                         }
 
-                        float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                            party, s, false, MobileParty.NavigationType.Default, out _);
+                        float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s);
                         if (dist >= float.MaxValue - 1f) continue;
                         if (!PartyOrderBehavior.IsSettlementReachable(party, s)) continue;
 
-                        float str = s.Town?.GarrisonParty?.Party.EstimatedStrength + s.Town?.Militia ?? 0f;
-                        var neighbours = Campaign.Current.Models.MapDistanceModel
-                            .GetNeighborsOfFortification(s.Town, MobileParty.NavigationType.Default);
-                        bool direct = neighbours.Any(n => faction.Settlements.Contains(n));
+                        float str = s.Town?.GarrisonParty?.Party.TotalStrength + s.Town?.Militia ?? 0f;
 
                         float prox = 10000f / (dist + 1f);
                         float penalty = Math.Min(str * 0.05f, prox * 0.5f);
-                        float score = (prox - penalty) * Math.Max(1, stance) * (direct ? 1.1f : 1f);
+                        float score = (prox - penalty) * Math.Max(1, stance);
 
                         if (score > bestScore) { bestScore = score; best = s; }
                     }
@@ -2380,31 +2385,22 @@ namespace BLTAdoptAHero.Actions
             }
             else
             {
-                foreach (var enemy in clan.FactionsAtWarWith)
+                foreach (var enemy in FactionManager.GetEnemyFactions(clan))
                 {
                     foreach (var s in enemy.Settlements)
                     {
                         if (!s.IsFortification) continue;
-                        if (s.IsUnderSiege && s.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction != faction)
-                        {                          
-                            var besiegerC = s.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction as Clan;
-                            bool allied = besiegerC != null && BLTClanDiplomacyBehavior.Current?.HasAlliance(clan, besiegerC) == true && besiegerC.IsAtWarWith(s.MapFaction);
-                            if (!allied) continue;
-                        }
 
                         float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(
-                            party, s, false, MobileParty.NavigationType.Default, out _);
+                            party, s);
                         if (dist >= float.MaxValue - 1f) continue;
                         if (!PartyOrderBehavior.IsSettlementReachable(party, s)) continue;
 
-                        float str = s.Town?.GarrisonParty?.Party.EstimatedStrength + s.Town?.Militia ?? 0f;
-                        var neighbours = Campaign.Current.Models.MapDistanceModel
-                            .GetNeighborsOfFortification(s.Town, MobileParty.NavigationType.Default);
-                        bool direct = neighbours.Any(n => faction.Settlements.Contains(n));
+                        float str = s.Town?.GarrisonParty?.Party.TotalStrength + s.Town?.Militia ?? 0f;
 
                         float prox = 10000f / (dist + 1f);
                         float penalty = Math.Min(str * 0.05f, prox * 0.5f);
-                        float score = (prox - penalty) * Math.Max(1, stance) * (direct ? 1.1f : 1f);
+                        float score = (prox - penalty) * Math.Max(1, stance);
 
                         if (score > bestScore) { bestScore = score; best = s; }
                     }
@@ -2423,7 +2419,7 @@ namespace BLTAdoptAHero.Actions
             {
                 if (!s.IsFortification) continue;
                 bool threat = s.IsUnderSiege || (s.LastAttackerParty != null && s.LastAttackerParty.IsActive);
-                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s, false, party.NavigationCapability, out _);
+                float dist = Campaign.Current.Models.MapDistanceModel.GetDistance(party, s);
                 float score = (1000f / (dist + 1f)) * (threat ? 10f : 1f);
                 if (score > bestScore) { bestScore = score; best = s; }
             }
@@ -2462,7 +2458,7 @@ namespace BLTAdoptAHero.Actions
             return match;
         }
 
-        /// <summary>Loose name lookup — no order-type filtering. Used for defend/patrol/garrison auto-targeting.</summary>
+        /// <summary>Loose name lookup â€” no order-type filtering. Used for defend/patrol/garrison auto-targeting.</summary>
         private static Settlement FindSettlementByNameLoose(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return null;

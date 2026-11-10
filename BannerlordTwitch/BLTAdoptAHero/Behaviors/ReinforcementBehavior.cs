@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
@@ -64,7 +64,7 @@ namespace BLTAdoptAHero
             CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener(
                 this, OnSiegeEventCreated);
 
-            CampaignEvents.AfterSiegeCompletedEvent.AddNonSerializedListener(
+            CampaignEvents.SiegeCompletedEvent.AddNonSerializedListener(
                 this, OnAfterSiegeCompleted);
 
             CampaignEvents.DailyTickPartyEvent.AddNonSerializedListener(
@@ -120,20 +120,7 @@ namespace BLTAdoptAHero
             var party = MilitiaPartyComponent.CreateMilitiaParty(partyId, settlement);
             if (party == null) return;
 
-            // 2) convert it to a Custom/Mobile party so militia-specific plumbing won't re-add troops later
-            try
-            {
-                // TextObject name - friendly readable name (localize if you want)
-                var name = new TextObject("{=blt_reinforce_name}BLT Reinforcements");
-                // Convert to a custom party (keeps the party instance but changes its PartyComponent)
-                CustomPartyComponent.ConvertPartyToCustomParty(party, settlement, name, owner: null);
-            }
-            catch
-            {
-                // conversion failing shouldn't be fatal; fall back to continuing with the party instance
-            }
-
-            // 3) Now we control the roster reliably - clear and add exact counts
+            // 2) Now we control the roster reliably - clear and add exact counts
             try { party.MemberRoster?.Clear(); } catch { }
 
             int meleeCount = count / 2 + (count % 2);

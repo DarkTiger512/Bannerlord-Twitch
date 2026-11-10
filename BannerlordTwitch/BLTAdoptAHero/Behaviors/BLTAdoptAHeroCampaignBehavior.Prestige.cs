@@ -123,7 +123,7 @@ namespace BLTAdoptAHero
                 dev.ClearUnspentPoints();
                 foreach (var skill in CampaignHelpers.AllSkillObjects) dev.RemoveFocus(skill, dev.GetFocus(skill));
                 hero.BattleEquipment.FillFrom(new Equipment());
-                hero.CivilianEquipment.FillFrom(new Equipment(Equipment.EquipmentType.Civilian));
+                hero.CivilianEquipment.FillFrom(new Equipment(true));
                 if (PrestigeConfig.StartingEquipmentTier > 0)
                     EquipHero.UpgradeEquipment(hero, PrestigeConfig.StartingEquipmentTier - 1, hero.GetClass(), true, customKeepFilter: _ => false, restrictedItemIds: BLTAdoptAHeroModule.CommonConfig.RestrictedItemIds);
                 heroAchievementPassivePowers.Remove(hero);

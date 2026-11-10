@@ -22,11 +22,9 @@
   <Import Project="$(SolutionDir)BLTProperties.targets" />
   <ItemGroup Condition="'$(UseBannerlordReferenceAssemblies)' == 'true'">
     <PackageReference Include="Bannerlord.ReferenceAssemblies" />
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.NavalDLC" ExcludeAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actions\UnequipHero.cs" />
-    <Compile Include="Actions\OptionalNavalApi.cs" />
 
     <Reference Include="FontAwesome.WPF, Version=4.7.0.37774, Culture=neutral, PublicKeyToken=0758b07a11a4f466">
       <HintPath>..\packages\FontAwesome.WPF.4.7.0.9\lib\net40\FontAwesome.WPF.dll</HintPath>
@@ -103,8 +101,6 @@
     <Compile Include="Actions\DuelCommand.cs" />
     <Compile Include="Actions\FollowCommand.cs" />
     <Compile Include="Actions\GuardCommand.cs" />
-    <Compile Include="Actions\NavalHarmonyPatches.cs" />
-    <Compile Include="Actions\NavalSummonHero.cs" />
     <Compile Include="Actions\VassalCommand.cs" />
     <Compile Include="Actions\FormationCommand.cs" />
     <Compile Include="Actions\EquipCustomItem.cs" />

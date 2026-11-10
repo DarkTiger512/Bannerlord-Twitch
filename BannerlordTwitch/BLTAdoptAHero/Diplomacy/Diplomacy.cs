@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -509,10 +509,10 @@ namespace BLTAdoptAHero
             {
                 var sb = new StringBuilder();
                 sb.AppendLine($"WARNING: Declaring war on {target.Name}");
-                sb.AppendLine($"Your strength: {(int)kingdom.CurrentTotalStrength}");
+                sb.AppendLine($"Your strength: {(int)kingdom.TotalStrength}");
 
-                int totalEnemyStrength = (int)target.CurrentTotalStrength;
-                sb.Append($"{target.Name}: {(int)target.CurrentTotalStrength}");
+                int totalEnemyStrength = (int)target.TotalStrength;
+                sb.Append($"{target.Name}: {(int)target.TotalStrength}");
 
                 if (targetAllies.Count > 0)
                 {
@@ -523,8 +523,8 @@ namespace BLTAdoptAHero
                         var ally = alliance.GetOtherKingdom(target);
                         if (ally != null)
                         {
-                            sb.AppendLine($"  - {ally.Name}: {(int)ally.CurrentTotalStrength}");
-                            totalEnemyStrength += (int)ally.CurrentTotalStrength;
+                            sb.AppendLine($"  - {ally.Name}: {(int)ally.TotalStrength}");
+                            totalEnemyStrength += (int)ally.TotalStrength;
                         }
                     }
                 }
@@ -725,22 +725,9 @@ namespace BLTAdoptAHero
             {
                 // Use base game calculation
                 // FIXED: Calculate tribute correctly based on offer/demand
-                int gameDuration;
-                if (isOffer)
-                {
-                    // Offering peace: we pay if we're weaker
-                    dailyTribute = Campaign.Current.Models.DiplomacyModel.GetDailyTributeToPay(hero.Clan, target.RulingClan, out gameDuration);
-                    // If game says we should pay (positive), use that. Otherwise, 0.
-                    dailyTribute = Math.Max(0, dailyTribute);
-                }
-                else
-                {
-                    // Demanding peace: they pay if they're weaker
-                    dailyTribute = Campaign.Current.Models.DiplomacyModel.GetDailyTributeToPay(target.RulingClan, hero.Clan, out gameDuration);
-                    // If game says they should pay (positive), use that. Otherwise, 0.
-                    dailyTribute = Math.Max(0, dailyTribute);
-                }
-                duration = gameDuration > 0 ? gameDuration : settings.TributeDuration;
+                // Bannerlord 1.2.12 cannot quote a native daily tribute. Explicit offers still use BLT treaties.
+                dailyTribute = 0;
+                duration = settings.TributeDuration;
             }
 
             // Check costs
@@ -800,7 +787,7 @@ namespace BLTAdoptAHero
                 BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, -settings.PeacePrice, true);
                 hero.Clan.Influence -= influenceCost;
                 // Player kingdom making peace with AI - use event dispatcher
-                CampaignEventDispatcher.Instance.OnPeaceOfferedToPlayer(kingdom, dailyTribute, duration);
+                CampaignEventDispatcher.Instance.OnPeaceOfferedToPlayer(kingdom, dailyTribute);
             }
             else
             {
@@ -827,7 +814,7 @@ namespace BLTAdoptAHero
                 try
                 {
                     // Make peace in game
-                    MakePeaceAction.ApplyByKingdomDecision(kingdom, target, dailyTribute, duration);
+                    MakePeaceAction.ApplyByKingdomDecision(kingdom, target, dailyTribute);
                     FactionManager.SetNeutral(kingdom, target);
 
                     // Create tribute if amount > 0
@@ -1511,7 +1498,7 @@ namespace BLTAdoptAHero
             foreach (var war in wars)
             {
                 var enemies = war.GetEnemies(kingdom);
-                string enemyList = string.Join(", ", enemies.Select(e => $"{e.Name} ({(int)e.CurrentTotalStrength})"));
+                string enemyList = string.Join(", ", enemies.Select(e => $"{e.Name} ({(int)e.TotalStrength})"));
                 sb.AppendLine($"• {enemyList}");
             }
             onSuccess(sb.ToString());
@@ -1696,7 +1683,7 @@ namespace BLTAdoptAHero
             try
             {
                 // Make peace using the tribute amount from the proposal
-                MakePeaceAction.ApplyByKingdomDecision(kingdom, proposer, proposal.DailyTribute, proposal.Duration);
+                MakePeaceAction.ApplyByKingdomDecision(kingdom, proposer, proposal.DailyTribute);
                 FactionManager.SetNeutral(kingdom, proposer);
 
                 // FIXED: Create tribute if needed, using correct payer/receiver
@@ -2190,7 +2177,7 @@ namespace BLTAdoptAHero
             {
                 sb.Append($" | Wars({activeWars.Count}):");
                 foreach (var enemy in activeWars)
-                    sb.Append($" {enemy.Name}({(int)enemy.CurrentTotalStrength}str)");
+                    sb.Append($" {enemy.Name}({(int)enemy.TotalStrength}str)");
             }
 
             if (alliances.Count > 0)
@@ -2285,8 +2272,8 @@ namespace BLTAdoptAHero
             if (!confirmed)
             {
                 string targetStrength = tgtKingdom != null
-                    ? ((int)tgtKingdom.CurrentTotalStrength).ToString()
-                    : ((int)(tgtClan?.CurrentTotalStrength ?? 0)).ToString();
+                    ? ((int)tgtKingdom.TotalStrength).ToString()
+                    : ((int)(tgtClan?.TotalStrength ?? 0)).ToString();
                 onSuccess($"Declare war on {target.Name} (strength: {targetStrength})? " +
                           $"Add 'yes' to confirm: !diplomacy war {tgtName} yes");
                 return;
@@ -2433,7 +2420,7 @@ namespace BLTAdoptAHero
             bool Filter(Clan c) =>
                 c != null && !c.IsEliminated
                 && (!requireIndependent || c.Kingdom == null)
-                && !c.Name.IsEmpty();
+                && !string.IsNullOrEmpty(c.Name?.ToString());
 
             return Clan.All.FirstOrDefault(c =>
                        Filter(c) &&
@@ -2506,137 +2493,12 @@ namespace BLTAdoptAHero
 
         private void HandleTradeCommand(Settings settings, Hero hero, string[] args, Action<string> onSuccess, Action<string> onFailure)
         {
-            if (!settings.TradeEnabled)
-            {
-                onFailure("Trade alliances disabled");
-                return;
-            }
-
-            if (args.Length == 0)
-            {
-                onFailure("Usage: !diplomacy trade <kingdom>");
-                return;
-            }
-
-            string targetName = string.Join(" ", args);
-            var kingdom = hero.Clan.Kingdom;
-            var target = FindKingdom(targetName);
-
-            if (target == null)
-            {
-                onFailure($"Kingdom '{targetName}' not found");
-                return;
-            }
-
-            if (kingdom == target)
-            {
-                onFailure("Cannot trade with yourself");
-                return;
-            }
-
-            if (kingdom.IsAtWarWith(target))
-            {
-                onFailure($"At war with {target.Name}. Make peace first.");
-                return;
-            }
-
-            // Check for existing trade agreement
-            TradeAgreementsCampaignBehavior.TradeAgreement temptrade;
-            TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
-            if (tradeBehavior.HasTradeAgreement(kingdom, target, out temptrade))
-            {
-                onFailure($"Already have trade agreement with {target.Name}");
-                return;
-            }
-            bool hasProposed = BLTTreatyManager.Current.GetTradeProposal(kingdom, target) != null;
-            bool hasProposal = BLTTreatyManager.Current.GetTradeProposalsFor(kingdom).Any(t => t.ProposerKingdomId == target.StringId);
-            if (hasProposed)
-            {
-                onFailure($"Already proposed trade agreement with {target.Name}");
-                return;
-            }
-            if (hasProposal)
-            {
-                onFailure($"Already has trade agreement proposal with {target.Name}. Accept or ignore");
-                return;
-            }
-
-            // Check costs
-            int influenceCost = Campaign.Current.Models.TradeAgreementModel.GetInfluenceCostOfProposingTradeAgreement(hero.Clan);
-
-            if (hero.Clan.Influence < influenceCost)
-            {
-                onFailure($"Not enough influence (need {influenceCost}, have {(int)hero.Clan.Influence})");
-                return;
-            }
-
-            if (BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero) < settings.TradePrice)
-            {
-                onFailure(Naming.NotEnoughGold(settings.TradePrice, BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(hero)));
-                return;
-            }
-
-            // Deduct costs upfront
-            BLTAdoptAHeroCampaignBehavior.Current.ChangeHeroGold(hero, -settings.TradePrice, true);
-            hero.Clan.Influence -= influenceCost;
-
-            // Check if target is BLT controlled
-            if (target.Leader != null && target.Leader.IsAdopted())
-            {
-                // Create trade proposal for BLT kingdoms
-                BLTTreatyManager.Current.CreateTradeProposal(kingdom, target, settings.TradePrice, influenceCost, 15);
-
-                onSuccess($"Trade agreement proposal sent to {target.Name}. They have 15 days to respond.");
-
-                // Notify target leader
-                string targetLeaderName = target.Leader.FirstName.ToString()
-                    .Replace(BLTAdoptAHeroModule.Tag, "")
-                    .Replace(BLTAdoptAHeroModule.DevTag, "")
-                    .Trim();
-                Log.LogFeedResponse($"@{targetLeaderName} {kingdom.Name} proposes a trade agreement! Use !diplomacy accept trade {kingdom.Name}");
-            }
-            else if (target == Hero.MainHero.Clan.Kingdom)
-            {
-                // Propose to player kingdom
-                tradeBehavior.OnTradeAgreementOfferedToPlayer(kingdom);
-                onSuccess($"Trade agreement proposal sent to {target.Name}");
-            }
-            else
-            {
-                // AI kingdom - create trade agreement directly
-                var duration = Campaign.Current.Models.TradeAgreementModel.GetTradeAgreementDurationInYears(kingdom, target);
-                tradeBehavior.MakeTradeAgreement(kingdom, target, duration);
-
-                onSuccess($"Trade agreement established with {target.Name}");
-                Log.ShowInformation($"{kingdom.Name} and {target.Name} have formed a trade agreement!", hero.CharacterObject);
-            }
+            onFailure("Native trade agreements are unavailable on Bannerlord 1.2.12.");
         }
 
         private void AcceptTradeProposal(Settings settings, Hero hero, Kingdom kingdom, Kingdom proposer, Action<string> onSuccess, Action<string> onFailure)
         {
-            var proposal = BLTTreatyManager.Current.GetTradeProposal(proposer, kingdom);
-            if (proposal == null)
-            {
-                onFailure($"No trade proposal from {proposer.Name}");
-                return;
-            }
-
-            if (kingdom.IsAtWarWith(proposer))
-            {
-                onFailure($"At war with {proposer.Name}. Make peace first.");
-                BLTTreatyManager.Current.RemoveTradeProposal(proposer, kingdom);
-                return;
-            }
-
-            // Create trade agreement
-            TradeAgreementsCampaignBehavior tradeBehavior = Campaign.Current.GetCampaignBehavior<TradeAgreementsCampaignBehavior>();
-            var duration = Campaign.Current.Models.TradeAgreementModel.GetTradeAgreementDurationInYears(kingdom, proposer);
-            tradeBehavior.MakeTradeAgreement(kingdom, proposer, duration);
-
-            BLTTreatyManager.Current.RemoveTradeProposal(proposer, kingdom);
-
-            onSuccess($"Trade agreement established with {proposer.Name}");
-            Log.ShowInformation($"{kingdom.Name} and {proposer.Name} have formed a trade agreement!", hero.CharacterObject);
+            onFailure("Native trade agreements are unavailable on Bannerlord 1.2.12.");
         }
 
         private Kingdom FindKingdom(string name)

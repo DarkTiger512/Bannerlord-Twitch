@@ -40,7 +40,7 @@ static class Program
    Check(loaded.TryReserve(s,child)==false,"double reservation rejected");loaded.RemoveReservation(h);Check(!loaded._heirs.Contains(child),"exact cleanup");
   }
   {
-   var(h,s,b)=Setup(true);h.CharacterObject.Race=s.CharacterObject.Race=7;s.Clan=new();
+   var(h,s,b)=Setup(true);h.CharacterObject.Race=s.CharacterObject.Race=h.Culture.Race=s.Culture.Race=7;s.Clan=new();
    h.Children.Add(new Hero{Clan=h.Clan,IsAlive=false});h.Children.Add(new Hero{Clan=new()});FamilyManagement.BabyCommandLimit=1;
    TaleWorlds.Core.MBRandom.RandomFloat=.9f;AdoptHeirService.Execute(h,0);TaleWorlds.Core.MBRandom.RandomFloat=.3f;
    var child=b.GetValidHeir(h);Check(child.CharacterObject.Race==7&&!child.IsFemale,"same modded race and model gender probability");
@@ -54,7 +54,7 @@ static class Program
   foreach(var scenario in new[]{"pregnant","limit","race","spouse","minor","prisoner","mission","battle","poor","negative","templates"})
   {
    var(h,s,b)=Setup();int cost=0;
-   switch(scenario){case "pregnant":s.IsPregnant=true;break;case "limit":FamilyManagement.BabyCommandLimit=0;break;case "race":s.CharacterObject.Race=1;break;case "spouse":h.Spouse=null;break;case "minor":s.SetBirthDay(CampaignTime.YearsFromNow(-5));break;case "prisoner":h.IsPrisoner=true;break;case "mission":Mission.Current=new();break;case "battle":s.PartyBelongedTo=new(){MapEvent=new()};break;case "poor":cost=1001;break;case "negative":cost=-1;break;case "templates":Campaign.Current.Models.HeroCreationModel.Missing=true;break;}
+   switch(scenario){case "pregnant":s.IsPregnant=true;break;case "limit":FamilyManagement.BabyCommandLimit=0;break;case "race":s.CharacterObject.Race=1;break;case "spouse":h.Spouse=null;break;case "minor":s.SetBirthDay(CampaignTime.YearsFromNow(-5));break;case "prisoner":h.IsPrisoner=true;break;case "mission":Mission.Current=new();break;case "battle":s.PartyBelongedTo=new(){MapEvent=new()};break;case "poor":cost=1001;break;case "negative":cost=-1;break;case "templates":s.Culture.Missing=true;break;}
    try{AdoptHeirService.Execute(h,cost);throw new Exception("Unexpected success: "+scenario);}catch(InvalidOperationException){}
    Check(HeroCreator.Created==0&&BLTAdoptAHeroCampaignBehavior.Current.GetHeroGold(h)==1000,"free preflight failure "+scenario);
   }

@@ -204,7 +204,7 @@ namespace BLTAdoptAHero.UI
         private static List<SettlementData> BuildSettlements(MapProjection projection) => Campaign.Current.Settlements
             .Where(s => s.IsTown || s.IsCastle).OrderBy(s => s.StringId, StringComparer.Ordinal).Select(s =>
             {
-                MapPoint p = projection.Project(s.Position.X, s.Position.Y);
+                MapPoint p = projection.Project(s.Position2D.X, s.Position2D.Y);
                 return new SettlementData { Id = s.StringId ?? s.Name?.ToString() ?? "unknown", Name = s.Name?.ToString() ?? "Unknown", Type = s.IsTown ? "Town" : "Castle", X = p.X, Y = p.Y };
             }).ToList();
 
@@ -247,15 +247,8 @@ namespace BLTAdoptAHero.UI
 
         private static bool SampleLand(IMapScene map, float x, float y)
         {
-            foreach (bool onLand in new[] { true, false })
-            {
-                var p = new CampaignVec2(new Vec2(x, y), onLand);
-                var face = map.GetFaceIndex(in p);
-                if (!face.IsValid()) continue;
-                TerrainType terrain = map.GetFaceTerrainType(face);
-                return terrain != TerrainType.Water && terrain != TerrainType.OpenSea && terrain != TerrainType.CoastalSea && terrain != TerrainType.SeaRestriction;
-            }
-            return false;
+            var face = map.GetFaceIndex(new Vec2(x, y));
+            return face.IsValid() && map.GetFaceTerrainType(face) != TerrainType.Water;
         }
 
         private static DynamicMapData BuildDynamicData()
@@ -287,11 +280,11 @@ namespace BLTAdoptAHero.UI
             if (hero.IsPrisoner && hero.PartyBelongedToAsPrisoner?.IsMobile == true)
             { position = hero.PartyBelongedToAsPrisoner.MobileParty.GetPosition2D; status = "Prisoner"; return true; }
             if (hero.IsPrisoner && hero.PartyBelongedToAsPrisoner?.IsSettlement == true)
-            { position = hero.PartyBelongedToAsPrisoner.Settlement.Position.ToVec2(); status = "Prisoner"; return true; }
+            { position = hero.PartyBelongedToAsPrisoner.Settlement.Position2D; status = "Prisoner"; return true; }
             if (hero.PartyBelongedTo != null)
             { position = hero.PartyBelongedTo.GetPosition2D; status = hero.PartyBelongedTo.Army != null ? "Army" : "Travelling"; return true; }
             if (hero.CurrentSettlement != null)
-            { position = hero.CurrentSettlement.Position.ToVec2(); status = "Settlement"; return true; }
+            { position = hero.CurrentSettlement.Position2D; status = "Settlement"; return true; }
             position = default; status = null; return false;
         }
 

@@ -1,4 +1,4 @@
-﻿using BannerlordTwitch.Helpers;
+using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Rewards;
 using BannerlordTwitch.Util;
 using BLTAdoptAHero;
@@ -283,7 +283,7 @@ namespace BLTAdoptAHero
                 // 1) Try noble templates first
                 roster = rosters.FirstOrDefault(r =>
                     r.EquipmentCulture == hero.Culture &&
-                    r.EquipmentCategories.HasFlag(EquipmentCategories.IsLordTemplate));
+                    r.EquipmentFlags.HasFlag(EquipmentFlags.IsNobleTemplate));
 
                 // 2) Fallback to any if no noble found
                 if (roster == null)
@@ -347,7 +347,6 @@ namespace BLTAdoptAHero
                         {
                             WeaponClass.Bow => ItemObject.ItemTypeEnum.Arrows,
                             WeaponClass.Crossbow => ItemObject.ItemTypeEnum.Bolts,
-                            WeaponClass.Sling => ItemObject.ItemTypeEnum.SlingStones,
                             _ => ItemObject.ItemTypeEnum.Arrows
                         };
 

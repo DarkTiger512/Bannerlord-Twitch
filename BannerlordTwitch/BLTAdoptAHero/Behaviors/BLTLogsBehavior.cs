@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -99,12 +99,12 @@ namespace BLTAdoptAHero.Behaviors
                         var heroSide = hero.PartyBelongedTo.MapEventSide;
                         bool won = mapEvent.Winner == heroSide;
                         var enemySide = heroSide.OtherSide;
-                        if (enemySide.HealthyTroopCountAtMapEventStart == 0 && eventType == "Raid") continue;
+                        if (enemySide.TroopCount == 0 && eventType == "Raid") continue;
 
                         string enemyPartyName = enemySide.LeaderParty?.Name?.ToString() ?? "unknown party";
                         string enemyFactionName = enemySide.LeaderParty?.MapFaction?.Name?.ToString() ?? "unknown faction";
 
-                        string battleLog = $"[{date}]{eventType} against {enemyPartyName} ({enemyFactionName})({heroSide.HealthyTroopCountAtMapEventStart} vs {enemySide.HealthyTroopCountAtMapEventStart}) - {(won ? "Victory" : "Defeat")}";
+                        string battleLog = $"[{date}]{eventType} against {enemyPartyName} ({enemyFactionName})({heroSide.TroopCount} vs {enemySide.TroopCount}) - {(won ? "Victory" : "Defeat")}";
 
                         if (!_heroLogs.TryGetValue(hero.StringId, out var logs))
                         {
@@ -140,7 +140,7 @@ namespace BLTAdoptAHero.Behaviors
                 });
 
                 // Release
-                CampaignEvents.HeroPrisonerReleased.AddNonSerializedListener(this, (hero, party, faction, detail, wasBattle) =>
+                CampaignEvents.HeroPrisonerReleased.AddNonSerializedListener(this, (hero, party, faction, detail) =>
                 {
                     if (hero == null) return;
                     if (hero.IsAdopted())
@@ -277,7 +277,7 @@ namespace BLTAdoptAHero.Behaviors
                 });
 
                 // Marriages
-                CampaignEvents.BeforeHeroesMarried.AddNonSerializedListener(this, (hero1, hero2, notif) =>
+                CampaignEvents.HeroesMarried.AddNonSerializedListener(this, (hero1, hero2, notif) =>
                 {
                     if (hero1.Clan == null || hero2.Clan == null) return;
                     if (isBLTClan(hero1.Clan) && isBLTClan(hero2.Clan)) return;
@@ -485,90 +485,6 @@ namespace BLTAdoptAHero.Behaviors
                     }
                 });
 
-                // Alliance
-                CampaignEvents.OnAllianceStartedEvent.AddNonSerializedListener(this, (kingdom1, kingdom2) =>
-                {
-                    if (kingdom1 == null || kingdom2 == null) return;
-                    var date = CampaignTime.Now;
-
-                    string allyLog1 = $"[{date}]Allied with {kingdom2.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom1.StringId, out var logs1))
-                    {
-                        logs1 = new List<string>();
-                        _kingdomLogs[kingdom1.StringId] = logs1;
-                    }
-                    if (logs1.Count >= maxLogs)
-                        logs1.RemoveAt(0);
-                    logs1.Add(allyLog1);
-
-                    string allyLog2 = $"[{date}]Allied with {kingdom1.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom2.StringId, out var logs2))
-                    {
-                        logs2 = new List<string>();
-                        _kingdomLogs[kingdom2.StringId] = logs2;
-                    }
-                    if (logs2.Count >= maxLogs)
-                        logs2.RemoveAt(0);
-                    logs2.Add(allyLog2);
-                });
-                CampaignEvents.OnAllianceEndedEvent.AddNonSerializedListener(this, (kingdom1, kingdom2) =>
-                {
-                    if (kingdom1 == null || kingdom2 == null) return;
-                    var date = CampaignTime.Now;
-
-                    string allyLog1 = $"[{date}]Ended alliance with {kingdom2.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom1.StringId, out var logs1))
-                    {
-                        logs1 = new List<string>();
-                        _kingdomLogs[kingdom1.StringId] = logs1;
-                    }
-                    if (logs1.Count >= maxLogs)
-                        logs1.RemoveAt(0);
-                    logs1.Add(allyLog1);
-
-                    string allyLog2 = $"[{date}]Ended alliance with {kingdom1.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom2.StringId, out var logs2))
-                    {
-                        logs2 = new List<string>();
-                        _kingdomLogs[kingdom2.StringId] = logs2;
-                    }
-                    if (logs2.Count >= maxLogs)
-                        logs2.RemoveAt(0);
-                    logs2.Add(allyLog2);
-                });
-
-                // Trade
-                CampaignEvents.OnTradeAgreementSignedEvent.AddNonSerializedListener(this, (kingdom1, kingdom2) =>
-                {
-                    if (kingdom1 == null || kingdom2 == null) return;
-                    var date = CampaignTime.Now;
-
-                    string tradeLog1 = $"[{date}]Signed trade agreement with {kingdom2.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom1.StringId, out var logs1))
-                    {
-                        logs1 = new List<string>();
-                        _kingdomLogs[kingdom1.StringId] = logs1;
-                    }
-                    if (logs1.Count >= maxLogs)
-                        logs1.RemoveAt(0);
-                    logs1.Add(tradeLog1);
-
-                    string tradeLog2 = $"[{date}]Signed trade agreement with {kingdom1.Name}";
-
-                    if (!_kingdomLogs.TryGetValue(kingdom2.StringId, out var logs2))
-                    {
-                        logs2 = new List<string>();
-                        _kingdomLogs[kingdom2.StringId] = logs2;
-                    }
-                    if (logs2.Count >= maxLogs)
-                        logs2.RemoveAt(0);
-                    logs2.Add(tradeLog2);
-                });
 
                 // Settlement owners
                 CampaignEvents.OnSettlementOwnerChangedEvent.AddNonSerializedListener(this, (fief, claim, newOwner, oldOwner, capturerHero, detail) =>
@@ -654,7 +570,7 @@ namespace BLTAdoptAHero.Behaviors
                 CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener(this, (siegeEvent) =>
                 {
                     var date = CampaignTime.Now;
-                    var attackers = siegeEvent.BesiegerCamp.MapFaction;
+                    var attackers = siegeEvent.BesiegerCamp.LeaderParty?.MapFaction;
                     var town = siegeEvent.BesiegedSettlement.Town;
                     var defendCount = siegeEvent.BesiegedSettlement.Parties.Sum(p => p.MemberRoster.TotalHealthyCount);
                     var attackCount = siegeEvent.BesiegerCamp.GetInvolvedPartiesForEventType().Sum(p => p.MemberRoster.TotalHealthyCount);

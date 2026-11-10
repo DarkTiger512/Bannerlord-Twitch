@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BannerlordTwitch;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
@@ -63,7 +63,7 @@ namespace BLTAdoptAHero.Actions
                 onFailure("Follow can only be used during an active mission.");
                 return;
             }
-            if (!Mission.Current.IsDeploymentFinished)
+            if (!BannerlordTwitch.Helpers.MissionHelpers.IsBattleReady(Mission.Current))
             {
                 onFailure("Can't follow during deployment - wait for the battle to actually begin.");
                 return;

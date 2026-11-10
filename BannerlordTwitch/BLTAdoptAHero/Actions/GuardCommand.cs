@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BannerlordTwitch;
 using BannerlordTwitch.Helpers;
 using BannerlordTwitch.Localization;
@@ -54,7 +54,7 @@ namespace BLTAdoptAHero.Actions
                 onFailure("Guard can only be used during an active mission.");
                 return;
             }
-            if (!Mission.Current.IsDeploymentFinished)
+            if (!BannerlordTwitch.Helpers.MissionHelpers.IsBattleReady(Mission.Current))
             {
                 onFailure("Can't activate guard during deployment - wait for the battle to actually begin.");
                 return;

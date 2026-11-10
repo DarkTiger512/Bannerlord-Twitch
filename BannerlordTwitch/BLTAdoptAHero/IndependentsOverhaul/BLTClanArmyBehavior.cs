@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Helpers;
@@ -79,9 +79,11 @@ namespace BLTAdoptAHero
                 // Army(null, ...) is safe: the Kingdom setter short-circuits when value == _kingdom (both null).
                 var army = new Army(null, armyLeader.PartyBelongedTo, armyType);
 
-                // Gather calls FindBestGatheringSettlementAndMoveTheLeader internally;
-                // our Harmony patch (BLT_ClanArmyFindGatheringPatch) intercepts that for null-kingdom armies.
-                army.Gather(gatherPoint, partiesToCall);
+                army.Gather(gatherPoint);
+                if (partiesToCall != null)
+                    foreach (var party in partiesToCall)
+                        if (party != null && party != army.LeaderParty && party.Army == null)
+                            party.Army = army;
 
                 Current?._clanArmies.Add(army);
                 CampaignEventDispatcher.Instance.OnArmyCreated(army);
@@ -167,7 +169,7 @@ namespace BLTAdoptAHero
             {
                 if (s == null || !s.IsFortification || s.IsUnderSiege) return;
                 float dist = Campaign.Current.Models.MapDistanceModel
-                    .GetDistance(leader, s, false, leader.NavigationCapability, out _);
+                    .GetDistance(leader, s);
                 if (dist >= Campaign.MapDiagonalSquared) return;
                 float score = bonus + 10000f / (dist + 1f);
                 if (score > bestScore) { bestScore = score; best = s; }

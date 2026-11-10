@@ -1,4 +1,4 @@
-﻿#if e159
+#if e159
 using System.IO;
 using Path = System.IO.Path;
 #endif
@@ -59,8 +59,8 @@ namespace BannerlordTwitch.Util
             => Common.PlatformFileHelper.SaveFileString(path, str);
         public static string GetFileContentString(PlatformFilePath path)
             => Common.PlatformFileHelper.GetFileContentString(path);
-        public static PlatformFilePath[] GetFiles(PlatformDirectoryPath path, string searchPattern, System.IO.SearchOption searchOption)
-            => Common.PlatformFileHelper.GetFiles(path, searchPattern, searchOption);
+        public static PlatformFilePath[] GetFiles(PlatformDirectoryPath path, string searchPattern)
+            => Common.PlatformFileHelper.GetFiles(path, searchPattern);
         public static void DeleteFile(PlatformFilePath path) => Common.PlatformFileHelper.DeleteFile(path);
 #endif
     }

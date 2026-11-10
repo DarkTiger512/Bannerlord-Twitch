@@ -93,7 +93,7 @@ namespace BLTAdoptAHero
             {
                 case ItemObject.ItemTypeEnum.Bow:
                 case ItemObject.ItemTypeEnum.Crossbow:
-                case ItemObject.ItemTypeEnum.Sling:
+
                 case ItemObject.ItemTypeEnum.Pistol:
                 case ItemObject.ItemTypeEnum.Musket:
                     return true;

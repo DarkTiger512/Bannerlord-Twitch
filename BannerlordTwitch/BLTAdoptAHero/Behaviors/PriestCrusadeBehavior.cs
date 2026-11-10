@@ -90,13 +90,11 @@ namespace BLTAdoptAHero.Behaviors
                 string suffix = $"{CampaignTime.Now.ToHours:F0}_{MBRandom.RandomInt(1000000)}";
                 clan = Clan.CreateClan($"blt_crusader_clan_{suffix}");
                 string clanName = SafeName(cfg.PriestCrusadeClanName, "Holy Crusaders");
-                clan.ChangeClanName(new TextObject(clanName), new TextObject(clanName));
-                clan.Culture = culture;
-                clan.Banner = Banner.CreateRandomBanner();
+                clan.InitializeClan(new TextObject(clanName), new TextObject(clanName), culture, Banner.CreateRandomBanner());
                 clan.Kingdom = null;
                 clan.IsNoble = true;
                 Settlement objective = FindObjective(target);
-                clan.SetInitialHomeSettlement(objective ?? Settlement.All.FirstOrDefault());
+                clan.UpdateHomeSettlement(objective ?? Settlement.All.FirstOrDefault());
                 var template = CampaignHelpers.GetWandererTemplates(culture).FirstOrDefault(t => !t.IsFemale && t.Occupation == Occupation.Preacher)
                     ?? CampaignHelpers.GetWandererTemplates(culture).FirstOrDefault(t => !t.IsFemale)
                     ?? CampaignHelpers.AllWandererTemplates.FirstOrDefault();
@@ -105,12 +103,12 @@ namespace BLTAdoptAHero.Behaviors
                 priest.SetName(new TextObject(SafeName(cfg.PriestCrusadePriestName, "Father Zealot")), new TextObject(SafeName(cfg.PriestCrusadePriestName, "Father Zealot")));
                 priest.Clan = clan;
                 clan.SetLeader(priest);
-                CampaignEventDispatcher.Instance.OnClanCreated(clan, false);
+                CampaignEventDispatcher.Instance.OnCompanionClanCreated(clan);
                 var spawn = objective ?? Settlement.All.FirstOrDefault();
                 if (spawn == null) throw new InvalidOperationException("no settlement spawn position was available");
                 party = MobilePartyHelper.SpawnLordParty(priest, spawn.GatePosition, 1f);
                 if (party == null) throw new InvalidOperationException("Bannerlord could not create the crusader party");
-                int size = RandomEventPolicy.CalculateArmySize(target.CurrentTotalStrength, cfg.PriestCrusadeArmyStrengthPercent, 100, 1000);
+                int size = RandomEventPolicy.CalculateArmySize(target.TotalStrength, cfg.PriestCrusadeArmyStrengthPercent, 100, 1000);
                 AddTroops(party, size);
                 if (party.MemberRoster.TotalManCount == 0) throw new InvalidOperationException("no valid crusader troops were available");
                 party.Ai.SetDoNotMakeNewDecisions(false);
@@ -151,9 +149,9 @@ namespace BLTAdoptAHero.Behaviors
         {
             var village = target?.BoundVillages?.FirstOrDefault()?.Settlement;
             if (village != null)
-                SetPartyAiAction.GetActionForRaidingSettlement(party, village, MobileParty.NavigationType.All, false, false);
+                SetPartyAiAction.GetActionForRaidingSettlement(party, village);
             else if (target != null)
-                SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target, MobileParty.NavigationType.All, false, false);
+                SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
         }
 
         private static void AddTroops(MobileParty party, int total)

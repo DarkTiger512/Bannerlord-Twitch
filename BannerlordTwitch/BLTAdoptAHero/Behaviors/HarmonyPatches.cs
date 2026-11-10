@@ -6,7 +6,6 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Map;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -15,7 +14,6 @@ using BannerlordTwitch.Util;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Election;
 using TaleWorlds.CampaignSystem.ViewModelCollection.KingdomManagement.Diplomacy;
-using static TaleWorlds.MountAndBlade.Launcher.Library.NativeMessageBox;
 using TaleWorlds.CampaignSystem.CampaignBehaviors.AiBehaviors;
 using TaleWorlds.CampaignSystem.Siege;
 using System.Linq;
@@ -611,8 +609,7 @@ namespace BLTAdoptAHero
 
     #region TownFoodStocks
 
-    [HarmonyPatch(nameof(DefaultSettlementFoodModel), "FoodStocksUpperLimit")]
-        [HarmonyPatch(MethodType.Getter)]
+    [HarmonyPatch(typeof(DefaultSettlementFoodModel), "FoodStocksUpperLimit", MethodType.Getter)]
         internal static class FoodStocksUpperLimitUncap
         {
             [HarmonyPrefix]
@@ -704,7 +701,6 @@ namespace BLTAdoptAHero
             IFaction faction1,
             IFaction faction2,
             int dailyTributeFrom1To2,
-            int dailyTributeDuration,
             MakePeaceAction.MakePeaceDetail detail = MakePeaceAction.MakePeaceDetail.Default)
         {
             // Always allow peace that BLT itself initiated
@@ -817,7 +813,7 @@ namespace BLTAdoptAHero
                 // If no active wars with real factions, allow normal disbanding
                 var kingdom = __instance.LeaderParty.MapFaction as Kingdom;
                 if (kingdom == null
-                    || !kingdom.FactionsAtWarWith.Any(f =>
+                    || !FactionManager.GetEnemyFactions(kingdom).Any(f =>
                         f.IsKingdomFaction || (f.IsClan && f.Fiefs.Any())))
                 {
                     ArmyCreationTimes.Remove(__instance);
@@ -895,7 +891,7 @@ namespace BLTAdoptAHero
             // for its defenders again while the siege is being rebuilt - those can be null, and
             // the original method copes with that perfectly well. So only take over when the data
             // this patch needs is present, and otherwise let the game's own method run.
-            if (__instance?.Settlement?.SiegeEvent?.BesiegerCamp?.MapFaction == null)
+            if (__instance?.Settlement?.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction == null)
             {
                 return true;
             }
@@ -915,7 +911,7 @@ namespace BLTAdoptAHero
             // sequence - by which point the siege may no longer be the one we validated. That
             // deferral is also why a throw from here surfaces in the caller's stack with no BLT
             // frame in sight.
-            var besiegerFaction = town.Settlement.SiegeEvent?.BesiegerCamp?.MapFaction;
+            var besiegerFaction = town.Settlement.SiegeEvent?.BesiegerCamp?.LeaderParty?.MapFaction;
             if (besiegerFaction == null) yield break;
 
             foreach (MobileParty mobileParty in town.Settlement.Parties)
@@ -935,135 +931,6 @@ namespace BLTAdoptAHero
     }
     #endregion
 
-    #region SiegeRetreatFix
-
-    /// <summary>
-    /// Fixes the vanilla bug where retreating from a siege assault causes the ENTIRE
-    /// besieging army to be captured/killed, and lords made fugitive respawning with 1 troop.
-    /// This version safely tracks mutated MapEvent instances instead of using ThreadStatic.
-    /// </summary>
-
-    [HarmonyPatch(typeof(MapEvent), "CalculateAndCommitMapEventResults")]
-    internal static class BLT_SiegeRetreatFix
-    {
-        private static readonly PropertyInfo RetreatingSideProp =
-            typeof(MapEvent).GetProperty("RetreatingSide",
-                BindingFlags.Public | BindingFlags.Instance);
-
-        // Tracks MapEvent instances we mutate so we can safely restore them.
-        private static readonly HashSet<MapEvent> _mutated = new();
-
-        private static bool IsSiegeRelated(MapEvent e) =>
-            e.IsSiegeAssault || e.IsSallyOut || e.IsSiegeOutside;
-
-        static void Prefix(MapEvent __instance)
-        {
-            try
-            {
-                if (!IsSiegeRelated(__instance))
-                    return;
-
-                if (!__instance.HasWinner)
-                    return;
-
-                if (__instance.RetreatingSide != BattleSideEnum.None)
-                    return;
-
-                var defeatedSide = __instance.GetMapEventSide(__instance.DefeatedSide);
-                if (defeatedSide == null)
-                    return;
-
-                int survivors = defeatedSide.GetTotalHealthyTroopCountOfSide();
-                if (survivors <= 0)
-                    return; // Truly wiped out — allow vanilla full capture
-
-                RetreatingSideProp?.SetValue(__instance, __instance.DefeatedSide);
-                _mutated.Add(__instance);
-
-#if DEBUG
-            Log.Trace($"[BLT] SiegeRetreatFix: {survivors} survivors on " +
-                      $"{__instance.DefeatedSide} side — temporarily suppressing troop capture.");
-#endif
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_SiegeRetreatFix Prefix error: {ex}");
-            }
-        }
-
-        static void Postfix(MapEvent __instance)
-        {
-            try
-            {
-                if (!_mutated.Remove(__instance))
-                    return;
-
-                // Restore original state so later systems see correct battle result
-                RetreatingSideProp?.SetValue(__instance, BattleSideEnum.None);
-
-#if DEBUG
-            Log.Trace("[BLT] SiegeRetreatFix: RetreatingSide restored to None.");
-#endif
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_SiegeRetreatFix Postfix error: {ex}");
-            }
-        }
-    }
-
-
-    // -------------------------------------------------------------------------
-    // Part 2: Safety net — prevent lords from being made fugitive if they belong
-    //         to a party actively part of a siege besieger camp.
-    // -------------------------------------------------------------------------
-
-    [HarmonyPatch(typeof(MakeHeroFugitiveAction), nameof(MakeHeroFugitiveAction.Apply))]
-    internal static class BLT_SiegeLordFugitiveFix
-    {
-        static bool Prefix(Hero fugitive, bool showNotification)
-        {
-            try
-            {
-                MobileParty party = fugitive.PartyBelongedTo;
-                if (party == null)
-                    return true;
-
-                var mapEvent = party.MapEvent ?? party.Army?.LeaderParty?.MapEvent;
-
-                // Ignore naval blockades
-                if (mapEvent != null && (mapEvent.IsBlockade || mapEvent.IsBlockadeSallyOut))
-                    return true;
-
-                bool isInSiegingParty =
-                    party.BesiegedSettlement != null ||
-                    (party.Army != null &&
-                     party.Army.LeaderParty?.BesiegedSettlement != null);
-
-                if (!isInSiegingParty)
-                    return true;
-
-                // Only suppress if the party still has healthy troops
-                if (party.Party?.NumberOfHealthyMembers <= 0)
-                    return true;
-
-#if DEBUG
-            Log.Trace($"[BLT] SiegeLordFugitiveFix: Blocked MakeHeroFugitive for " +
-                      $"{fugitive.Name} (besieging " +
-                      $"{party.BesiegedSettlement?.Name ?? party.Army?.LeaderParty?.BesiegedSettlement?.Name})");
-#endif
-
-                return false; // Prevent fugitive conversion
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_SiegeLordFugitiveFix error: {ex}");
-                return true;
-            }
-        }
-    }
-
-    #endregion
 
     #region BlockArmies
     [HarmonyPatch(typeof(Kingdom), "CreateArmy")]
@@ -1109,55 +976,15 @@ namespace BLTAdoptAHero
 
     #region ClanArmyPatches
 
-    /// <summary>
-    /// Patches Army.FindBestGatheringSettlementAndMoveTheLeader for clan armies
-    /// (Army.Kingdom == null).  The vanilla method unconditionally iterates
-    /// this.Kingdom.Settlements, which would throw a NullReferenceException.
-    ///
-    /// When Kingdom is non-null the prefix returns true and vanilla runs unchanged.
-    /// When Kingdom is null (clan army) the prefix:
-    ///   • Calls BLTClanArmyBehavior.FindClanGatherSettlement to pick a friendly settlement.
-    ///   • Sets AiBehaviorObject to that settlement.
-    ///   • Moves the leader party toward it (replicating SendLeaderPartyToReachablePointAroundPosition).
-    ///   • Returns false to skip the vanilla body entirely.
-    /// </summary>
-    [HarmonyPatch(typeof(Army), "FindBestGatheringSettlementAndMoveTheLeader")]
+    [HarmonyPatch(typeof(Army), "FindBestInitialGatheringSettlement")]
     internal static class BLT_ClanArmyFindGatheringPatch
     {
         [HarmonyPrefix]
-        static bool Prefix(Army __instance, Settlement focusSettlement)
+        private static bool Prefix(Army __instance, Settlement initialHostileTargetSettlement, ref Settlement __result)
         {
-            try
-            {
-                if (__instance.Kingdom != null) return true;
-
-                var gather = BLTClanArmyBehavior.FindClanGatherSettlement(__instance)
-                             ?? focusSettlement;
-
-                if (gather == null)
-                {
-                    __instance.LeaderParty.SetMoveModeHold();
-                    return false;
-                }
-
-                __instance.AiBehaviorObject = gather;
-
-                __instance.LeaderParty.SetMoveGoToPoint(
-                    NavigationHelper.FindReachablePointAroundPosition(
-                        gather.GatePosition,
-                        MobileParty.NavigationType.Default,
-                        __instance.GatheringPositionMaxDistanceToTheSettlement,
-                        __instance.GatheringPositionMinDistanceToTheSettlement,
-                        false),
-                    __instance.LeaderParty.NavigationCapability);
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[BLT] BLT_ClanArmyFindGatheringPatch error: {ex}");
-                return true;
-            }
+            if (__instance.Kingdom != null) return true;
+            __result = BLTClanArmyBehavior.FindClanGatherSettlement(__instance) ?? initialHostileTargetSettlement;
+            return false;
         }
     }
 
@@ -1262,50 +1089,6 @@ namespace BLTAdoptAHero
 
     #endregion
 
-        #region More Naval Fixes holy shit how broken is this DLC
-
-    [PatchAfterModulesLoaded]
-    [HarmonyPatch]
-    public static class NavalPatrolRadiusPatch
-    {
-        private const string ModelType = "NavalDLC.GameComponents.NavalDLCMobilePartyAIModel";
-
-        private static readonly DefaultMobilePartyAIModel StockModel = new DefaultMobilePartyAIModel();
-
-        [HarmonyPrepare]
-        static bool Prepare() => TargetMethods().Any();
-
-        static IEnumerable<MethodBase> TargetMethods()
-        {
-            Type? type = AccessTools.TypeByName(ModelType);
-            MethodInfo? method = type != null ? AccessTools.Method(type, "GetPatrolRadius") : null;
-            if (method != null) yield return method;
-        }
-
-        static bool Prefix(MobileParty mobileParty, CampaignVec2 patrolPoint, ref float __result)
-        {
-            try
-            {
-                if (patrolPoint.IsOnLand || !patrolPoint.IsValid()) return true;
-
-                if (mobileParty == null) return true;
-                if (mobileParty.IsBandit || !mobileParty.IsLordParty) return true;
-                if (!mobileParty.IsCurrentlyAtSea) return true;
-                if (mobileParty.TargetSettlement != null) return true;
-
-                __result = StockModel.GetPatrolRadius(mobileParty, patrolPoint);
-                return false;
-            }
-            catch (Exception ex)
-            {
-                __result = 0f;
-                return false;
-            }
-        }
-    }
-
-        #endregion
-
         #region NullSettlement Patch
 
     [HarmonyPatch]
@@ -1355,7 +1138,7 @@ namespace BLTAdoptAHero
     [HarmonyPatch(typeof(SetPartyAiAction), nameof(SetPartyAiAction.GetActionForRaidingSettlement),
         new[]
         {
-            typeof(MobileParty), typeof(Settlement), typeof(MobileParty.NavigationType), typeof(bool), typeof(bool)
+            typeof(MobileParty), typeof(Settlement)
         })]
     public static class RaidNullSettlementPatch
     {
