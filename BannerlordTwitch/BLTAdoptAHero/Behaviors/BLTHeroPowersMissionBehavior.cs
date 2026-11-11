@@ -366,13 +366,16 @@ namespace BLTAdoptAHero
         [UsedImplicitly, HarmonyPrefix, HarmonyPatch(typeof(Mission), "HandleMissileCollisionReaction")]
         private static void HandleMissileCollisionReactionPrefix(Mission __instance, int missileIndex,
             Mission.MissileCollisionReaction collisionReaction, MatrixFrame attachLocalFrame, Agent attackerAgent,
-            Agent attachedAgent, bool attachedToShield, sbyte attachedBoneIndex, MissionObject attachedMissionObject,
-            Vec3 bounceBackVelocity, Vec3 bounceBackAngularVelocity, int forcedSpawnIndex)
+            Agent attachedAgent, bool attachedToShield, sbyte attachedBoneIndex,
+            Dictionary<int, Mission.Missile> ____missiles)
         {
-            var _missiles = (Dictionary<int, Mission.Missile>)AccessTools.Field(typeof(Mission), "_missilesDictionary")
-                .GetValue(__instance);
-            Current?.MissileCollision(collisionReaction, attackerAgent, attachedAgent, attachedBoneIndex,
-                attachedToShield, attachLocalFrame, _missiles[missileIndex]);
+            // Bannerlord 1.2.12 stores tracked missiles in Mission._missiles.
+            if (____missiles == null || !____missiles.TryGetValue(missileIndex, out var missile) || missile == null)
+                return;
+
+            __instance.GetMissionBehavior<BLTHeroPowersMissionBehavior>()?.MissileCollision(
+                collisionReaction, attackerAgent, attachedAgent, attachedBoneIndex, attachedToShield,
+                attachLocalFrame, missile);
         }
 
         [UsedImplicitly, HarmonyPostfix, HarmonyPatch(typeof(Mission), "DecideWeaponCollisionReaction")]
