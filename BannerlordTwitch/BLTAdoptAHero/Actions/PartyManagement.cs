@@ -967,8 +967,13 @@ namespace BLTAdoptAHero.Actions
                 var results = new List<string>();
                 foreach (var mp in targetParties)
                 {
-                    IssueSinglePartyOrder(settings, h, mp, orderType, primaryTarget, null, null);
-                    results.Add(mp.LeaderHero?.FirstName?.ToString() ?? mp.Name.ToString());
+                    IssueSinglePartyOrder(settings, h, mp, orderType, primaryTarget,
+                        _ => results.Add(mp.LeaderHero?.FirstName?.ToString() ?? mp.Name.ToString()), null);
+                }
+                if (results.Count == 0)
+                {
+                    onFailure("No clan parties could take this order.");
+                    return;
                 }
                 string tName = primaryTarget?.Name?.ToString() ?? "auto";
                 onSuccess($"{results.Count} parties ordered to {subCmd} â†’ {tName}: {string.Join(", ", results)}");
@@ -1039,8 +1044,13 @@ namespace BLTAdoptAHero.Actions
                 { onFailure?.Invoke($"Cannot garrison in hostile {target.Name}"); return; }
             }
 
+            if (target == null || !PartyOrderBehavior.ValidateOrder(mp, orderType, target))
+            {
+                onFailure?.Invoke("No valid settlement for this order");
+                return;
+            }
+
             PartyOrderBehavior.IssueOrder(mp, orderType, target);
-            mp.Ai.SetDoNotMakeNewDecisions(true);
             PartyOrderBehavior.Current?.RegisterOrder(h, mp, orderType, target,
                 settings.ArmyMaxReissueAttempts, settings.PartyOrderExpiryDays);
 
@@ -1236,7 +1246,6 @@ namespace BLTAdoptAHero.Actions
             if (curTarget != null)
             {
                 PartyOrderBehavior.IssueOrder(newLeaderParty, curType, curTarget);
-                newLeaderParty.Ai.SetDoNotMakeNewDecisions(true);
                 PartyOrderBehavior.Current?.RegisterOrder(h, newLeaderParty, curType, curTarget,
                     settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
             }
@@ -1359,7 +1368,6 @@ namespace BLTAdoptAHero.Actions
 
             army.ArmyType = Army.ArmyTypes.Defender;
             PartyOrderBehavior.IssueOrder(party, PartyOrderType.Garrison, target);
-            party.Ai.SetDoNotMakeNewDecisions(true);
             PartyOrderBehavior.Current?.RegisterOrder(h, party, PartyOrderType.Garrison, target,
                 settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
 
@@ -1658,7 +1666,6 @@ namespace BLTAdoptAHero.Actions
             if (curTarget != null)
             {
                 PartyOrderBehavior.IssueOrder(party, curType, curTarget);
-                party.Ai.SetDoNotMakeNewDecisions(true);
                 PartyOrderBehavior.Current?.RegisterOrder(h, party, curType, curTarget,
                     settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
             }
@@ -2162,7 +2169,6 @@ namespace BLTAdoptAHero.Actions
                 {
                     var fallback = FindBestSettlementToDefend(party, h.Clan.MapFaction);
                     PartyOrderBehavior.IssueOrder(party, PartyOrderType.SmartGuard, fallback);
-                    party.Ai.SetDoNotMakeNewDecisions(true);
                     PartyOrderBehavior.Current?.RegisterOrder(h, party, PartyOrderType.SmartGuard, fallback,
                         settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
                     onFailure($"{target.Name} is not reachable by land â€” army set to patrol instead");
@@ -2179,7 +2185,6 @@ namespace BLTAdoptAHero.Actions
                 army.ArmyType = armyType;
                 if (target != null) army.AiBehaviorObject = target;
                 PartyOrderBehavior.IssueOrder(party, orderType, target);
-                party.Ai.SetDoNotMakeNewDecisions(true);
                 PartyOrderBehavior.Current?.RegisterOrder(h, party, orderType, target,
                     settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
                 onSuccess($"Army redirected: {subCmd}" + (target != null ? $" â†’ {target.Name}" : ""));
@@ -2331,7 +2336,6 @@ namespace BLTAdoptAHero.Actions
             // â”€â”€ Shared post-creation setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (target != null) newArmy.AiBehaviorObject = target;
             PartyOrderBehavior.IssueOrder(party, orderType, target);
-            party.Ai.SetDoNotMakeNewDecisions(true);
             PartyOrderBehavior.Current?.RegisterOrder(h, party, orderType, target,
                 settings.ArmyMaxReissueAttempts, settings.ArmyOrderExpiryDays);
         }

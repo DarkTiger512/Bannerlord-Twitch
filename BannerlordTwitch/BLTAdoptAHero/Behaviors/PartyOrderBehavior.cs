@@ -52,6 +52,7 @@ namespace BLTAdoptAHero
             CampaignEvents.MobilePartyDestroyed.AddNonSerializedListener(this, OnMobilePartyDestroyed);
             CampaignEvents.OnSettlementOwnerChangedEvent.AddNonSerializedListener(this, OnSettlementOwnerChanged);
             CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+            CampaignEvents.OnPartyJoinedArmyEvent.AddNonSerializedListener(this, OnPartyJoinedArmy);
             CampaignEvents.OnMissionEndedEvent.AddNonSerializedListener(this, OnMissionEnded);
         }
 
@@ -77,10 +78,15 @@ namespace BLTAdoptAHero
                         .Where(o => o != null && !string.IsNullOrEmpty(o.PartyId))
                         .ToList();
 
-                    foreach (var order in _orders.Where(o => o.IsActive))
+                    foreach (var order in _orders.Where(o => o.IsActive).ToList())
                     {
                         var p = MobileParty.All.FirstOrDefault(x => x.StringId == order.PartyId);
                         if (p == null || !p.IsActive) { order.IsActive = false; continue; }
+                        if (IsArmyFollower(p))
+                        {
+                            ExpireOrder(order, null, false);
+                            continue;
+                        }
                         p.Ai.SetDoNotMakeNewDecisions(true);
                     }
                 }
@@ -111,7 +117,7 @@ namespace BLTAdoptAHero
         public void RegisterOrder(Hero hero, MobileParty party, PartyOrderType type,
             Settlement targetSettlement, int maxReissueAttempts, float expiryDays = 0f)
         {
-            if (hero == null || party == null) return;
+            if (hero == null || party == null || IsArmyFollower(party)) return;
             CancelOrdersForParty(party.StringId, null, false);
 
             _orders.Add(new PartyOrderData
@@ -129,6 +135,7 @@ namespace BLTAdoptAHero
                 ReissueAttempts = 0,
                 IsActive = true
             });
+            party.Ai.SetDoNotMakeNewDecisions(true);
         }
 
         public void CancelOrdersForParty(string partyId, string reason, bool notify)
@@ -179,35 +186,30 @@ namespace BLTAdoptAHero
                 var order = _orders.FirstOrDefault(o => o.IsActive && o.PartyId == party.StringId);
                 if (order == null) return;
 
-                if (!party.IsActive) { ExpireOrder(order, null, false); return; }
+                if (IsArmyFollower(party)) { ExpireOrder(order, null, false); return; }
 
-                // ── Settlement handling ─────────────────────────────────────────────────
-                if (party.CurrentSettlement != null)
-                {
-                    // Garrison at the correct fort: satisfied — stay locked
-                    if (order.Type == PartyOrderType.Garrison &&
-                        party.CurrentSettlement.StringId == order.TargetSettlementId)
-                    {
-                        order.ReissueAttempts = 0;
-                        party.Ai.SetDoNotMakeNewDecisions(true);
-                        return;
-                    }
-                    // Every other order type (including SmartGuard): unlock so the
-                    // party can leave. The order will be re-applied next tick.
-                    try { party.Ai.SetDoNotMakeNewDecisions(false); }
-                    catch (Exception ex) { Log.Error($"[BLT] AI unlock in settlement error: {ex}"); }
-                    return;
-                }
-
-                // Expiry
                 if (order.ExpiresAtDays > 0 && CampaignTime.Now.ToDays >= order.ExpiresAtDays)
                 {
-                    NotifyHero(order, "Army order expired.");
+                    NotifyHero(order, "Party order expired.");
                     ExpireOrder(order, "Expired", false);
                     return;
                 }
 
                 if (party.MapEvent != null) return;
+
+                if (party.CurrentSettlement != null)
+                {
+                    var destination = order.TargetSettlementId != null ? Settlement.Find(order.TargetSettlementId) : null;
+                    if (!ValidateOrder(party, order.Type, destination))
+                    {
+                        ExpireOrder(order, "Order target is no longer valid.", true);
+                        return;
+                    }
+                    IssueOrder(party, order.Type, destination);
+                    order.ReissueAttempts = 0;
+                    party.Ai.SetDoNotMakeNewDecisions(true);
+                    return;
+                }
 
                 // ── SmartGuard: re-evaluate conditions; only re-issue on state change ──
                 if (order.Type == PartyOrderType.SmartGuard)
@@ -461,6 +463,15 @@ namespace BLTAdoptAHero
             catch (Exception ex) { Log.Error($"[BLT] OnSettlementOwnerChanged error: {ex}"); }
         }
 
+        private static bool IsArmyFollower(MobileParty party)
+            => party.Army != null && party.Army.LeaderParty != party;
+
+        private void OnPartyJoinedArmy(MobileParty party)
+        {
+            if (party != null && IsArmyFollower(party))
+                CancelOrdersForParty(party.StringId, null, false);
+        }
+
         private void OnArmyDispersed(Army army, Army.ArmyDispersionReason reason, bool isPlayerArmy)
         {
             try
@@ -480,7 +491,7 @@ namespace BLTAdoptAHero
                 foreach (var order in _orders.Where(o => o.IsActive).ToList())
                 {
                     var p = MobileParty.All.FirstOrDefault(x => x.StringId == order.PartyId);
-                    if (p == null || !p.IsActive) continue;
+                    if (p == null || !p.IsActive || IsArmyFollower(p)) continue;
                     var target = order.TargetSettlementId != null ? Settlement.Find(order.TargetSettlementId) : null;
                     if (!ValidateOrder(p, order.Type, target)) continue;
                     IssueOrder(p, order.Type, target);
@@ -501,13 +512,25 @@ namespace BLTAdoptAHero
         /// </summary>
         public static void IssueOrder(MobileParty party, PartyOrderType type, Settlement target)
         {
-            var pm = new PartyManagement();
+            if (target == null && (type == PartyOrderType.Patrol || type == PartyOrderType.SmartGuard))
+                target = new PartyManagement().FindBestSettlementToDefend(party, party.MapFaction);
+            if (target == null || !party.IsActive || party.IsMainParty || IsArmyFollower(party)) return;
+
+            // On 1.2.12 an outbound order needs to leave the settlement before
+            // setting its map movement. Garrisoning here is already satisfied.
+            var currentSettlement = party.CurrentSettlement;
+            if (currentSettlement != null)
+            {
+                if ((type == PartyOrderType.Garrison && currentSettlement == target)
+                    || currentSettlement.IsUnderSiege || party.MapEvent != null)
+                    return;
+                LeaveSettlementAction.ApplyForParty(party);
+            }
 
             switch (type)
             {
                 case PartyOrderType.Siege:
-                    if (target != null)
-                        SetPartyAiAction.GetActionForBesiegingSettlement(party, target);
+                    SetPartyAiAction.GetActionForBesiegingSettlement(party, target);
                     break;
 
                 case PartyOrderType.Defend:
@@ -515,28 +538,23 @@ namespace BLTAdoptAHero
                     break;
 
                 case PartyOrderType.Patrol:
-                    if (target != null)
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
-                    else
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom));
+                    SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
                     break;
 
                 case PartyOrderType.Garrison:
                     // GoToSettlement causes the party to travel to and enter the settlement
-                    if (target != null)
-                        SetPartyAiAction.GetActionForVisitingSettlement(party, target);
+                    SetPartyAiAction.GetActionForVisitingSettlement(party, target);
                     break;
 
                 case PartyOrderType.Raid:
-                    if (target != null)
-                        SetPartyAiAction.GetActionForRaidingSettlement(party, target);
+                    SetPartyAiAction.GetActionForRaidingSettlement(party, target);
                     break;
 
                 case PartyOrderType.SmartGuard:
-                    if (target != null)
+                    if (target.IsFortification)
                         IssueSmartGuardOrder(party, target);
                     else
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, pm.FindBestSettlementToDefend(party, party.LeaderHero?.Clan?.Kingdom));
+                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
                     break;
             }
         }
