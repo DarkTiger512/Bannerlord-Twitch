@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Helpers;
@@ -1283,6 +1283,10 @@ namespace BLTAdoptAHero
         private const string ModelType = "NavalDLC.GameComponents.NavalDLCMobilePartyAIModel";
 
         private static readonly DefaultMobilePartyAIModel StockModel = new DefaultMobilePartyAIModel();
+
+        // War Sails is optional; skip the patch if its method is missing.
+        [HarmonyPrepare]
+        static bool Prepare() => TargetMethods().Any();
 
         static IEnumerable<MethodBase> TargetMethods()
         {
