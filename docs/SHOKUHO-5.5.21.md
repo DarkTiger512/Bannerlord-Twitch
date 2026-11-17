@@ -15,6 +15,14 @@ The build retains follow, guard, both retinue rosters, classed and classless equ
 - Custom viewer widgets remain available. The newer native agent name-marker constructor hook is unavailable.
 - TOAM race rules, asset fallbacks, preload hooks, siege timeout mitigation and dependency ordering remain TOAM-specific. This port uses Classic equipment selection.
 
+## Patrol and defend movement
+
+The patrol/defend hotfix replaces the earlier `RecalculateShortTermAi()` refresh with a full native movement update. The older engine's refresh does not handle patrol navigation, and its action wrapper skips an already matching patrol target. Explicit patrol/defend orders now clear a previous AI pause, reset the movement assignment, and call `CheckPartyNeedsUpdate()` while preserving the command's decision lock. This also applies to smart guard and recovery of existing held orders. Parties in combat and army followers are left under their existing control.
+
+`tools/test-shokuho-party-orders.py <output-directory>` exercises the production dispatch and hourly recovery code with a stateful 1.2.x AI fixture. It covers patrol and defend movement, repeated held orders, siege/raid transitions, army leaders and followers, departure restrictions, and lock restoration on failure. The previous refresh implementation fails the same movement regression. This fixture does not replace a live Shokuho campaign test.
+
+For live verification, issue `!party patrol <settlement>` and `!party defend <fortification>` to a party inside a friendly settlement and to one already holding outside. Advance campaign time and verify both its map position and hover status change. Repeat with an army leader, then save/reload an active order. Defend should engage hostile besiegers and return to patrol when the siege ends; an army follower should continue following its leader.
+
 ## Disposable campaign checklist
 
 1. Start Shokuho by itself on 1.2.12.77991 with its documented dependencies. Back up your campaign and BLT profile. Replace the four BLT module directories from the ZIP and load them after Shokuho.

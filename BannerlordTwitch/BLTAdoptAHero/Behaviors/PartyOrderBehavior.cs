@@ -514,9 +514,11 @@ namespace BLTAdoptAHero
         /// </summary>
         public static void IssueOrder(MobileParty party, PartyOrderType type, Settlement target)
         {
+            if (party == null || !party.IsActive || party.IsMainParty || IsArmyFollower(party)
+                || party.MapEvent != null) return;
             if (target == null && (type == PartyOrderType.Patrol || type == PartyOrderType.SmartGuard))
                 target = new PartyManagement().FindBestSettlementToDefend(party, party.MapFaction);
-            if (target == null || !party.IsActive || party.IsMainParty || IsArmyFollower(party)) return;
+            if (target == null) return;
 
             // On 1.2.12 an outbound order needs to leave the settlement before
             // setting its map movement. Garrisoning here is already satisfied.
@@ -624,18 +626,24 @@ namespace BLTAdoptAHero
 
         private static void RefreshMovement(MobileParty party, Action setMovement)
         {
-            // An existing BLT order may still have AI decisions locked when this runs.
+            // 1.2.x RecalculateShortTermAi has no patrol case and does not update
+            // navigation. SetPartyAiAction also skips a matching behavior/target.
+            // Reset the default behavior so CheckPartyNeedsUpdate runs the full
+            // native short-term AI and chooses a path, even for a held old order.
             var ai = party.Ai;
             bool wasLocked = ai.DoNotMakeNewDecisions;
-            if (wasLocked) ai.SetDoNotMakeNewDecisions(false);
+            ai.SetDoNotMakeNewDecisions(true);
             try
             {
+                // Explicit map orders supersede a previous settlement/rest AI pause.
+                ai.EnableAi();
+                ai.SetMoveModeHold();
                 setMovement();
-                ai.RecalculateShortTermAi();
+                ai.CheckPartyNeedsUpdate();
             }
             finally
             {
-                if (wasLocked) ai.SetDoNotMakeNewDecisions(true);
+                ai.SetDoNotMakeNewDecisions(wasLocked);
             }
         }
 

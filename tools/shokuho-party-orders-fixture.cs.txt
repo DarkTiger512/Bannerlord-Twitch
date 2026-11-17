@@ -1,0 +1,308 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+enum PartyOrderType { Siege, Defend, Patrol, Garrison, Raid, SmartGuard }
+enum AiBehavior { Hold, PatrolAroundPoint, DefendSettlement, EngageParty }
+enum MoveModeType { Hold, Point, Party }
+sealed class Order
+{
+    public PartyOrderType Type = PartyOrderType.Patrol;
+    public string TargetSettlementId;
+    public int ReissueAttempts;
+}
+sealed class Faction { public bool IsAtWarWith(Faction other) => other != null && other != this; }
+sealed class Siege { public Camp BesiegerCamp; }
+sealed class Camp { public MobileParty LeaderParty; }
+sealed class Village { public Settlement Settlement; public float Hearth; }
+sealed class Settlement
+{
+    private static readonly Dictionary<string, Settlement> all = new();
+    public string StringId;
+    public bool IsUnderSiege, IsUnderRaid;
+    public bool IsFortification = true;
+    public Siege SiegeEvent;
+    public MobileParty LastAttackerParty;
+    public List<Village> BoundVillages = new();
+    public Settlement(string id) { StringId = id; all[id] = this; }
+    public static Settlement Find(string id) => all.GetValueOrDefault(id);
+}
+sealed class Army
+{
+    public MobileParty LeaderParty;
+    public Settlement Target;
+    public string Behavior;
+}
+sealed class MobileParty
+{
+    public Army Army;
+    public Settlement CurrentSettlement, TargetSettlement;
+    public MobileParty TargetParty;
+    public Faction MapFaction = new();
+    public object MapEvent;
+    public string StringId = "party";
+    public bool IsActive = true, IsMainParty, HasOrder;
+    public List<string> Calls = new();
+    public AiBehavior DefaultBehavior => Ai.DefaultBehavior;
+    public PartyAi Ai;
+    public MobileParty() { Ai = new PartyAi(this); }
+}
+
+// Model separate strategic orders, short-term updates and navigation. The older
+// call-count fixture could pass even when navigation never left Hold.
+// Reference: https://github.com/iniznet/Bannerlord.Modules.Source/tree/1.2.x/Core/TaleWorlds.CampaignSystem
+// Party/MobilePartyAi.cs and Actions/SetPartyAiAction.cs. No native runtime is loaded.
+sealed class PartyAi
+{
+    private readonly MobileParty party;
+    private bool needsUpdate;
+    public bool DoNotMakeNewDecisions, IsDisabled, ThrowOnUpdate;
+    public AiBehavior DefaultBehavior { get; private set; }
+    public MoveModeType PartyMoveMode { get; private set; }
+    public Settlement MovementTarget { get; private set; }
+    public MobileParty MovementParty { get; private set; }
+    public int Updates, DistanceTravelled;
+    public PartyAi(MobileParty party) => this.party = party;
+    public void SetDoNotMakeNewDecisions(bool locked) => DoNotMakeNewDecisions = locked;
+    public void EnableAi() { IsDisabled = false; }
+    private void SetDefault(AiBehavior behavior)
+    {
+        if (DefaultBehavior != behavior) needsUpdate = true;
+        DefaultBehavior = behavior;
+    }
+    public void SetMoveModeHold()
+    {
+        Stall();
+        SetDefault(AiBehavior.Hold);
+        party.TargetSettlement = null;
+        party.TargetParty = null;
+    }
+    public void SetMovePatrolAroundSettlement(Settlement target)
+    {
+        SetDefault(AiBehavior.PatrolAroundPoint);
+        party.TargetSettlement = target;
+        party.TargetParty = null;
+        party.Calls.Add("patrol");
+    }
+    public void SetMoveDefendSettlement(Settlement target)
+    {
+        SetDefault(AiBehavior.DefendSettlement);
+        party.TargetSettlement = target;
+        party.TargetParty = null;
+        party.Calls.Add("defend");
+    }
+    public void SetMoveEngageParty(MobileParty target)
+    {
+        SetDefault(AiBehavior.EngageParty);
+        party.TargetParty = target;
+        party.TargetSettlement = null;
+        party.Calls.Add("engage");
+    }
+    public void RecalculateShortTermAi() { /* No patrol case; no navigation update. */ }
+    public void CheckPartyNeedsUpdate() { if (needsUpdate) NativeTick(); }
+    public void NativeTick()
+    {
+        needsUpdate = false;
+        if (ThrowOnUpdate) throw new InvalidOperationException("Native update failed");
+        if (IsDisabled || party.MapEvent != null) return;
+        Updates++;
+        MovementTarget = party.TargetSettlement;
+        MovementParty = party.TargetParty;
+        PartyMoveMode = DefaultBehavior == AiBehavior.Hold ? MoveModeType.Hold
+            : DefaultBehavior == AiBehavior.EngageParty ? MoveModeType.Party : MoveModeType.Point;
+        if (PartyMoveMode != MoveModeType.Hold) DistanceTravelled++;
+    }
+    public void Stall()
+    {
+        PartyMoveMode = MoveModeType.Hold;
+        MovementTarget = null;
+        MovementParty = null;
+        needsUpdate = false;
+    }
+}
+static class LeaveSettlementAction
+{
+    public static void ApplyForParty(MobileParty party)
+    {
+        party.Calls.Add("leave");
+        party.CurrentSettlement = null;
+    }
+}
+static class SetPartyAiAction
+{
+    public static void GetActionForPatrollingAroundSettlement(MobileParty party, Settlement target)
+    {
+        if (party.DefaultBehavior != AiBehavior.PatrolAroundPoint || party.TargetSettlement != target)
+            party.Ai.SetMovePatrolAroundSettlement(target);
+        if (party.Army != null) { party.Army.Target = target; party.Army.Behavior = "patrol"; }
+    }
+    public static void GetActionForDefendingSettlement(MobileParty party, Settlement target)
+    {
+        party.Ai.SetMoveDefendSettlement(target);
+        if (party.Army != null) { party.Army.Target = target; party.Army.Behavior = "defend"; }
+    }
+    public static void GetActionForVisitingSettlement(MobileParty party, Settlement target) => party.Calls.Add("visit");
+    public static void GetActionForBesiegingSettlement(MobileParty party, Settlement target) => party.Calls.Add("siege");
+    public static void GetActionForRaidingSettlement(MobileParty party, Settlement target) => party.Calls.Add("raid");
+}
+sealed class PartyManagement
+{
+    public Settlement FindBestSettlementToDefend(MobileParty party, Faction faction) => null;
+}
+sealed class Test
+{
+    private MobileParty party;
+    private void CancelOrdersForParty(string id, string reason, bool notify)
+    {
+        Check(id == party.StringId, "Correct party identity");
+        party.HasOrder = false;
+        party.Ai.SetDoNotMakeNewDecisions(false);
+    }
+    private static void NotifyHero(Order order, string text) => throw new Exception(text);
+    private static void ExpireOrder(Order order, string text, bool notify) => throw new Exception(text);
+FOLLOWER
+DISPATCH
+    private static void Monitor(MobileParty party, Order order)
+    {
+MONITOR
+    }
+    private static bool IsPatrolCurrent(MobileParty party, Settlement expectedTarget)
+    {
+        var order = new Order();
+        var expectedBehavior = AiBehavior.PatrolAroundPoint;
+DRIFT
+    }
+    static void Check(bool condition, string name)
+    {
+        if (!condition) throw new Exception(name);
+    }
+    static void Main()
+    {
+        var home = new Settlement("home");
+        var target = new Settlement("target");
+        foreach (var type in new[] { PartyOrderType.Patrol, PartyOrderType.Defend, PartyOrderType.SmartGuard })
+        foreach (bool locked in new[] { false, true })
+        foreach (bool armyLeader in new[] { false, true })
+        {
+            var outbound = new MobileParty { CurrentSettlement = home };
+            if (armyLeader) outbound.Army = new Army { LeaderParty = outbound };
+            outbound.Ai.DoNotMakeNewDecisions = locked;
+            outbound.Ai.IsDisabled = true; // Prior native rest/departure pause.
+            IssueOrder(outbound, type, target);
+            Check(outbound.CurrentSettlement == null && outbound.Calls[0] == "leave", "Departure before " + type);
+            Check(outbound.Ai.PartyMoveMode == MoveModeType.Point && outbound.Ai.MovementTarget == target,
+                type + " must establish navigation, not just DefaultBehavior");
+            Check(outbound.Ai.DoNotMakeNewDecisions == locked, "Restore prior lock after " + type);
+            if (armyLeader) Check(outbound.Army.Target == target && outbound.Army.Behavior == "patrol", "Army objective updated");
+            outbound.Ai.SetDoNotMakeNewDecisions(true); // RegisterOrder locks the accepted command.
+            var order = new Order { Type = type, TargetSettlementId = target.StringId };
+            int moved = outbound.Ai.DistanceTravelled;
+            for (int tick = 0; tick < 4; tick++) outbound.Ai.NativeTick();
+            Check(outbound.Ai.DistanceTravelled > moved, "Movement continues after registration locks decisions");
+            int updates = outbound.Ai.Updates;
+            if (type != PartyOrderType.Patrol) Monitor(outbound, order);
+            Check(outbound.Ai.Updates == updates, "Healthy order is not reset each hour");
+
+            // A saved/stalled order can match the strategic behavior and target
+            // while navigation still says Hold and AI remains disabled.
+            outbound.Ai.IsDisabled = true;
+            outbound.Ai.Stall();
+            if (type == PartyOrderType.Patrol)
+            {
+                Check(!IsPatrolCurrent(outbound, target), "Held patrol is detected");
+                IssueOrder(outbound, type, target);
+            }
+            else Monitor(outbound, order);
+            Check(outbound.Ai.PartyMoveMode == MoveModeType.Point && outbound.Ai.MovementTarget == target,
+                "Matching held " + type + " recovers on hourly reissue");
+            Check(outbound.Ai.DoNotMakeNewDecisions, "Recovered order stays locked");
+        }
+
+        var defender = new MobileParty();
+        var enemy = new MobileParty();
+        target.IsUnderSiege = true;
+        target.LastAttackerParty = enemy;
+        target.SiegeEvent = new Siege { BesiegerCamp = new Camp { LeaderParty = enemy } };
+        var defend = new Order { Type = PartyOrderType.Defend, TargetSettlementId = target.StringId };
+        IssueOrder(defender, defend.Type, target);
+        Check(defender.Ai.PartyMoveMode == MoveModeType.Party && defender.Ai.MovementParty == enemy, "Defend engages besieger");
+        defender.Ai.Stall();
+        Monitor(defender, defend);
+        Check(defender.Ai.MovementParty == enemy, "Held engage recovers");
+        target.IsUnderSiege = false;
+        target.SiegeEvent = null;
+        Monitor(defender, defend);
+        Check(defender.Ai.MovementTarget == target && defender.Ai.PartyMoveMode == MoveModeType.Point, "Siege ending resumes patrol");
+
+        var guard = new Order { Type = PartyOrderType.SmartGuard, TargetSettlementId = target.StringId };
+        var village = new Settlement("village") { IsFortification = false, IsUnderRaid = true, LastAttackerParty = enemy };
+        target.BoundVillages.Add(new Village { Settlement = village, Hearth = 100 });
+        Monitor(defender, guard);
+        Check(defender.Ai.MovementTarget == village, "Guard protects raided village");
+        target.IsUnderSiege = true;
+        target.SiegeEvent = new Siege { BesiegerCamp = new Camp { LeaderParty = enemy } };
+        Monitor(defender, guard);
+        Check(defender.DefaultBehavior == AiBehavior.DefendSettlement && defender.Ai.MovementTarget == target, "Siege takes priority over raid");
+        target.IsUnderSiege = false;
+        target.SiegeEvent = null;
+        village.IsUnderRaid = false;
+        Monitor(defender, guard);
+        Check(defender.DefaultBehavior == AiBehavior.PatrolAroundPoint && defender.Ai.MovementTarget == target, "Guard resumes patrol");
+
+        foreach (var entry in new[] { (PartyOrderType.Garrison, "visit"), (PartyOrderType.Raid, "raid"), (PartyOrderType.Siege, "siege") })
+        {
+            var outbound = new MobileParty { CurrentSettlement = home };
+            IssueOrder(outbound, entry.Item1, target);
+            Check(string.Join(",", outbound.Calls) == "leave," + entry.Item2, "Preserve departure for " + entry.Item1);
+        }
+        var garrison = new MobileParty { CurrentSettlement = home };
+        IssueOrder(garrison, PartyOrderType.Garrison, home);
+        IssueOrder(garrison, PartyOrderType.Patrol, null);
+        Check(garrison.CurrentSettlement == home && garrison.Calls.Count == 0, "Garrison and missing target stay home");
+        garrison.MapEvent = new object();
+        IssueOrder(garrison, PartyOrderType.Patrol, target);
+        Check(garrison.Calls.Count == 0, "Combat blocks departure");
+        garrison.CurrentSettlement = null;
+        IssueOrder(garrison, PartyOrderType.Defend, target);
+        Check(garrison.Calls.Count == 0, "Open-field combat blocks movement reset");
+        garrison.MapEvent = null;
+        garrison.CurrentSettlement = home;
+        home.IsUnderSiege = true;
+        IssueOrder(garrison, PartyOrderType.Patrol, target);
+        Check(garrison.Calls.Count == 0, "Siege blocks departure");
+        home.IsUnderSiege = false;
+        IssueOrder(null, PartyOrderType.Patrol, target);
+        foreach (var unavailable in new[] { new MobileParty { IsMainParty = true }, new MobileParty { IsActive = false } })
+        {
+            IssueOrder(unavailable, PartyOrderType.Patrol, target);
+            Check(unavailable.Calls.Count == 0, "Unavailable party is untouched");
+        }
+
+        var leader = new MobileParty { HasOrder = true };
+        leader.Ai.DoNotMakeNewDecisions = true;
+        var army = new Army { LeaderParty = leader };
+        leader.Army = army;
+        var follower = new MobileParty { Army = army, HasOrder = true };
+        follower.Ai.DoNotMakeNewDecisions = true;
+        var behavior = new Test { party = follower };
+        behavior.OnPartyJoinedArmy(follower);
+        Check(!follower.HasOrder && !follower.Ai.DoNotMakeNewDecisions, "Army call releases follower order");
+        IssueOrder(follower, PartyOrderType.Patrol, target);
+        Check(follower.Calls.Count == 0, "Follower does not run BLT movement");
+        behavior.party = leader;
+        behavior.OnPartyJoinedArmy(leader);
+        Check(leader.HasOrder && leader.Ai.DoNotMakeNewDecisions, "Army leader keeps its order");
+
+        foreach (bool locked in new[] { false, true })
+        {
+            var broken = new MobileParty();
+            broken.Ai.DoNotMakeNewDecisions = locked;
+            broken.Ai.ThrowOnUpdate = true;
+            bool threw = false;
+            try { IssueOrder(broken, PartyOrderType.Patrol, target); }
+            catch (InvalidOperationException) { threw = true; }
+            Check(threw && broken.Ai.DoNotMakeNewDecisions == locked, "Update failure restores prior lock");
+        }
+        Console.WriteLine("PASS Shokuho patrol/defend movement, held-order recovery, guard transitions, departures and army handoff");
+    }
+}
