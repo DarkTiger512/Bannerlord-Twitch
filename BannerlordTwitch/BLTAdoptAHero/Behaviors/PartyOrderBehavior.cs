@@ -253,7 +253,7 @@ namespace BLTAdoptAHero
                                       && party.TargetSettlement.StringId == wantedTarget.StringId;
 
                     // Only call IssueSmartGuardOrder when the desired state actually changed
-                    if (!behaviorOk || !targetOk)
+                    if (!behaviorOk || !targetOk || party.Ai.PartyMoveMode == MoveModeType.Hold)
                         IssueSmartGuardOrder(party, sgTarget);
 
                     party.Ai.SetDoNotMakeNewDecisions(true);
@@ -282,7 +282,8 @@ namespace BLTAdoptAHero
                     if (enemyBesieging)
                     {
                         bool alreadyEngaging = party.TargetParty == besiegerParty
-                            && party.DefaultBehavior == AiBehavior.EngageParty;
+                            && party.DefaultBehavior == AiBehavior.EngageParty
+                            && party.Ai.PartyMoveMode != MoveModeType.Hold;
                         if (!alreadyEngaging)
                             IssueForceDefendOrder(party, defTarget);
                     }
@@ -291,7 +292,7 @@ namespace BLTAdoptAHero
                         bool behaviorOk = party.DefaultBehavior == AiBehavior.PatrolAroundPoint;
                         bool targetOk = party.TargetSettlement != null
                                          && party.TargetSettlement.StringId == defTarget.StringId;
-                        if (!behaviorOk || !targetOk)
+                        if (!behaviorOk || !targetOk || party.Ai.PartyMoveMode == MoveModeType.Hold)
                             IssueForceDefendOrder(party, defTarget);
                     }
 
@@ -338,10 +339,11 @@ namespace BLTAdoptAHero
 
                 bool behaviorMatches = party.DefaultBehavior == expectedBehavior;
                 bool targetMatches = expectedTarget == null
-                    || party.TargetSettlement == null
+                    || (party.TargetSettlement == null && order.Type != PartyOrderType.Patrol)
                     || party.TargetSettlement == expectedTarget;
+                bool patrolHeld = order.Type == PartyOrderType.Patrol && party.Ai.PartyMoveMode == MoveModeType.Hold;
 
-                if (behaviorMatches && targetMatches)
+                if (behaviorMatches && targetMatches && !patrolHeld)
                 {
                     order.ReissueAttempts = 0;
                     if (order.Type == PartyOrderType.Siege && party.BesiegedSettlement != null)
@@ -538,7 +540,7 @@ namespace BLTAdoptAHero
                     break;
 
                 case PartyOrderType.Patrol:
-                    SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
+                    IssuePatrol(party, target);
                     break;
 
                 case PartyOrderType.Garrison:
@@ -554,7 +556,7 @@ namespace BLTAdoptAHero
                     if (target.IsFortification)
                         IssueSmartGuardOrder(party, target);
                     else
-                        SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target);
+                        IssuePatrol(party, target);
                     break;
             }
         }
@@ -575,7 +577,7 @@ namespace BLTAdoptAHero
                 var besiegerFaction = fortification.SiegeEvent.BesiegerCamp.LeaderParty?.MapFaction;
                 if (besiegerFaction != null && party.MapFaction.IsAtWarWith(besiegerFaction))
                 {
-                    SetPartyAiAction.GetActionForDefendingSettlement(party, fortification);
+                    RefreshMovement(party, () => SetPartyAiAction.GetActionForDefendingSettlement(party, fortification));
                     return;
                 }
                 // Besieger is non-hostile (e.g. allied siege or civil war) → fall through to patrol
@@ -590,14 +592,14 @@ namespace BLTAdoptAHero
                     var raider = village.Settlement.LastAttackerParty;
                     if (raider == null || !party.MapFaction.IsAtWarWith(raider.MapFaction)) continue;
 
-                    SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, village.Settlement);
+                    IssuePatrol(party, village.Settlement);
                     return;
                 }
             }
 
             // ── 3. Default: patrol the fortification ─────────────────────────
             {
-                SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification);
+                IssuePatrol(party, fortification);
             }
         }
 
@@ -611,10 +613,30 @@ namespace BLTAdoptAHero
             var besieger = fortification.SiegeEvent?.BesiegerCamp?.LeaderParty;
             if (besieger != null && besieger.IsActive && party.MapFaction.IsAtWarWith(besieger.MapFaction))
             {
-                party.Ai.SetMoveEngageParty(besieger);
+                RefreshMovement(party, () => party.Ai.SetMoveEngageParty(besieger));
                 return;
             }
-            SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, fortification);
+            IssuePatrol(party, fortification);
+        }
+
+        private static void IssuePatrol(MobileParty party, Settlement target)
+            => RefreshMovement(party, () => SetPartyAiAction.GetActionForPatrollingAroundSettlement(party, target));
+
+        private static void RefreshMovement(MobileParty party, Action setMovement)
+        {
+            // An existing BLT order may still have AI decisions locked when this runs.
+            var ai = party.Ai;
+            bool wasLocked = ai.DoNotMakeNewDecisions;
+            if (wasLocked) ai.SetDoNotMakeNewDecisions(false);
+            try
+            {
+                setMovement();
+                ai.RecalculateShortTermAi();
+            }
+            finally
+            {
+                if (wasLocked) ai.SetDoNotMakeNewDecisions(true);
+            }
         }
 
         public static bool IsSettlementReachable(MobileParty party, Settlement target)
