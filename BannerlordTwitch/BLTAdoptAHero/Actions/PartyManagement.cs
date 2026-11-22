@@ -359,13 +359,10 @@ namespace BLTAdoptAHero.Actions
             }
             Army army = party?.Army;
 
-            string behaviorText = party?.DefaultBehavior.ToString() ?? "";
-            string armyBehavior = army?.LeaderParty?.DefaultBehavior.ToString() ?? "";
-
-            if (string.IsNullOrEmpty(mode))
+            if (string.IsNullOrEmpty(mode) || mode == "status")
             {
                 var sb = new StringBuilder();
-                BuildStatusString(adoptedHero, party, army, behaviorText, armyBehavior, sb);
+                BuildStatusString(adoptedHero, party, army, sb);
                 onSuccess(sb.ToString());
                 return;
             }
@@ -393,11 +390,10 @@ namespace BLTAdoptAHero.Actions
         }
 
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        //  STATUS STRING  (unchanged)
+        //  STATUS STRING
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-        private static void BuildStatusString(Hero adoptedHero, MobileParty party, Army army,
-            string behaviorText, string armyBehavior, StringBuilder sb)
+        private static void BuildStatusString(Hero adoptedHero, MobileParty party, Army army, StringBuilder sb)
         {
             if (adoptedHero.HeroState == Hero.CharacterStates.Released)
                 sb.Append("{=r1nJTiSA}Your hero has just been released".Translate());
@@ -430,25 +426,8 @@ namespace BLTAdoptAHero.Actions
                 else
                     sb.Append($"Size: {sizeStr}) | ");
 
-                if (!string.IsNullOrWhiteSpace(behaviorText) && behaviorText != armyBehavior)
-                    sb.Append($"Your party is: {behaviorText} | ");
-                if (party.IsDisbanding) sb.Append("Disbanding");
-
-                // Active order tag
-                var activeOrder = PartyOrderBehavior.Current?.GetActiveOrder(party.StringId);
-                if (activeOrder != null)
-                    sb.Append($"[{activeOrder.Type} order locked] | ");
-
-                if (party.TargetParty != null || party.ShortTermTargetParty != null)
-                {
-                    var al = party.Army?.LeaderParty;
-                    if (party.TargetParty != al?.TargetParty || party.ShortTermTargetParty != al?.ShortTermTargetParty)
-                    {
-                        var tgt = party.ShortTermTargetParty ?? party.TargetParty;
-                        sb.Append("{=9aFoBcPY}Target: {target} - ".Translate(("target", tgt?.Name?.ToString() ?? "Unknown")));
-                        sb.Append("{=D3dcUxuj}Size: {size} | ".Translate(("size", tgt?.MemberRoster?.TotalManCount ?? 0)));
-                    }
-                }
+                sb.Append(DescribePartyStatus(party));
+                sb.Append(" | ");
 
                 if (army != null)
                 {
@@ -456,7 +435,8 @@ namespace BLTAdoptAHero.Actions
                     sb.Append("{=d76wc5iS}[Strength: {strength} | ".Translate(("strength", Math.Round(army.TotalStrength).ToString())));
                     sb.Append("{=D3dcUxuj}Size: {size} | ".Translate(("size", army.TotalHealthyMembers.ToString())));
                     sb.Append("{=7p5j5Mlx}Party nÂº: {count}] ".Translate(("count", army.LeaderPartyAndAttachedPartiesCount.ToString())));
-                    if (!string.IsNullOrWhiteSpace(armyBehavior)) sb.Append($"Your army is: {armyBehavior} | ");
+                    if (army.LeaderParty != null && army.LeaderParty != party)
+                        sb.Append($"| Army leader: {DescribePartyStatus(army.LeaderParty)} | ");
                 }
 
                 if (party.MapEvent != null)
@@ -478,11 +458,56 @@ namespace BLTAdoptAHero.Actions
                 }
             }
             else if (party != null && !adoptedHero.IsPartyLeader)
-                sb.Append($"Companion in {party.Name}'s party");
+                sb.Append($"Companion in {party.Name}'s party | {DescribePartyStatus(party)}");
             else if (party == null && !adoptedHero.IsPartyLeader)
                 sb.Append("You have no party");
             else
                 sb.Append("Unknown");
+        }
+
+        private static string DescribePartyStatus(MobileParty party)
+        {
+            var nearest = party.CurrentSettlement == null
+                ? SettlementHelper.FindNearestFortification(toMapPoint: party) : null;
+            string location = party.CurrentSettlement != null ? $"Inside {party.CurrentSettlement.Name}"
+                : nearest != null ? $"Near {nearest.Name}" : "On the campaign map";
+            var order = PartyOrderBehavior.Current?.GetActiveOrder(party.StringId);
+            var orderTarget = order?.TargetSettlementId is string id ? Settlement.Find(id) : null;
+            var target = party.BesiegedSettlement ?? party.TargetSettlement ?? party.ShortTermTargetSettlement;
+            var targetParty = party.ShortTermTargetParty ?? party.TargetParty;
+            string activity = party.DefaultBehavior switch
+            {
+                AiBehavior.BesiegeSettlement => "Marching to besiege",
+                AiBehavior.AssaultSettlement => "Assaulting",
+                AiBehavior.RaidSettlement => "Raiding",
+                AiBehavior.DefendSettlement => "Defending",
+                AiBehavior.PatrolAroundPoint => "Patrolling",
+                AiBehavior.GoToSettlement or AiBehavior.GoToPoint => "Travelling",
+                AiBehavior.EngageParty => "Engaging",
+                AiBehavior.EscortParty or AiBehavior.JoinParty => "Following",
+                AiBehavior.GoAroundParty => "Moving around",
+                AiBehavior.FleeToPoint or AiBehavior.FleeToGate or AiBehavior.FleeToParty => "Retreating",
+                _ => "Idle"
+            };
+            string destination = target?.Name.ToString() ?? targetParty?.Name.ToString();
+            if (party.IsDisbanding) activity = "Disbanding";
+            else if (party.MapEvent != null) activity = "In battle";
+            else if (party.BesiegedSettlement != null) activity = $"Besieging {party.BesiegedSettlement.Name}";
+            else if (party.Ai.PartyMoveMode == MoveModeType.Hold) activity = "Holding";
+            else if (destination != null) activity += $" {destination}";
+
+            if (order == null) return $"{location} | {activity}";
+            string instruction = order.Type switch
+            {
+                PartyOrderType.Siege => "Besiege",
+                PartyOrderType.Defend => "Defend",
+                PartyOrderType.Patrol => "Patrol",
+                PartyOrderType.Garrison => "Garrison",
+                PartyOrderType.Raid => "Raid",
+                PartyOrderType.SmartGuard => "Guard",
+                _ => "Unknown"
+            };
+            return $"{location} | {activity} | Order: {instruction} {orderTarget?.Name.ToString() ?? "unknown settlement"}";
         }
 
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1115,13 +1140,10 @@ namespace BLTAdoptAHero.Actions
             sb.Append($"Army: {army.Name} | Str: {(int)army.TotalStrength} | ");
             sb.Append($"{army.TotalHealthyMembers} troops / {army.LeaderPartyAndAttachedPartiesCount} parties | ");
             sb.Append($"Cohesion: {(int)army.Cohesion}");
-            sb.Append($" | {party.DefaultBehavior} â†’ {party.TargetSettlement?.Name?.ToString() ?? party.TargetParty?.Name?.ToString() ?? "â€”"}");
+            sb.Append($" | {DescribePartyStatus(army.LeaderParty ?? party)}");
             sb.Append($" | Morale: {(int)army.Morale}");
             if (party.FoodChange < 0f && party.Food > 0f)
                 sb.Append($" | Food: ~{(int)(party.Food / Math.Abs(party.FoodChange))}d");
-            var order = PartyOrderBehavior.Current?.GetActiveOrder(party.StringId);
-            if (order != null)
-                sb.Append($" | Order: {order.Type} ({order.ReissueAttempts}/{order.MaxReissueAttempts} re-issues)");
             onSuccess(sb.ToString());
         }
 
@@ -1426,12 +1448,10 @@ namespace BLTAdoptAHero.Actions
                     foreach (var a in ownArmies)
                     {
                         var ldr = a.LeaderParty?.LeaderHero;
-                        string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
-                        string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
+                        string status = a.LeaderParty != null ? DescribePartyStatus(a.LeaderParty) : "Leader unavailable";
                         sb.Append($"[own] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, " +
                                   $"Str:{(int)a.TotalStrength}, " +
-                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, {behavior}â†’{tgt}) | ");
+                                  $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, {status}) | ");
                     }
                 }
 
@@ -1442,14 +1462,12 @@ namespace BLTAdoptAHero.Actions
                     foreach (var (owner, a) in alliedArmies)
                     {
                         var ldr = a.LeaderParty?.LeaderHero;
-                        string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
-                        string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                      ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
+                        string status = a.LeaderParty != null ? DescribePartyStatus(a.LeaderParty) : "Leader unavailable";
                         bool inCombat = a.LeaderParty?.MapEvent != null;
                         sb.Append($"[{idx}] {a.Name} ({owner.Name}, Leader:{ldr?.Name.ToString() ?? "?"}, " +
                                   $"Str:{(int)a.TotalStrength}, " +
                                   $"Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
-                                  $"{behavior}â†’{tgt}{(inCombat ? " [COMBAT]" : "")}) | ");
+                                  $"{status}{(inCombat ? " [COMBAT]" : "")}) | ");
                         idx++;
                     }
                 }
@@ -1469,14 +1487,10 @@ namespace BLTAdoptAHero.Actions
             {
                 var a = armies[i];
                 var ldr = a.LeaderParty?.LeaderHero;
-                string behavior = a.LeaderParty?.DefaultBehavior.ToString() ?? "â€”";
-                string tgt = a.LeaderParty?.TargetSettlement?.Name?.ToString()
-                                  ?? a.LeaderParty?.TargetParty?.Name?.ToString() ?? "â€”";
-                string orderTag = PartyOrderBehavior.Current?.HasActiveOrder(a.LeaderParty?.StringId ?? "") == true
-                    ? "[order]" : "";
+                string status = a.LeaderParty != null ? DescribePartyStatus(a.LeaderParty) : "Leader unavailable";
                 sb2.Append($"[{i + 1}] {a.Name} (Leader:{ldr?.Name.ToString() ?? "?"}, Clan:{a.LeaderParty?.ActualClan?.Name.ToString() ?? "?"}, " +
                            $"Str:{(int)a.TotalStrength}, Parties:{a.LeaderPartyAndAttachedPartiesCount}, " +
-                           $"{behavior}â†’{tgt}{orderTag}) | ");
+                           $"{status}) | ");
             }
             onSuccess(sb2.ToString().TrimEnd(' ', '|'));
         }

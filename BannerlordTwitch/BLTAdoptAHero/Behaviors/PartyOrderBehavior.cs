@@ -12,6 +12,7 @@ using BannerlordTwitch.Util;
 using BLTAdoptAHero;
 using BLTAdoptAHero.Actions;
 using TaleWorlds.Core;
+using TaleWorlds.Library;
 using Helpers;
 
 namespace BLTAdoptAHero
@@ -211,6 +212,16 @@ namespace BLTAdoptAHero
                     return;
                 }
 
+                if (UsesGateDeparture(order.Type) && party.DefaultBehavior == AiBehavior.GoToPoint
+                    && IsNearDepartureGate(party, party.LastVisitedSettlement)
+                    && party.TargetPosition.DistanceSquared(party.LastVisitedSettlement.GatePosition) >= 4f)
+                {
+                    // Give the party time to clear the gate before steering it back toward the fort.
+                    if (party.Ai.PartyMoveMode == MoveModeType.Hold || party.Ai.IsDisabled)
+                        IssueOrder(party, order.Type, Settlement.Find(order.TargetSettlementId));
+                    return;
+                }
+
                 // ── SmartGuard: re-evaluate conditions; only re-issue on state change ──
                 if (order.Type == PartyOrderType.SmartGuard)
                 {
@@ -252,9 +263,9 @@ namespace BLTAdoptAHero
                     bool targetOk = party.TargetSettlement != null
                                       && party.TargetSettlement.StringId == wantedTarget.StringId;
 
-                    // Only call IssueSmartGuardOrder when the desired state actually changed
+                    // Reissue only when the assignment changed or movement is stalled.
                     if (!behaviorOk || !targetOk || party.Ai.PartyMoveMode == MoveModeType.Hold)
-                        IssueSmartGuardOrder(party, sgTarget);
+                        IssueOrder(party, order.Type, sgTarget);
 
                     party.Ai.SetDoNotMakeNewDecisions(true);
                     order.ReissueAttempts = 0;
@@ -285,7 +296,7 @@ namespace BLTAdoptAHero
                             && party.DefaultBehavior == AiBehavior.EngageParty
                             && party.Ai.PartyMoveMode != MoveModeType.Hold;
                         if (!alreadyEngaging)
-                            IssueForceDefendOrder(party, defTarget);
+                            IssueOrder(party, order.Type, defTarget);
                     }
                     else
                     {
@@ -293,7 +304,7 @@ namespace BLTAdoptAHero
                         bool targetOk = party.TargetSettlement != null
                                          && party.TargetSettlement.StringId == defTarget.StringId;
                         if (!behaviorOk || !targetOk || party.Ai.PartyMoveMode == MoveModeType.Hold)
-                            IssueForceDefendOrder(party, defTarget);
+                            IssueOrder(party, order.Type, defTarget);
                     }
 
                     party.Ai.SetDoNotMakeNewDecisions(true);
@@ -526,10 +537,22 @@ namespace BLTAdoptAHero
             if (currentSettlement != null)
             {
                 if ((type == PartyOrderType.Garrison && currentSettlement == target)
-                    || currentSettlement.IsUnderSiege || party.MapEvent != null)
+                    || currentSettlement.IsUnderSiege)
                     return;
+                if (UsesGateDeparture(type))
+                {
+                    // Leaving dispatches settlement callbacks synchronously. Clear the previous
+                    // visit order and AI pause before those callbacks can see an outbound party.
+                    party.Ai.EnableAi();
+                    party.Ai.SetMoveModeHold();
+                }
                 LeaveSettlementAction.ApplyForParty(party);
+                if (party.CurrentSettlement != null || party.MapEvent != null) return;
             }
+
+            if (UsesGateDeparture(type)
+                && TryClearDepartureGate(party, currentSettlement ?? party.LastVisitedSettlement))
+                return;
 
             switch (type)
             {
@@ -619,6 +642,40 @@ namespace BLTAdoptAHero
                 return;
             }
             IssuePatrol(party, fortification);
+        }
+
+        private static bool UsesGateDeparture(PartyOrderType type)
+            => type == PartyOrderType.Patrol || type == PartyOrderType.SmartGuard || type == PartyOrderType.Defend;
+
+        private static bool IsNearDepartureGate(MobileParty party, Settlement settlement)
+            => settlement != null && party.Position2D.DistanceSquared(settlement.GatePosition) < 2.25f;
+
+        private static bool TryClearDepartureGate(MobileParty party, Settlement settlement)
+        {
+            if (!IsNearDepartureGate(party, settlement)) return false;
+            if (party.DefaultBehavior == AiBehavior.GoToPoint && party.Ai.PartyMoveMode != MoveModeType.Hold && !party.Ai.IsDisabled
+                && party.TargetPosition.DistanceSquared(settlement.GatePosition) >= 4f)
+                return true;
+
+            // Try several directions because coastal or mountain gates can be next to blocked faces.
+            var map = Campaign.Current.MapSceneWrapper;
+            var origin = party.Position2D;
+            var start = map.GetFaceIndex(origin);
+            if (!start.IsValid()) return false;
+            for (int i = 0; i < 12; i++)
+            {
+                float angle = (float)(i * Math.PI / 6);
+                var point = settlement.GatePosition + new Vec2((float)Math.Cos(angle), (float)Math.Sin(angle)) * 3f;
+                var face = map.GetFaceIndex(point);
+                if (!face.IsValid() || map.GetFaceTerrainType(face) == TerrainType.Water
+                    || !map.AreFacesOnSameIsland(start, face, false)
+                    || !map.GetPathDistanceBetweenAIFaces(start, face, origin, point, 0.1f, 12f, out _))
+                    continue;
+
+                RefreshMovement(party, () => party.Ai.SetMoveGoToPoint(point));
+                return true;
+            }
+            return false;
         }
 
         private static void IssuePatrol(MobileParty party, Settlement target)

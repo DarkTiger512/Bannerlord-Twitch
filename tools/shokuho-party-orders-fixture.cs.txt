@@ -3,8 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 
 enum PartyOrderType { Siege, Defend, Patrol, Garrison, Raid, SmartGuard }
-enum AiBehavior { Hold, PatrolAroundPoint, DefendSettlement, EngageParty }
+enum AiBehavior { Hold, PatrolAroundPoint, DefendSettlement, EngageParty, GoToPoint, BesiegeSettlement, AssaultSettlement, RaidSettlement, GoToSettlement, EscortParty, JoinParty, GoAroundParty, FleeToPoint, FleeToGate, FleeToParty }
 enum MoveModeType { Hold, Point, Party }
+enum TerrainType { Land, Water }
+readonly record struct Vec2(float X, float Y)
+{
+    public static Vec2 operator +(Vec2 a, Vec2 b) => new(a.X + b.X, a.Y + b.Y);
+    public static Vec2 operator *(Vec2 a, float scale) => new(a.X * scale, a.Y * scale);
+    public float DistanceSquared(Vec2 other) => (X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y);
+}
+readonly record struct Face(Vec2 Point) { public bool IsValid() => true; }
+sealed class Map
+{
+    public Face GetFaceIndex(Vec2 point) => new(point);
+    public TerrainType GetFaceTerrainType(Face face) => face.Point.X > 2.9f ? TerrainType.Water : TerrainType.Land;
+    public bool AreFacesOnSameIsland(Face start, Face end, bool _) => true;
+    public bool GetPathDistanceBetweenAIFaces(Face start, Face end, Vec2 from, Vec2 to, float radius, float max, out float distance)
+    {
+        distance = MathF.Sqrt(from.DistanceSquared(to));
+        return to.X < 2f;
+    }
+}
+sealed class Campaign
+{
+    public static Campaign Current = new();
+    public Map MapSceneWrapper = new();
+}
+static class SettlementHelper
+{
+    public static Settlement FindNearestFortification(MobileParty toMapPoint) => toMapPoint.LastVisitedSettlement;
+}
+sealed class PartyOrderBehavior
+{
+    public static PartyOrderBehavior Current = new();
+    public Order ActiveOrder;
+    public Order GetActiveOrder(string id) => ActiveOrder;
+}
 sealed class Order
 {
     public PartyOrderType Type = PartyOrderType.Patrol;
@@ -19,6 +53,8 @@ sealed class Settlement
 {
     private static readonly Dictionary<string, Settlement> all = new();
     public string StringId;
+    public string Name => StringId;
+    public Vec2 GatePosition;
     public bool IsUnderSiege, IsUnderRaid;
     public bool IsFortification = true;
     public Siege SiegeEvent;
@@ -36,8 +72,11 @@ sealed class Army
 sealed class MobileParty
 {
     public Army Army;
-    public Settlement CurrentSettlement, TargetSettlement;
-    public MobileParty TargetParty;
+    public Settlement CurrentSettlement, TargetSettlement, LastVisitedSettlement, BesiegedSettlement, ShortTermTargetSettlement;
+    public MobileParty TargetParty, ShortTermTargetParty;
+    public Vec2 Position2D = new(10f, 10f), TargetPosition;
+    public bool IsDisbanding;
+    public string Name => StringId;
     public Faction MapFaction = new();
     public object MapEvent;
     public string StringId = "party";
@@ -98,6 +137,12 @@ sealed class PartyAi
         party.TargetSettlement = null;
         party.Calls.Add("engage");
     }
+    public void SetMoveGoToPoint(Vec2 target)
+    {
+        SetDefault(AiBehavior.GoToPoint);
+        party.TargetPosition = target;
+        party.Calls.Add("clear gate");
+    }
     public void RecalculateShortTermAi() { /* No patrol case; no navigation update. */ }
     public void CheckPartyNeedsUpdate() { if (needsUpdate) NativeTick(); }
     public void NativeTick()
@@ -122,10 +167,14 @@ sealed class PartyAi
 }
 static class LeaveSettlementAction
 {
+    public static bool SimulateGateReentry;
     public static void ApplyForParty(MobileParty party)
     {
         party.Calls.Add("leave");
+        party.LastVisitedSettlement = party.CurrentSettlement;
         party.CurrentSettlement = null;
+        if (SimulateGateReentry && (party.Ai.IsDisabled || party.DefaultBehavior == AiBehavior.GoToSettlement))
+            party.CurrentSettlement = party.LastVisitedSettlement;
     }
 }
 static class SetPartyAiAction
@@ -172,6 +221,7 @@ MONITOR
         var expectedBehavior = AiBehavior.PatrolAroundPoint;
 DRIFT
     }
+STATUS_METHOD
     static void Check(bool condition, string name)
     {
         if (!condition) throw new Exception(name);
@@ -180,6 +230,41 @@ DRIFT
     {
         var home = new Settlement("home");
         var target = new Settlement("target");
+        foreach (var type in new[] { PartyOrderType.Patrol, PartyOrderType.Defend, PartyOrderType.SmartGuard })
+        {
+            var atGate = new MobileParty { CurrentSettlement = home, Position2D = home.GatePosition };
+            atGate.Ai.IsDisabled = true;
+            var departure = new Order { Type = type, TargetSettlementId = home.StringId };
+            LeaveSettlementAction.SimulateGateReentry = true;
+            IssueOrder(atGate, type, home);
+            LeaveSettlementAction.SimulateGateReentry = false;
+            Check(atGate.CurrentSettlement == null, "Clear the AI pause before the settlement-left callback");
+            Check(string.Join(",", atGate.Calls) == "leave,clear gate", "Start with a map point away from the gate");
+            Check(atGate.TargetPosition.DistanceSquared(home.GatePosition) >= 8f && atGate.TargetPosition.X < 2f,
+                "Skip water and unreachable routes");
+            Monitor(atGate, departure);
+            Check(atGate.Calls.Count == 2, "Keep the departure leg while still near the gate");
+            atGate.Ai.Stall();
+            Monitor(atGate, departure);
+            Check(atGate.Ai.PartyMoveMode == MoveModeType.Point && atGate.Calls.Count == 3, "Restart a stalled gate departure");
+            atGate.Position2D = atGate.TargetPosition;
+            if (type == PartyOrderType.Patrol)
+            {
+                Check(!IsPatrolCurrent(atGate, home), "Patrol monitoring resumes after departure");
+                IssueOrder(atGate, type, home);
+            }
+            else Monitor(atGate, departure);
+            Check(atGate.DefaultBehavior == AiBehavior.PatrolAroundPoint && atGate.Ai.MovementTarget == home,
+                "Resume the saved order after clearing the gate");
+        }
+
+        var holding = new MobileParty { CurrentSettlement = home };
+        PartyOrderBehavior.Current.ActiveOrder = new Order { Type = PartyOrderType.Siege, TargetSettlementId = target.StringId };
+        Check(DescribePartyStatus(holding) == "Inside home | Holding | Order: Besiege target", "Held status names the location and outstanding order");
+        holding.LastVisitedSettlement = home;
+        holding.CurrentSettlement = null;
+        holding.BesiegedSettlement = target;
+        Check(DescribePartyStatus(holding) == "Near home | Besieging target | Order: Besiege target", "Active siege names its target even while stationary");
         foreach (var type in new[] { PartyOrderType.Patrol, PartyOrderType.Defend, PartyOrderType.SmartGuard })
         foreach (bool locked in new[] { false, true })
         foreach (bool armyLeader in new[] { false, true })
