@@ -25,7 +25,7 @@ $(document).ready(function () {
         if (!geography || data.GeographyRevision !== revision) { hub.server.refresh(0); return; }
         container.classList.remove('hidden');
         container.setAttribute('aria-hidden', 'false');
-        ownership = new Map((data.Ownership || []).map(item => [item.Id, item.KingdomId]));
+        ownership = new Map((data.Ownership || []).map(item => [item.Id, item]));
         currentHeroes = data.Heroes || [];
         renderSettlements(currentHeroes); renderHeroes(currentHeroes);
         updateSpectatorCamera(currentHeroes);
@@ -71,7 +71,11 @@ $(document).ready(function () {
         const ordered = [...(geography.Settlements || [])].sort((a, b) =>
             (a.Type === 'Town' ? 0 : 1) - (b.Type === 'Town' ? 0 : 1) || a.Id.localeCompare(b.Id));
         ordered.forEach(s => {
-            const colors = kingdomColors.get(ownership.get(s.Id)) || { fill: '#788087', border: '#e7e1d5' };
+            const owner = ownership.get(s.Id);
+            let colors = owner && kingdomColors.get(owner.KingdomId);
+            const independent = !colors && !!owner && owner.Independent;
+            if (independent) colors = { fill: owner.Color1, border: owner.Color2 };
+            colors = colors || { fill: '#788087', border: '#e7e1d5' };
             const group = document.createElementNS(ns, 'g'); group.setAttribute('transform', `translate(${s.X},${s.Y})`);
             let shape;
             if (s.Type === 'Town') {
@@ -83,8 +87,21 @@ $(document).ready(function () {
             shape.setAttribute('class', 'settlement-shape'); shape.setAttribute('fill', colors.fill);
             shape.setAttribute('stroke', colors.border); shape.setAttribute('stroke-width', '.55');
             group.appendChild(shape); settlementLayer.appendChild(group);
+            if (independent) {
+                const extent = s.Type === 'Town' ? (settings.TownRadius || 2.15) * 0.5 : (settings.CastleLength || 2.5) * 0.3;
+                group.appendChild(makeCross(extent, colors.border));
+            }
             if (density === 'All' || (density === 'Smart' && s.Type === 'Town')) addSettlementLabel(s, occupied);
         });
+    }
+    function makeCross(e, color) {
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('d', `M${-e},${-e}L${e},${e}M${-e},${e}L${e},${-e}`);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '.5');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('class', 'independent-mark');
+        return path;
     }
     function addSettlementLabel(s, occupied) {
         const box = { x: s.X + 1.8, y: s.Y - 2.2, w: Math.max(5, s.Name.length * .8), h: 2.2 };
