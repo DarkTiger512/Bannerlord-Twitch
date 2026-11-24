@@ -360,29 +360,56 @@ namespace BLTAdoptAHero
     #endregion
 
     #region ClanKingdomDecisions
-        // Constructors must finish: skipping one leaves an allocated, incomplete ballot.
-        // Reject AI proposals at the queue boundary instead.
-        [HarmonyPatch(typeof(Kingdom), nameof(Kingdom.AddDecision), new Type[] { typeof(KingdomDecision), typeof(bool) })]
-        internal static class BltKingdomDecisionQueuePatch
+    // Constructors must finish: skipping one leaves an allocated, incomplete ballot.
+    // Reject AI proposals at the queue boundary instead.
+    [HarmonyPatch(typeof(Kingdom), nameof(Kingdom.AddDecision), new Type[] { typeof(KingdomDecision), typeof(bool) })]
+    internal static class BltKingdomDecisionQueuePatch
+    {
+        [HarmonyPrefix]
+        private static bool Prefix(KingdomDecision kingdomDecision)
         {
-            [HarmonyPrefix]
-            private static bool Prefix(KingdomDecision kingdomDecision)
-            {
-                if (!(kingdomDecision is DeclareWarDecision)
-                    && !(kingdomDecision is ExpelClanFromKingdomDecision))
-                    return true;
+            var proposerClan = kingdomDecision.ProposerClan;
+            if (proposerClan == null || proposerClan == Hero.MainHero?.Clan)
+                return true; // player-proposed: always allowed
 
-                var proposerClan = kingdomDecision.ProposerClan;
-                if (proposerClan?.Kingdom?.Leader != null && proposerClan.Kingdom.Leader.IsAdopted() && Hero.MainHero?.Clan != proposerClan)
-                {
-#if DEBUG
-                    Log.Trace($"[BLT] Blocked {kingdomDecision.GetType().Name} proposal for BLT kingdom: {proposerClan.Kingdom.Name}");
-#endif
-                    return false;
-                }
+            if (kingdomDecision is MakePeaceKingdomDecision peace)
+                return AllowPeaceProposal(proposerClan, peace);
+
+            if (!(kingdomDecision is DeclareWarDecision)
+                && !(kingdomDecision is ExpelClanFromKingdomDecision))
                 return true;
+
+            if (proposerClan.Kingdom?.Leader != null && proposerClan.Kingdom.Leader.IsAdopted())
+            {
+#if DEBUG
+        Log.Trace($"[BLT] Blocked {kingdomDecision.GetType().Name} proposal for BLT kingdom: {proposerClan.Kingdom.Name}");
+#endif
+                return false;
             }
+            return true;
         }
+
+        private static bool AllowPeaceProposal(Clan proposerClan, MakePeaceKingdomDecision peace)
+        {
+            Kingdom ownKingdom = proposerClan.Kingdom;
+            IFaction other = peace.FactionToMakePeaceWith; // verify name in dnSpy
+
+            bool ownIsBlt = ownKingdom?.Leader != null && ownKingdom.Leader.IsAdopted();
+            bool otherIsBlt = !BLTDiplomacyPatches.IsPlayerSide(other)
+                              && BLTDiplomacyPatches.FactionHasAdoptedClan(other);
+
+            if (!ownIsBlt && !otherIsBlt) return true; // plain AI vs AI / AI vs player
+
+            // AI kingdom wants peace with a BLT kingdom: turn it into a BLT proposal
+            if (!ownIsBlt && ownKingdom != null && other is Kingdom bltKingdom)
+                BLTDiplomacyBehavior.Current?.HandleAIPeaceAttempt(ownKingdom, bltKingdom);
+
+#if DEBUG
+    Log.Trace($"[BLT] Blocked AI peace proposal: {proposerClan.Kingdom?.Name} -> {other?.Name}");
+#endif
+            return false;
+        }
+    }
 
         //        // Block KingdomPolicyDecision for BLT kingdoms (optional - you might want to keep this)
         //        [HarmonyPatch(typeof(KingdomPolicyDecision), MethodType.Constructor, new Type[] { typeof(Clan), typeof(PolicyObject), typeof(bool) })]
@@ -648,53 +675,37 @@ namespace BLTAdoptAHero
     {
         // ── helpers ──────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Returns true when <paramref name="faction"/> is — or contains — at least one
-        /// clan whose leader is an adopted hero.  Works for both Kingdom and Clan factions.
-        /// </summary>
-        private static bool FactionHasAdoptedClan(IFaction faction)
+        /// <summary>The player's own faction: their independent clan, or a kingdom they rule.</summary>
+        internal static bool IsPlayerSide(IFaction f)
         {
-            if (faction == null) return false;
-
-            // Faction IS a clan (e.g. minor factions, rebel clans)
-            if (faction is Clan clan)
-                return clan.Leader != null && clan.Leader.IsAdopted();
-
-            // Faction is a kingdom — check every member clan
-            if (faction is Kingdom kingdom)
-                return kingdom.Clans.Any(c => c?.Leader != null && c.Leader.IsAdopted());
-
-            return false;
+            var pc = Clan.PlayerClan;
+            if (f == null || pc == null) return false;
+            if (f == pc) return true;
+            return f is Kingdom k && k.Leader == Hero.MainHero;
         }
 
         /// <summary>
-        /// Logs a feed response for every adopted leader found inside <paramref name="faction"/>.
+        /// True when the faction's own ruler is an adopted hero, so its diplomacy is
+        /// driven by viewer commands. A BLT vassal inside an AI-ruled kingdom does NOT
+        /// make that kingdom BLT-controlled, and the player's own faction never is.
         /// </summary>
-        private static void NotifyAdoptedLeaders(IFaction faction, IFaction other, string reason)
+        internal static bool IsBltControlled(IFaction f)
         {
-            IEnumerable<Hero> adopted = faction is Kingdom k
-                ? k.Clans.Where(c => c?.Leader != null && c.Leader.IsAdopted()).Select(c => c.Leader)
-                : faction is Clan c2 && c2.Leader != null && c2.Leader.IsAdopted()
-                    ? new[] { c2.Leader }
-                    : Enumerable.Empty<Hero>();
+            if (f == null || IsPlayerSide(f)) return false;
+            return f.Leader != null && f.Leader.IsAdopted();
+        }
 
-            foreach (Hero h in adopted)
-            {
-                string n = h.FirstName.ToString()
-                    .Replace(BLTAdoptAHeroModule.Tag, "")
-                    .Replace(BLTAdoptAHeroModule.DevTag, "")
-                    .Trim();
-                Log.LogFeedResponse($"@{n} Peace with {other.Name} rejected – {reason}");
-            }
+        private static void NotifyLeader(IFaction f, string message)
+        {
+            string name = f.Leader.FirstName.ToString()
+                .Replace(BLTAdoptAHeroModule.Tag, "")
+                .Replace(BLTAdoptAHeroModule.DevTag, "")
+                .Trim();
+            Log.LogFeedResponse($"@{name} {message}");
         }
 
         // ── main patch ───────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Intercepts MakePeaceAction.ApplyInternal BEFORE any siege/stance teardown occurs.
-        /// Blocks peace whenever either faction contains any clan with an adopted leader,
-        /// unless BLT itself sanctioned the action (<see cref="AdoptedHeroFlags._allowDiplomacyAction"/>).
-        /// </summary>
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MakePeaceAction), "ApplyInternal")]
         public static bool Prefix_MakePeaceAction_Apply(
@@ -703,27 +714,21 @@ namespace BLTAdoptAHero
             int dailyTributeFrom1To2,
             MakePeaceAction.MakePeaceDetail detail = MakePeaceAction.MakePeaceDetail.Default)
         {
-            // Always allow peace that BLT itself initiated
+            // Peace that BLT itself sanctioned
             if (AdoptedHeroFlags._allowDiplomacyAction)
                 return true;
 
-            // We only meddle when at least one side involves an adopted clan
-            bool f1HasAdopted = FactionHasAdoptedClan(faction1);
-            bool f2HasAdopted = FactionHasAdoptedClan(faction2);
+            bool f1IsBLT = IsBltControlled(faction1);
+            bool f2IsBLT = IsBltControlled(faction2);
 
-            if (!f1HasAdopted && !f2HasAdopted)
-                return true; // pure AI-vs-AI with no adopted clans: let it through
-
-            // Exclude the player's own kingdom from BLT restrictions
-            Kingdom playerKingdom = Hero.MainHero?.Clan?.Kingdom;
-            bool f1IsBLT = f1HasAdopted && faction1 != playerKingdom;
-            bool f2IsBLT = f2HasAdopted && faction2 != playerKingdom;
-
+            // No BLT-ruled side: player vs AI, AI vs AI, AI kingdoms with BLT vassals...
             if (!f1IsBLT && !f2IsBLT)
-                return true; // adopted clans are all inside the player's own kingdom
+                return true;
 
             if (BLTTreatyManager.Current == null)
                 return true;
+
+            bool playerInvolved = IsPlayerSide(faction1) || IsPlayerSide(faction2);
 
             // ── Case 1: minimum war duration not yet met ─────────────────────────
             var k1 = faction1 as Kingdom;
@@ -733,36 +738,37 @@ namespace BLTAdoptAHero
                 !BLTTreatyManager.Current.CanMakePeace(k1, k2, out string reason))
             {
 #if DEBUG
-                Log.Trace($"[BLT-Harmony] Blocked peace (min duration): {faction1.Name} <-> {faction2.Name} – {reason}");
+        Log.Trace($"[BLT-Harmony] Blocked peace (min duration): {faction1.Name} <-> {faction2.Name} – {reason}");
 #endif
-                if (f1IsBLT) NotifyAdoptedLeaders(faction1, faction2, reason);
-                if (f2IsBLT) NotifyAdoptedLeaders(faction2, faction1, reason);
+                if (f1IsBLT) NotifyLeader(faction1, $"Peace with {faction2.Name} rejected – {reason}");
+                if (f2IsBLT) NotifyLeader(faction2, $"Peace with {faction1.Name} rejected – {reason}");
 
                 Log.ShowInformation($"Peace rejected – {reason}",
-                    (faction1 as Kingdom)?.Leader?.CharacterObject
-                    ?? (faction1 as Clan)?.Leader?.CharacterObject);
+                    faction1.Leader?.CharacterObject ?? faction2.Leader?.CharacterObject);
 
-                return false; // blocked — war never ended, no re-declare needed
+                return false;
             }
 
-            // ── Case 2: AI trying to make peace with a BLT-side faction ─────────
+            // ── Case 2: exactly one BLT side ─────────────────────────────────────
             if (f1IsBLT != f2IsBLT)
             {
+                if (playerInvolved)
+                    return true; // player <-> BLT peace goes through
+
                 IFaction aiFaction = f1IsBLT ? faction2 : faction1;
                 IFaction bltFaction = f1IsBLT ? faction1 : faction2;
 #if DEBUG
-                Log.Trace($"[BLT-Harmony] Blocked AI->BLT peace: {aiFaction.Name} -> {bltFaction.Name}. Creating proposal.");
+        Log.Trace($"[BLT-Harmony] Blocked AI->BLT peace: {aiFaction.Name} -> {bltFaction.Name}. Creating proposal.");
 #endif
-                // Only queue a visible proposal when both sides are kingdoms
                 if (aiFaction is Kingdom aiKingdom && bltFaction is Kingdom bltKingdom)
                     BLTDiplomacyBehavior.Current?.HandleAIPeaceAttempt(aiKingdom, bltKingdom);
 
-                return false; // blocked — siege state untouched
+                return false;
             }
 
-            // ── Case 3: Both BLT sides without _allowDiplomacyAction ─────────────
+            // ── Case 3: both BLT-ruled, unsanctioned ─────────────────────────────
 #if DEBUG
-            Log.Trace($"[BLT-Harmony] Blocked unsanctioned BLT-BLT peace: {faction1.Name} <-> {faction2.Name}");
+    Log.Trace($"[BLT-Harmony] Blocked unsanctioned BLT-BLT peace: {faction1.Name} <-> {faction2.Name}");
 #endif
             return false;
         }

@@ -134,6 +134,7 @@ namespace BLTAdoptAHero
                 {
                     harmony = new Harmony("mod.bannerlord.bltadoptahero");
                     harmony.PatchAll();
+                    CharacterReloadCompat.TryPatch(harmony);
                 }
                 catch (Exception e)
                 {

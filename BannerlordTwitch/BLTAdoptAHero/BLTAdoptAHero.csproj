@@ -92,6 +92,7 @@
     <Compile Include="Actions\CheckAmmo.cs" />
     <Compile Include="Actions\PrestigeCommand.cs" />
     <Compile Include="Behaviors\BLTAdoptAHeroCampaignBehavior.Prestige.cs" />
+    <Compile Include="Behaviors\CharacterReloadCompat.cs" />
     <Compile Include="Util\PrestigePolicy.cs" />
     <Compile Include="Util\BattleBalancePolicy.cs" />
     <Compile Include="Behaviors\BLTSummonBehavior.Balance.cs" />
