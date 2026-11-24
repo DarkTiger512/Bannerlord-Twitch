@@ -78,7 +78,14 @@ namespace BLTAdoptAHero.UI
 
         public sealed class KingdomData { public string Id { get; set; } public string Name { get; set; } public string Color1 { get; set; } public string Color2 { get; set; } }
         public sealed class SettlementData { public string Id { get; set; } public string Name { get; set; } public string Type { get; set; } public float X { get; set; } public float Y { get; set; } }
-        public sealed class SettlementOwnershipData { public string Id { get; set; } public string KingdomId { get; set; } }
+        public sealed class SettlementOwnershipData
+        {
+            public string Id { get; set; }
+            public string KingdomId { get; set; }
+            public bool Independent { get; set; }
+            public string Color1 { get; set; }   // only set for independent owners
+            public string Color2 { get; set; }
+        }
         public sealed class CoastlineSegment { public float X1 { get; set; } public float Y1 { get; set; } public float X2 { get; set; } public float Y2 { get; set; } }
         public sealed class LandArea { public float X { get; set; } public float Y { get; set; } public float Width { get; set; } public float Height { get; set; } }
 
@@ -255,9 +262,23 @@ namespace BLTAdoptAHero.UI
         {
             var result = new DynamicMapData { Visible = geography != null, GeographyRevision = geography?.Revision ?? 0 };
             if (geography == null || Campaign.Current == null) return result;
-            result.Ownership = Campaign.Current.Settlements.Where(s => s.IsTown || s.IsCastle)
-                .Select(s => new SettlementOwnershipData { Id = s.StringId ?? s.Name?.ToString() ?? "unknown", KingdomId = s.OwnerClan?.Kingdom?.StringId })
-                .OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
+            result.Ownership = Campaign.Current.Settlements.Where(s => s.IsTown || s.IsCastle).Select(s =>
+            {
+                Clan owner = s.OwnerClan;
+                Kingdom kingdom = owner?.Kingdom;
+                var data = new SettlementOwnershipData
+                {
+                    Id = s.StringId ?? s.Name?.ToString() ?? "unknown",
+                    KingdomId = kingdom?.StringId
+                };
+                if (kingdom == null && owner != null)
+                {
+                    data.Independent = true;
+                    data.Color1 = ClanColor(owner, true);
+                    data.Color2 = ClanColor(owner, false);
+                }
+                return data;
+            }).OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
 
             var projection = new MapProjection(geography.Projection.MinX, geography.Projection.MaxX, geography.Projection.MinY, geography.Projection.MaxY, geography.Projection.Height);
             foreach (Hero hero in Hero.AllAliveHeroes.Where(h => h.IsAdopted()).OrderBy(h => h.StringId))
@@ -288,10 +309,30 @@ namespace BLTAdoptAHero.UI
             position = default; status = null; return false;
         }
 
+        private static bool HasColor(uint c) => (c & 0x00FFFFFF) != 0;
+
+        private static uint BannerColor(Banner banner, bool primary)
+        {
+            if (banner == null) return 0;
+            // Banner.GetPrimaryColor() returns 0xFFFFFFFF on an empty banner, so check the count first
+            if (primary) return banner.BannerDataList.Count > 0 ? banner.GetPrimaryColor() : 0;
+            return banner.BannerDataList.Count > 1 ? banner.GetFirstIconColor() : 0;
+        }
+
         private static string KingdomColor(Kingdom kingdom, bool primary)
         {
-            uint color = primary ? kingdom.Color : kingdom.Color2;
-            if ((color & 0x00FFFFFF) == 0) color = primary ? kingdom.RulingClan?.Color ?? 0xFF777777 : kingdom.RulingClan?.Color2 ?? 0xFFFFFFFF;
+            uint color = BannerColor(kingdom.Banner, primary);
+            if (!HasColor(color)) color = primary ? kingdom.Color : kingdom.Color2;
+            if (!HasColor(color))
+                color = primary ? kingdom.RulingClan?.Color ?? 0xFF777777 : kingdom.RulingClan?.Color2 ?? 0xFFFFFFFF;
+            return ColorToHex(color | 0xFF000000);
+        }
+
+        private static string ClanColor(Clan clan, bool primary)
+        {
+            uint color = BannerColor(clan.Banner, primary);
+            if (!HasColor(color)) color = primary ? clan.Color : clan.Color2;
+            if (!HasColor(color)) color = primary ? 0xFF777777 : 0xFFFFFFFF;
             return ColorToHex(color | 0xFF000000);
         }
 
